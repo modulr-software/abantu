@@ -1,0 +1,40 @@
+{:aliases {:test {:extra-paths ["test"]
+                  :extra-deps {io.github.cognitect-labs/test-runner
+                               {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+                  :main-opts ["-m" "cognitect.test-runner"]
+                  :exec-fn cognitect.test-runner.api/test}
+           :migrate {:main-opts ["-m" "abantu.migrate"]}
+           :start-server {:main-opts ["-m" "abantu.source"]}
+           :build {:deps {io.github.clojure/tools.build {:git/tag "v0.10.9" :git/sha "e405aac"}}
+                   :ns-default build}}
+ :paths ["src" "resources" "dev" "test"]
+ :deps {http-kit/http-kit {:mvn/version "2.8.0"}
+        compojure/compojure {:mvn/version "1.7.1"}
+        ring/ring-core {:mvn/version "1.13.0"}
+        ring/ring-json {:mvn/version "0.5.1"}
+        ring/ring-defaults {:mvn/version "0.6.0"}
+        ring-cors/ring-cors {:mvn/version "0.1.13"}
+        io.github.modulr-software/congest {:mvn/version "0.1.7"}
+        com.github.seancorfield/next.jdbc {:mvn/version "1.3.1070"}
+        org.xerial/sqlite-jdbc {:mvn/version "3.51.0.0"}
+        buddy/buddy-core {:mvn/version "1.12.0-430"}
+        buddy/buddy-sign {:mvn/version "3.5.351"}
+        aero/aero {:mvn/version "1.1.6"}
+        clj-oauth2/clj-oauth2 {:mvn/version "0.2.0"}
+        com.layerware/hugsql-core {:mvn/version "0.5.3"}
+        com.layerware/hugsql-adapter-next-jdbc {:mvn/version "0.5.3"}
+        metosin/malli {:mvn/version "0.18.0"}
+        com.gfredericks/test.chuck {:mvn/version "0.2.14"}
+        com.kepler16/mallard {:mvn/version "3.2.1"}
+        com.kepler16/mallard-sqlite-store {:mvn/version "3.2.1"}
+        com.github.seancorfield/honeysql {:mvn/version "2.7.1310"}
+        io.replikativ/datahike {:mvn/version "0.6.1599"}
+        hickory/hickory {:mvn/version "0.7.1"}
+        com.draines/postal {:mvn/version "2.0.5"}
+        hiccup/hiccup {:mvn/version "2.0.0"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.4.3"}
+        metosin/jsonista {:mvn/version "0.3.13"}
+        metosin/reitit {:mvn/version "0.9.1"}
+        metosin/reitit-middleware {:mvn/version "0.9.1"}
+        metosin/reitit-swagger {:mvn/version "0.9.1"}
+        metosin/reitit-swagger-ui {:mvn/version "0.9.1"}}}

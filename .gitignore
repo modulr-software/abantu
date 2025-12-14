@@ -1,0 +1,12 @@
+.clj-kondo/
+.env
+.env.local
+.calva/
+.lsp/
+source-users
+.cpcache/
+.nrepl-port
+target/
+
+.db
+admins.json

@@ -1,0 +1,14 @@
+# flyctl launch added from .gitignore
+**/.clj-kondo
+**/.env
+**/.env.local
+**/.calva
+**/.lsp
+**/source-users
+**/.cpcache
+**/dev/dev.clj
+**/.nrepl-port
+
+**/.db
+#**/admins.json
+fly.toml
