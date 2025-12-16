@@ -5,28 +5,16 @@
             [malli.error :as me]
             [clojure.java.io :as io]))
 
-(def ^:private oauth2-provider-schema
-  [:map
-   [:authorization-uri :string]
-   [:access-token-uri :string]
-   [:redirect-uri :string]
-   [:client-id :string]
-   [:client-secret :string]
-   [:access-query-param :keyword]
-   [:scope [:vector {:min 1} :string]]
-   [:grant-type :string]])
-
 (def ^:private schema
   [:map
    [:supersecretkey [:string {:min 32}]]
    [:admins-path {:optional true} :string]
-   [:admins-encrypted-path :string]
+   [:admins-encrypted-path {:optional true} :string]
    [:cors-origin :string]
    [:env :string]
    [:database [:map
                [:dir :string]
-               [:type :string]]]
-   [:oauth2 [:map-of keyword? oauth2-provider-schema]]])
+               [:type :string]]]])
 
 (defn- load-config []
   (let [config (aero/read-config (io/resource "config.edn"))

@@ -48,7 +48,7 @@
 
 (defn insert!
   "inserts a single record or a set of records into a table. records passed in 
-  map form where the keys can be snake-case keywords. all keys are converted 
+  map form where the keys can be kebab-case keywords. all keys are converted 
   to snake_case strings before executing prepared statements."
   [ds {:keys [tname data values ret]}]
   (let [values' (or data values)

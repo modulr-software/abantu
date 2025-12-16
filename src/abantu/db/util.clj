@@ -18,6 +18,7 @@
    (str (name type) "_" id)))
 
 (defn- -conn [dbname]
+  (prn "db-name" (db-path dbname))
   (let [conn (-> {:dbtype (conf/read-value :database :type)}
                  (merge {:dbname (db-path dbname)})
                  (jdbc/get-connection))]

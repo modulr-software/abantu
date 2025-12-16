@@ -4,15 +4,4 @@
  :cors-origin #or [#env CORS_ORIGIN "http://localhost:8080"]
  :env #or [#env ENV "dev"]
  :database {:dir #or [#env DATABASE_DIR ".db/"]
-            :type "sqlite"}
- :email {:address #or [#env SUPPORT_ADDRESS "lee@weareabantu.earth"]
-         :username #env EMAIL_USERNAME
-         :password #env EMAIL_PASSWORD}
- :oauth2 {:google {:authorization-uri   "https://accounts.google.com/o/oauth2/auth"
-                   :access-token-uri    "https://oauth2.googleapis.com/token"
-                   :redirect-uri        #or [#env GOOGLE_REDIRECT_URI "http://localhost:3000/oauth2/google/callback"]
-                   :client-id           #env GOOGLE_CLIENT_ID
-                   :client-secret       #env GOOGLE_CLIENT_SECRET
-                   :access-query-param  :access_token
-                   :scope               ["https://www.googleapis.com/auth/userinfo.email"]
-                   :grant-type          "authorization_code"}}}
+            :type "sqlite"}}

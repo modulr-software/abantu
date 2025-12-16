@@ -18,3 +18,13 @@
     (catch Exception e
       (println (str "Couldn't read the admins file: " (.getMessage e)))
       [])))
+
+(comment
+  (conf/read-value :admins-encrypted-path)
+  (conf/read-value :admins-path)
+  (conf/read-value :supersecretkey)
+
+  (encrypt!)
+  (read)
+
+  ())
