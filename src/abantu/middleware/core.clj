@@ -9,6 +9,7 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.middleware.json :as ring]
             [ring.middleware.cookies :as cookies]
+            [ring.middleware.multipart-params :as multipart-params]
             [clojure.walk :as walk]))
 
 (defn wrap-ds [handler ds]
@@ -67,4 +68,5 @@
       (wrap-defaults (assoc site-defaults :session false :security {:anti-forgery false}))
       (ring/wrap-json-response)
       (ring/wrap-json-body {:keywords? true})
+      (multipart-params/wrap-multipart-params)
       (cookies/wrap-cookies)))
