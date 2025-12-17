@@ -1,0 +1,41 @@
+{
+  "nouns": [
+    { "xhosa": "umda", "english": "border; boundary", "noun_class": "3/4", "type": "noun" },
+    { "xhosa": "indaba", "english": "news", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "udala", "english": "age", "noun_class": "11/10", "type": "noun" },
+    { "xhosa": "indalo", "english": "nature", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indawo", "english": "place", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indawo yokulala", "english": "shelter; accommodation", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indawo yokumisa iintente", "english": "campsite", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "iindawo zembali", "english": "historical places", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ubude", "english": "length; height", "noun_class": "11/10", "type": "noun" },
+    { "xhosa": "idesika", "english": "desk", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "iidilesi", "english": "address", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "idinala", "english": "dinner", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "idinga", "english": "appointment; promise", "noun_class": "5/6", "type": "noun" },
+    { "xhosa": "umdla", "english": "interest", "noun_class": "3/4", "type": "noun" }
+  ],
+  "verbs": [
+    { "xhosa": "-dala", "english": "be old", "type": "verb" },
+    { "xhosa": "-dada", "english": "swim", "type": "verb" },
+    { "xhosa": "-danile", "english": "be disappointed", "type": "verb" },
+    { "xhosa": "-dibana", "english": "meet (with)", "type": "verb" },
+    { "xhosa": "-dikidiki", "english": "be lukewarm", "type": "verb" },
+    { "xhosa": "-dinwa", "english": "get tired", "type": "verb" },
+    { "xhosa": "-diniwe", "english": "be tired", "type": "verb" },
+    { "xhosa": "-dla", "english": "eat", "type": "verb" },
+    { "xhosa": "-dlala", "english": "play", "type": "verb" }
+  ],
+  "adjectives": [
+    { "xhosa": "-dala", "english": "old", "type": "adjective" },
+    { "xhosa": "-de", "english": "long; tall", "type": "adjective" },
+    { "xhosa": "-mdla", "english": "interesting", "type": "adjective" }
+  ],
+  "adverbs": [
+    { "xhosa": "kade", "english": "long ago", "type": "adverb" }
+  ],
+  "interrogatives": [
+    { "xhosa": "-dibana na-", "english": "meet with?", "type": "interrogative construction" },
+    { "xhosa": "idla malini?", "english": "what does it cost?", "type": "interrogative phrase" }
+  ]
+}

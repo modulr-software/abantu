@@ -1,0 +1,44 @@
+{
+  "nouns": [
+    { "xhosa": "umdlalo", "english": "game", "noun_class": "3/4", "type": "noun" },
+    { "xhosa": "isport", "english": "sport", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indlebe", "english": "ear", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indlebe ndlela", "english": "way; road", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ipikiniki", "english": "picnic", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "isidlo", "english": "meal", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "isidlo sakusasa", "english": "breakfast", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "isidlo sasemini", "english": "lunch", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "isidlo sangokuhlwa", "english": "supper; dinner", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "indlu", "english": "house", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indlu yangasese", "english": "toilet", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "isikhongozeli", "english": "container", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "umnqwazi", "english": "hat", "noun_class": "3/4", "type": "noun" },
+    { "xhosa": "ifowuni", "english": "phone", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indawo yokufaka intloko", "english": "shelter", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "indoda", "english": "man", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ikati", "english": "cat", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ikhaya", "english": "home", "noun_class": "5/6", "type": "noun" },
+    { "xhosa": "iglasi", "english": "glass", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "udonga", "english": "wall", "noun_class": "11/10", "type": "noun" },
+    { "xhosa": "udongwe", "english": "clay", "noun_class": "11/10", "type": "noun" },
+    { "xhosa": "ipotfoliyo", "english": "pottery", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhakethi", "english": "bucket", "noun_class": "9/10", "type": "noun" }
+  ],
+  "verbs": [
+    { "xhosa": "-dlala", "english": "play", "type": "verb" },
+    { "xhosa": "-hamba", "english": "go / travel", "type": "verb" },
+    { "xhosa": "-hamba kakuhle", "english": "have a good trip", "type": "verb_phrase" },
+    { "xhosa": "-dlula", "english": "pass (by)", "type": "verb" }
+  ],
+  "adjectives": [
+    { "xhosa": "-dula", "english": "expensive", "type": "adjective" },
+    { "xhosa": "-cocekile", "english": "clean", "type": "adjective" },
+    { "xhosa": "-cocekileyo", "english": "clean; neat", "type": "adjective" }
+  ],
+  "adverbs": [
+    { "xhosa": "ekugqibeleni", "english": "finally; at last", "type": "adverb" }
+  ],
+  "interjections": [
+    { "xhosa": "hambe kakuhle!", "english": "have a good trip!", "type": "interjection" }
+  ]
+}

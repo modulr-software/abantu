@@ -1,0 +1,53 @@
+{
+  "nouns": [
+    { "xhosa": "umbala", "english": "colour", "noun_class": "3/4", "type": "noun" },
+    { "xhosa": "ibala", "english": "count", "noun_class": "5/6", "type": "noun" },
+    { "xhosa": "imbalela", "english": "drought", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "umbane", "english": "electricity; lightning", "noun_class": "3/4", "type": "noun" },
+    { "xhosa": "isibane", "english": "light; lamp", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "imbatyisi", "english": "oyster", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibele", "english": "breast", "noun_class": "5/6", "type": "noun" },
+    { "xhosa": "ububele", "english": "kindness", "noun_class": "11/10", "type": "noun" },
+    { "xhosa": "ibhakethi", "english": "bucket", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhalbhu", "english": "bulb", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhandeji", "english": "bandage", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhasi", "english": "bus", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhayi", "english": "jacket", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhayi yemvula", "english": "raincoat", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "iBhayibhile", "english": "Bible", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhayisekile", "english": "bicycle", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "ibhedi", "english": "bed", "noun_class": "9/10", "type": "noun" },
+    { "xhosa": "isibhedlele", "english": "hospital", "noun_class": "7/8", "type": "noun" },
+    { "xhosa": "isibhengezo", "english": "advertisement; announcement", "noun_class": "7/8", "type": "noun" }
+  ],
+  "verbs": [
+    { "xhosa": "-ba", "english": "be", "type": "verb" },
+    { "xhosa": "-biwe", "english": "steal", "type": "verb" },
+    { "xhosa": "-bala", "english": "count", "type": "verb" },
+    { "xhosa": "-balula", "english": "recommend", "type": "verb" },
+    { "xhosa": "-bamba", "english": "catch", "type": "verb" },
+    { "xhosa": "-banda", "english": "be cold", "type": "verb" },
+    { "xhosa": "-basa", "english": "light a fire", "type": "verb" },
+    { "xhosa": "-betha", "english": "beat; hit", "type": "verb" },
+    { "xhosa": "-bhala", "english": "write (down)", "type": "verb" }
+  ],
+  "adjectives": [
+    { "xhosa": "-balulekileyo", "english": "important", "type": "adjective" },
+    { "xhosa": "-bandayo", "english": "cold", "type": "adjective" },
+    { "xhosa": "-banzi", "english": "wide", "type": "adjective" },
+    { "xhosa": "-nobubele", "english": "kind; friendly", "type": "adjective" }
+  ],
+  "adverbs": [
+    { "xhosa": "ngomso", "english": "tomorrow", "type": "adverb" }
+  ],
+  "pronouns_interrogatives": [
+    { "xhosa": "-bani?", "english": "who?", "type": "interrogative pronoun" }
+  ],
+  "auxiliaries_and_particles": [
+    {
+      "xhosa": "-ba (future construction)",
+      "english": "will (auxiliary, e.g. iza kuba mnandi)",
+      "type": "auxiliary"
+    }
+  ]
+}
