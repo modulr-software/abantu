@@ -14,7 +14,8 @@
    [:env :string]
    [:database [:map
                [:dir :string]
-               [:type :string]]]])
+               [:type :string]]]
+   [:openai :string]])
 
 (defn- load-config []
   (let [config (aero/read-config (io/resource "config.edn"))

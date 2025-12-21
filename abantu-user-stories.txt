@@ -1,0 +1,29 @@
+1) define the parts of speech of a language
+  - name
+  - description
+
+2) add vocab for each part of speech
+  - word in the language
+  - english translation
+  - part of speech id
+  - example
+
+3) each language needs to have units with defined outcomes
+  - specify which parts of speech will be used
+  - see all exercises related to the unit
+  - be able to generate new exercises for the unit (from vocab queried via parts of speech)
+  - be able to edit units
+  - trial run through exercises of unit
+
+4) creating exercises
+  - need to be able to generate exercises in bulk
+  - be able to remove exercises from a unit
+  - be able to edit any exercise
+  - be able to generate new or additional possible answers for any exercise (new or existing)
+  - be able to optionally record audio for specific exercises
+  - set difficulty level
+  - set exercise type
+
+5) have sections that use multiple units content and ask questions based on them combined
+
+6) be able to show the user their progress in respect to their language
