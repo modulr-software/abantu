@@ -100,23 +100,12 @@
 
   (def ds (db.util/conn :master))
 
-  (find ds {:tname :incoming-posts
-            :limit 5
-            :order-by [[:id :asc]]
-            :ret :*})
+  (->>
+   (find ds {:tname :vocab
+             :ret :*})
+   ;;(count)
+   )
 
-  (insert! ds {:tname :sectors
-               :values {:name "something"}
-               :ret :*})
 
-  (delete! ds
-           {:tname :feeds
-            :where [:= :id 6]
-            :ret :*})
-
-  (update! ds
-           {:tname :users
-            :where [:= :id 3]
-            :values {:type "creator"}})
-
-  ())
+  ()
+  )
