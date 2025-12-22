@@ -4,6 +4,12 @@
             [clojure.data.json :as json])
   (:import [java.util Base64]))
 
+(def models {:mini "gpt-4.1-mini"
+             :fivetwo "gpt-5.2"})
+
+(defn model [key]
+  (get-in models [key]))
+
 (defn image->base64 [path]
   (let [file-bytes (with-open [in (io/input-stream (io/file path))]
                      (.readAllBytes in)) ; Read all bytes from the input stream
@@ -35,21 +41,146 @@ Please respond only with the desired output, in raw text, without any markdown f
 
   Please respond only with the desired output, in raw text, without any markdown formatting or newlines. Specifically ensure the output does not contain ```json ```, as this output is being returned directly from an API.")
 
-(defn GIVE-ME-SOMETHING-BY-PROMPT-PLEEEAAASSEEEE [prompt image-path]
-  (-> (openai/create-chat-completion {:model "gpt-4.1-mini"
-                                      :messages [{:role "user"
-                                                  :content [{:type "text"
-                                                             :text prompt}
-                                                            {:type "image_url"
-                                                             :image_url {:url (str "data:image/jpg;base64," (image->base64 image-path))}}]}]})
-      (get :choices)
-      (first)
-      (get-in [:message :content])
-      (json/read-str {:key-fn keyword}))
-  )
+(defn data-url
+  "Takes an image-path on the local file system and converts the image to a base64 url.
+   Returns a string."
+  [image-path]
+  (str "data:image/jpg;base64,"
+       (image->base64 image-path)))
+
+(defn image-payload [image-path]
+  {:type "image_url"
+   :image_url {:url (data-url image-path)}})
+
+(defn prompt-text [prompt]
+  {:type "text"
+   :text prompt})
+
+(defn prompt [model prompt & image-paths]
+    {:model model
+     :messages [{:role "user"
+                 :content (-> (concat [(prompt-text prompt)]
+                                  (mapv #(image-payload %)
+                                        image-paths))
+                              (vec))}]})
+
+(defn extract-content [result]
+  (-> result
+      (get-in [:choices 0 :message :content])))
+
+(defn gib-thing
+  "takes a model name a text prompt and an optional set of image paths
+   and returns the first result that gipitty produces, without the json payload around it."
+  [prompt' model & image-paths]
+  (-> prompt
+      (partial model prompt')
+      (apply image-paths)
+      (openai/create-chat-completion)
+      (extract-content)))
+
+
+(defn prompt52 [text]
+  (str "Extract all verb stems from the following text.
+   Only list the verb stems and an english literal meaning of the verb stem.
+   Produce only this and nothing else.
+   Do not include pronoun prefixes on any of the verbs, instead start the verbs witht he character '-'.
+   For example: walinyhala becomes -linyhala. ebathaza becomes -thaza. sesabalimi becomes -limi.
+   The text is:\n"
+       text))
+
+
+(def ^:private image-text-prompt
+  "Extract the text in the given image and return only the text, nothing else. attempt to match the formatting of
+   the text with whitespace characters, but do not use any markdown of any sort.")
+
+(gib-thing
+ image-text-prompt
+ (model :mini)
+ "resources/undlali_3.jpg")
+
+(-> image-text-prompt
+    (gib-thing (model :mini)
+               "resources/undlali_3.jpg")
+    (prompt52)
+    (gib-thing (model :fivetwo)))
+
 
 (comment
 
-  (GIVE-ME-SOMETHING-BY-PROMPT-PLEEEAAASSEEEE noun-extraction-query "resources/undlali_3.jpg")
+  ;; PRIOS
+  ;; - load the latest vocab json into the db
+  ;; - load more vocab from this list: https://www.scribd.com/document/523205194/1000-Most-Common-Xhosa-words
+  ;; - complete a model for language and parts of speech + units and exercises
+  ;; - complete API for being able to:
+  ;; ---- look at vocab, parts of speech, units etc.
+  ;; ---- be able to update all of the above
 
-  ())
+  ;; NICE TO HAVES
+  ;; - testing that raw text extraction of verb stems, nouns and adverbs works fine
+  ;; ---- verb stems can be extracted if examples of how to extract are supplied (results inconsistent)
+  ;; ---- nouns can be extracted just fine afaik
+  ;; - training / contextualizing a custom model with dictionary vocab
+  ;; - prompt pipeline for expressions
+
+
+  (defn test-prompt [text]
+    (str "Extract from the given text all verb stems related to any of the verbs in the list of verbs supplied.
+          Do this by dropping any prefixes and infixes that come before the verb stem you find in the given text.
+          Do not change the verbs in the text to their root form, keep the variant, but show only the variant without
+          the prefixes attached to it.
+          Extract only the words that are related to the supplied list of verbs and nothing else.
+          List only the verb stem without pronoun prefixes or object concords.
+          Do not include any markdown characters in the output.
+          Provide a description of the meaning of the extracted verb form.
+
+          For example: when given -baleka as a supplied verb, extract from the text 'ndibalekile' the
+          form '-balekile - to have run'.
+
+
+          The list of verbs supplied is: -lunga (to become fine), -nxiba (to wear something).
+          The given text is:\n"
+         text))
+
+  (->> (gib-thing
+        (test-prompt text-cache)
+        (model :fivetwo))
+       (spit "resources/output2.txt"))
+
+
+
+  (def text-cache
+    (gib-thing
+     image-text-prompt
+     (model :mini)
+     "resources/undlali_3.jpg"))
+
+  text-cache
+  (spit "resources/text_cache.txt" text-cache)
+
+
+
+  (def dict-response
+    (gib-thing
+     (model :fivetwo)
+     (str "extract all of the given isiXhosa words into a list of json objects with the following fields:
+      - type (the part of speech)
+      - noun_class (the prefix of singular and plural of the noun only)
+      - word (the actual word or expression in the target language)
+      - english (the english translation of the word)
+      
+      use the content of the text provided to fill the values of the json object fields.
+      produce the raw json text output only without any formatting.
+      
+      the text is: "
+          (slurp "resources/dict.json"))))
+
+
+  (-> (slurp "resources/dict.json")
+      (clojure.data.json/read-str {:key-fn keyword}))
+
+
+  (prompt52 text-cache)
+
+
+  ()
+  )
