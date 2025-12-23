@@ -31,6 +31,15 @@
    (tables/foreign-key :user-id :users :id)
    (tables/foreign-key :user-type-id :user-types :id)))
 
+(def vocab
+  (tables/create-table-sql
+   :vocab
+   (tables/table-id)
+   [:xhosa :text :not nil]
+   [:english :text :not nil]
+   [:type :text :not nil]
+   [:noun-class :text]))
+
 
 (comment
   (require '[honey.sql :as sql])

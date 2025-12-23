@@ -19,18 +19,29 @@
 (defn run-up! [context]
   (let [ds-master (:db-master context)
         admins (admins/read)]
-    
+
     (prn "here")
+
 
     (tables/create-tables!
      ds-master
      :abantu.db.master
-     [:user-assigned-types :user-types :users])
+     [:user-assigned-types :user-types :users :vocab])
+
+
+    (->>
+     (-> (slurp "resources/dict.json")
+         (clojure.data.json/read-str {:key-fn keyword}))
+     (assoc {:tname :vocab
+             :ret :*}
+            :values)
+     (db/insert! ds-master))
 
     (db/insert! ds-master {:tname :user-types
                            :values user-types-seed})
 
     (run! (partial insert-admin! ds-master) admins)))
+
 
 
 (defn run-down! [context]
