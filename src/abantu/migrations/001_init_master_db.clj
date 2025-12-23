@@ -3,7 +3,8 @@
             [abantu.db.master]
             [abantu.db.honey :as db]
             [abantu.db.tables :as tables]
-            [abantu.password :as password]))
+            [abantu.password :as password]
+            [clojure.data.json :as json]))
 
 (def user-types-seed
   [{:name "student"}
@@ -20,18 +21,14 @@
   (let [ds-master (:db-master context)
         admins (admins/read)]
 
-    (prn "here")
-
-
     (tables/create-tables!
      ds-master
      :abantu.db.master
      [:user-assigned-types :user-types :users :vocab])
 
-
     (->>
      (-> (slurp "resources/dict.json")
-         (clojure.data.json/read-str {:key-fn keyword}))
+         (json/read-str {:key-fn keyword}))
      (assoc {:tname :vocab
              :ret :*}
             :values)
@@ -42,8 +39,6 @@
 
     (run! (partial insert-admin! ds-master) admins)))
 
-
-
 (defn run-down! [context]
   (let [ds-master (:db-master context)]
     (tables/drop-all-tables! ds-master)))
@@ -53,14 +48,13 @@
   (tables/create-tables!
    (abantu.db.util/conn :master)
    :abantu.db.master
-   [:users :user-types :user-assigned-types])
-  
+   [:users :user-types :user-assigned-types :vocab])
+
   (admins/read)
 
   (db/insert! (abantu.db.util/conn :master)
               {:email "merveillevaneck@gmail.com"
                :password (password/hash-password "M3rveille")})
-  
+
   (run! (partial insert-admin! (abantu.db.util/conn :master)) (admins/read))
-  ()
-  )
+  ())

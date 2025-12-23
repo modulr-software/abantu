@@ -34,6 +34,7 @@
         hiccup/hiccup {:mvn/version "2.0.0"}
         clojure.java-time/clojure.java-time {:mvn/version "1.4.3"}
         net.clojars.wkok/openai-clojure {:mvn/version "0.23.0"}
+        clj-fuzzy/clj-fuzzy {:mvn/version "0.4.1"}
         metosin/jsonista {:mvn/version "0.3.13"}
         metosin/reitit {:mvn/version "0.9.1"}
         metosin/reitit-middleware {:mvn/version "0.9.1"}

@@ -38,6 +38,34 @@
    [:type :text :not nil]
    [:noun-class :text]))
 
+(def units 
+  (tables/create-table-sql
+    :units
+    (tables/table-id)
+    [:name :text :not nil]
+    [:description :text]
+    [:creator-id :integer]
+    (tables/foreign-key :creator-id :users :id)))
+
+(def exercises
+  (tables/create-table-sql
+   :exercises
+   (tables/table-id)
+   [:unit-id :integer :not nil]
+   [:question-type :text [:check [:in :question-type ["translation" "multiple-choice"]]]]
+   [:question :text :not nil]
+   [:answer :text :not nil]
+   [:answer-id :integer]
+   (tables/foreign-key :unit-id :units :id)))
+
+(def exercise-options
+  (tables/create-table-sql
+   :exercise-options
+   (tables/table-id)
+   [:exercise-id :integer :not nil]
+   [:option :text :not nil]
+   (tables/foreign-key :exercise-id :exercises :id)))
+
 (comment
   (require '[honey.sql :as sql])
 

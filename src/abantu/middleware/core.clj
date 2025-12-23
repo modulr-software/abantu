@@ -42,10 +42,22 @@
                                     k)) body)
            body)))
 
+(defn process-query-params [{:keys [query-params] :as req} t-fn]
+  (assoc req
+         :query-params
+         (if
+          (or (map? query-params) (vector? query-params) (seq? query-params))
+           (cske/transform-keys (fn [k]
+                                  (if (or (keyword? k) (string? k))
+                                    (t-fn k)
+                                    k)) query-params)
+           query-params)))
+
 (defn wrap-case-conversion [handler]
   (fn [request]
     (-> request
         (process-body csk/->kebab-case-keyword)
+        (process-query-params csk/->kebab-case-keyword)
         (handler)
         (process-body csk/->camelCaseKeyword))))
 
