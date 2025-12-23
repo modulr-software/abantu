@@ -108,14 +108,16 @@ Please respond only with the desired output, in raw text, without any markdown f
 (comment
 
   ;; PRIOS
-  ;; - load the latest vocab json into the db
-  ;; - load more vocab from this list: https://www.scribd.com/document/523205194/1000-Most-Common-Xhosa-words
-  ;; - complete a model for language and parts of speech + units and exercises
   ;; - complete API for being able to:
   ;; ---- look at vocab, parts of speech, units etc.
   ;; ---- be able to update all of the above
+  ;; ---- make a ui to inspect vocab
+  ;; ---- make a ui to make exercises
+  ;; ---- make a ui to complete exercises
 
   ;; NICE TO HAVES
+  ;; - complete a model for language and parts of speech + units and exercises
+  ;; - load more vocab from this list: https://www.scribd.com/document/523205194/1000-Most-Common-Xhosa-words
   ;; - testing that raw text extraction of verb stems, nouns and adverbs works fine
   ;; ---- verb stems can be extracted if examples of how to extract are supplied (results inconsistent)
   ;; ---- nouns can be extracted just fine afaik
