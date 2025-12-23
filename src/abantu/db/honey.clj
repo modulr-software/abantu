@@ -100,11 +100,38 @@
 
   (def ds (db.util/conn :master))
 
+  (def unique-classes
+    (->>
+     (find ds {:tname :vocab
+               :ret :*})
+     (mapv :type)
+     (filterv identity)
+     (set)))
+
+  unique-classes
+
   (->>
    (find ds {:tname :vocab
-             :ret :*})
-   ;;(count)
-   )
+             :where [:= :type "verb"]
+             :ret :*}))
+
+  
+  (insert! ds {:tname :vocab
+               :values (-> (slurp "resources/dict.json")
+                           (clojure.data.json/read-str {:key-fn keyword}))
+               :ret :*})
+
+
+  (->> {:tname :vocab
+        :ret :*}
+       (find ds)
+       (filterv #(clojure.string/includes? (:type %) "interjection"))
+       (mapv #(update! ds {:tname :vocab
+                           :where (:id %)
+                           :values {:type "interjection"}
+                           :ret :*})))
+  
+
 
 
   ()

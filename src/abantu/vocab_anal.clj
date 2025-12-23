@@ -175,9 +175,6 @@ Please respond only with the desired output, in raw text, without any markdown f
           (slurp "resources/dict.json"))))
 
 
-  (-> (slurp "resources/dict.json")
-      (clojure.data.json/read-str {:key-fn keyword}))
-
 
   (prompt52 text-cache)
 
