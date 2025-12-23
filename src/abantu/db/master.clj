@@ -1,7 +1,6 @@
 (ns abantu.db.master
   (:require [abantu.db.tables :as tables]))
 
-
 (def users
   (tables/create-table-sql
    :users
@@ -14,7 +13,6 @@
    [:onboarded :integer [:default 0]]
    [:mobile :text]
    [:profile-image :text]))
-
 
 (def user-types
   (tables/create-table-sql
@@ -39,7 +37,6 @@
    [:english :text :not nil]
    [:type :text :not nil]
    [:noun-class :text]))
-
 
 (comment
   (require '[honey.sql :as sql])

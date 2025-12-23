@@ -57,12 +57,12 @@ Please respond only with the desired output, in raw text, without any markdown f
    :text prompt})
 
 (defn prompt [model prompt & image-paths]
-    {:model model
-     :messages [{:role "user"
-                 :content (-> (concat [(prompt-text prompt)]
-                                  (mapv #(image-payload %)
-                                        image-paths))
-                              (vec))}]})
+  {:model model
+   :messages [{:role "user"
+               :content (-> (concat [(prompt-text prompt)]
+                                    (mapv #(image-payload %)
+                                          image-paths))
+                            (vec))}]})
 
 (defn extract-content [result]
   (-> result
@@ -78,7 +78,6 @@ Please respond only with the desired output, in raw text, without any markdown f
       (openai/create-chat-completion)
       (extract-content)))
 
-
 (defn prompt52 [text]
   (str "Extract all verb stems from the following text.
    Only list the verb stems and an english literal meaning of the verb stem.
@@ -88,22 +87,9 @@ Please respond only with the desired output, in raw text, without any markdown f
    The text is:\n"
        text))
 
-
 (def ^:private image-text-prompt
   "Extract the text in the given image and return only the text, nothing else. attempt to match the formatting of
    the text with whitespace characters, but do not use any markdown of any sort.")
-
-(gib-thing
- image-text-prompt
- (model :mini)
- "resources/undlali_3.jpg")
-
-(-> image-text-prompt
-    (gib-thing (model :mini)
-               "resources/undlali_3.jpg")
-    (prompt52)
-    (gib-thing (model :fivetwo)))
-
 
 (comment
 
@@ -124,6 +110,16 @@ Please respond only with the desired output, in raw text, without any markdown f
   ;; - training / contextualizing a custom model with dictionary vocab
   ;; - prompt pipeline for expressions
 
+  (gib-thing
+   image-text-prompt
+   (model :mini)
+   "resources/undlali_3.jpg")
+
+  (-> image-text-prompt
+      (gib-thing (model :mini)
+                 "resources/undlali_3.jpg")
+      (prompt52)
+      (gib-thing (model :fivetwo)))
 
   (defn test-prompt [text]
     (str "Extract from the given text all verb stems related to any of the verbs in the list of verbs supplied.
@@ -148,8 +144,6 @@ Please respond only with the desired output, in raw text, without any markdown f
         (model :fivetwo))
        (spit "resources/output2.txt"))
 
-
-
   (def text-cache
     (gib-thing
      image-text-prompt
@@ -158,8 +152,6 @@ Please respond only with the desired output, in raw text, without any markdown f
 
   text-cache
   (spit "resources/text_cache.txt" text-cache)
-
-
 
   (def dict-response
     (gib-thing
@@ -176,10 +168,9 @@ Please respond only with the desired output, in raw text, without any markdown f
       the text is: "
           (slurp "resources/dict.json"))))
 
-
+  (-> (slurp "resources/dict.json")
+      (clojure.data.json/read-str {:key-fn keyword}))
 
   (prompt52 text-cache)
 
-
-  ()
-  )
+  ())
