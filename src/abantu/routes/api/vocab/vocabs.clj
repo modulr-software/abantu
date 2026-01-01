@@ -1,9 +1,15 @@
 (ns abantu.routes.api.vocab.vocabs
   (:require [abantu.services.interface :as services]
             [ring.util.response :as res]
-            [clj-fuzzy.levenshtein :as levenshtein]))
+            [clj-fuzzy.levenshtein :as levenshtein]
+            [abantu.routes.openapi :as openapi]
+            [abantu.routes.openapi :as api]))
+
 
 (defn get
+  {:summary "get all the vocab n shit"
+   :parameters (api/params :query api/VocabSearchParams) 
+   :responses (api/success api/VocabSearchResponse)}
   [{:keys [ds query-params] :as _request}]
   (let [{:keys [type search]} query-params
         vocab (services/vocab-query ds {:type type})
@@ -19,6 +25,10 @@
     (res/response searched)))
 
 (defn post
+  {:summary "insert all the vocab lol"
+   :parameters (api/params :body api/InsertVocabParams)
+   :responses (-> (api/success api/InsertVocabResponse)
+                  (api/bad-request))}
   [{:keys [ds body] :as _request}]
   (let [new-word (services/insert-vocab! ds {:data body})]
     (-> (res/response new-word)

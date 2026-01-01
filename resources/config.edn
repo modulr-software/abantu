@@ -1,4 +1,5 @@
 {:supersecretkey #env SUPER_SECRET_KEY
+ :port #or [#env PORT 3000]
  :admins-path "resources/admins.json"
  :admins-encrypted-path "resources/admins_encrypted.json"
  :cors-origin #or [#env CORS_ORIGIN "http://localhost:8080"]

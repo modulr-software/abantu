@@ -12,6 +12,7 @@
    [:admins-encrypted-path {:optional true} :string]
    [:cors-origin :string]
    [:env :string]
+   [:port :int]
    [:database [:map
                [:dir :string]
                [:type :string]]]
@@ -39,5 +40,6 @@
   (read-value :oauth2 :google)
   (read-value :cors-origin)
   (read-value :admins-path)
+  (read-value :port)
   (load-config))
 

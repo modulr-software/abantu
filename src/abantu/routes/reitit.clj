@@ -3,13 +3,29 @@
             [abantu.middleware.interface :as mw]
             [abantu.db.interface :as db]
             [abantu.routes.file :as file]
+            [reitit.coercion.malli]
+            [malli.util :as mu]
             [abantu.routes.api.vocab.vocabs :as vocabs]
             [abantu.routes.api.vocab.-id-.vocab :as vocab]
             [abantu.routes.api.units.units :as units]
             [abantu.routes.api.units.-id-.unit :as unit]
             [abantu.routes.api.units.-id-.exercises.manage.exercises :as exercises]
             [abantu.routes.api.units.-id-.exercises.manage.-id-.exercise :as exercise]
-            [abantu.routes.api.units.-id-.exercises.generate.exercises-generate :as exercises-generate]))
+            [abantu.routes.api.units.-id-.exercises.generate.exercises-generate :as exercises-generate]
+            [reitit.swagger :as swagger]
+            [reitit.swagger-ui :as swagger-ui]
+            [reitit.openapi :as openapi]
+            [abantu.util :as util]))
+
+(defn route [handlers]
+  (reduce (fn [acc [k v]]
+            (let [{:keys [middleware summary parameters responses]} (util/metadata v)]
+              (merge acc {k {:middleware middleware
+                             :summary summary
+                             :parameters parameters
+                             :responses responses
+                             :handler v}})))
+          {} handlers))
 
 (defn create-app
   ([] (create-app {:ds (db/ds :master)}))
@@ -17,33 +33,56 @@
    (let [ds (or ds (db/ds :master))]
      (ring/ring-handler
       (ring/router
-       [["/"              {:middleware [[mw/apply-generic :ds ds]]}
-         [""              (fn [_request] {:status 200 :body {:message "success"}})]
-         ["file"          {:post {:handler file/post}}]
+       [["/swagger.json"   {:get {:no-doc true
+                                  :swagger {:info {:title "source-api"
+                                                   :description "swagger docs for source api with malli and reitit-ring"
+                                                   :version "0.0.1"}
+                                            :securityDefinitions {"auth" {:type :apiKey
+                                                                          :in :header
+                                                                          :name "Authorization"}
+                                                                  "apiKey" {:type :apiKey
+                                                                            :in :header
+                                                                            :name "Authorization"}}}
+                                  :handler (swagger/create-swagger-handler)}}]
+
+        ["/openapi.json"   {:get {:no-doc true
+                                  :openapi {:info {:title "source-api"
+                                                   :description "openapi3 docs for source api with malli and reitit-ring"
+                                                   :version "0.0.1"}
+                                            :components {:securitySchemes {"bearerAuth" {:type :http
+                                                                                         :scheme :bearer
+                                                                                         :bearerFormat "JWT"
+                                                                                         :description "JWT Authorization using the Bearer scheme"}
+                                                                           "apiKey" {:type :http
+                                                                                     :scheme :bearer
+                                                                                     :description "API Key authorization using the Bearer scheme"}}}}
+                                  :handler (openapi/create-openapi-handler)}}]
+        ["/"              {:middleware [[mw/apply-generic :ds ds]]}
+         ;;["test"              (fn [_request] {:status 200 :body {:message "success"}})]
 
          ["api"
           ["/vocab"
-           [""            {:get {:handler vocabs/get}
-                           :post {:handler vocabs/post}}]
-           ["/:id"        {:get {:handler vocab/get}
-                           :post {:handler vocab/post}
-                           :delete {:handler vocab/delete}}]]
+           [""            (route {:get vocabs/get
+                                  :post vocabs/post})]
+           ["/:id" (route {:get vocab/get
+                           :post vocab/post
+                           :delete vocab/delete})]]]]]
 
-          ["/units"
-           [""            {:get {:handler units/get}
-                           :post {:handler units/post}}]
-           ["/:id"
-            [""           {:get {:handler unit/get}
-                           :post {:handler unit/post}
-                           :delete {:handler unit/delete}}]
-            ["/exercises"
-             ["/manage"
-              [""         {:get {:handler exercises/get}
-                           :post {:handler exercises/post}}]
-              ["/:id"     {:get {:handler exercise/get}
-                           :post {:handler exercise/post}
-                           :delete {:handler exercise/delete}}]]
-             ["/generate" {:get {:handler exercises-generate/get}}]]]]]]])))))
+       {:data {:coercion (reitit.coercion.malli/create
+                          {:error-keys #{#_:type :coercion :in :schema :value :errors :humanized #_:transformed}
+                           :compile mu/closed-schema
+                           :strip-extra-keys true
+                           :default-values true
+                           :options nil})
+               :middleware [[mw/apply-generic :ds ds]]}})
+      (ring/routes
+       (swagger-ui/create-swagger-ui-handler {:path "/"
+                                              :config {:validatorUrl nil
+                                                       :urls [{:name "swagger", :url "swagger.json"}
+                                                              {:name "openapi", :url "openapi.json"}]
+                                                       :urls.primaryName "swagger"
+                                                       :operationsSorter "alpha"}})
+       (ring/create-default-handler))))))
 
 (comment
   ())
