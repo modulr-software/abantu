@@ -131,6 +131,11 @@
                            :values {:type "interjection"}
                            :ret :*})))
   
+  (find ds {:tname :units
+            :ret :*})
+  
+  (find ds {:tname :users
+            :ret :*})
 
 
 

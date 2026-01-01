@@ -24,7 +24,7 @@
     (tables/create-tables!
      ds-master
      :abantu.db.master
-     [:user-assigned-types :user-types :users :vocab])
+     [:user-assigned-types :user-types :users :vocab :units :exercises :answers])
 
     (->>
      (-> (slurp "resources/dict.json")
@@ -48,7 +48,7 @@
   (tables/create-tables!
    (abantu.db.util/conn :master)
    :abantu.db.master
-   [:users :user-types :user-assigned-types :vocab])
+   [:users :user-types :user-assigned-types :vocab :units :exercises :answers])
 
   (admins/read)
 

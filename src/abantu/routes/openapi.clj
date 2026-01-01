@@ -3,100 +3,23 @@
     [abantu.routes.openapi :as openapi]
     [abantu.routes.openapi :as api]))
 
-;; MALLI SCHEMAS
-
-(defn optional [key type]
-  [key {:optional true} type])
-
-(defn maybe [type]
-  [:maybe type])
-
-(defn sometimes [key type]
-  (optional key (maybe type)))
-
-(def VocabSearchParams
-  [:map
-           (sometimes :type :string)
-           (sometimes :search :string)])
-
-(def VocabSearchResult
-   [:map
-    [:id :int]
-    [:xhosa :string]
-    [:english :string]
-    (sometimes :illustration :string)
-    (sometimes :noun-class :string)
-    [:type :string]])
-
-(def VocabSearchResponse
-  [:vector VocabSearchResult])
-
-(def InsertVocab
-  [:map
-    [:xhosa :string]
-    [:english :string]
-    (sometimes :illustration :string)
-    (sometimes :noun-class :string)
-    [:type :string]])
-
-(def InsertVocabParams
-  [:vector InsertVocab])
-
-(def InsertVocabResponse
-  [:vector VocabSearchResult])
-
-(def VocabByIdResult
-  VocabSearchResult)
-
-(def UpdateVocabBody
-  [:map
-   (sometimes :xhosa :string)
-   (sometimes :english :string)
-   (sometimes :illustration :string)
-   (sometimes :noun-class :string)
-   (sometimes :type :string)])
-
-(def VocabByIdParams [:map [:id :string]])
-
-(def IdPathParam [:map [:id :string]])
-
-(def DeleteVocabResponse
-  [:map [:message :string]])
-
-(def User
-  [:map
-   [:id :int]
-   [:email :string]
-   [:firstname :string]
-   [:lastname :string]
-   [:email-verified :boolean]
-   [:onboarded :boolean]
-   [:mobile :string]
-   [:profile-image :string]])
-
-(def GetUnitResult
-  [:map
-   [:id :int]
-   [:name :string]
-   [:description :string]
-   [:creator User]
-   [:question-type]])
-
-(def GetUnitsResponse
-  [:vector GetUnitsResponse])
-
 
 ;; HELPER FUNCTIONS
+
+(defn response-schema
+  ([] (response-schema nil))
+  ([data-schema]
+   (vec
+    (cond-> [:map [:message :string]]
+      (some? data-schema)
+      (concat [[:data data-schema]])))))
 
 
 (defn error
   "A function that wraps an optional error data schema in a standard error message schema"
   ([] (error nil))
   ([data-schema]
-   (vec
-    (cond-> [:map [:message :string]]
-      (some? data-schema)
-      (concat [:data data-schema])))))
+   (response-schema data-schema)))
 
 
 (defn- assoc-response [acc [key schema]]
@@ -192,3 +115,102 @@
   (error)
   ()
   )
+
+
+
+;; MALLI SCHEMAS
+
+(defn optional [key type]
+  [key {:optional true} type])
+
+(defn maybe [type]
+  [:maybe type])
+
+(defn sometimes [key type]
+  (optional key (maybe type)))
+
+(def VocabSearchParams
+  [:map
+           (sometimes :type :string)
+           (sometimes :search :string)])
+
+(def VocabSearchResult
+   [:map
+    [:id :int]
+    [:xhosa :string]
+    [:english :string]
+    (sometimes :illustration :string)
+    (sometimes :noun-class :string)
+    [:type :string]])
+
+(def VocabSearchResponse
+  [:vector VocabSearchResult])
+
+(def InsertVocab
+  [:map
+    [:xhosa :string]
+    [:english :string]
+    (sometimes :illustration :string)
+    (sometimes :noun-class :string)
+    [:type :string]])
+
+(def InsertVocabParams
+  [:vector InsertVocab])
+
+(def InsertVocabResponse
+  [:vector VocabSearchResult])
+
+(def VocabByIdResult
+  VocabSearchResult)
+
+(def UpdateVocabBody
+  [:map
+   (sometimes :xhosa :string)
+   (sometimes :english :string)
+   (sometimes :illustration :string)
+   (sometimes :noun-class :string)
+   (sometimes :type :string)])
+
+(def VocabByIdParams [:map [:id :string]])
+
+(def IdPathParam [:map [:id :string]])
+
+(def DeleteVocabResponse
+  [:map [:message :string]])
+
+(def User
+[:map
+   [:id :int]
+   [:email :string]
+   [:firstname :string]
+   [:lastname :string]
+   [:email-verified :boolean]
+   [:onboarded :boolean]
+   [:mobile :string]
+   [:profile-image :string]])
+
+(def GetUnitResult
+  [:map
+   [:id :int]
+   [:name :string]
+   [:description :string]
+   [:creator-id :int]
+   [:question-type :string]])
+
+(def GetUnitResponse
+  GetUnitResult)
+
+(def GetUnitsResponse
+  [:vector GetUnitResult])
+
+(def CreateUnitParams
+  [:map
+   [:name :string]
+   [:description :string]
+   [:creator-id :int]
+   [:question-type :string]])
+
+(def CreateUnitsResponse
+  (response-schema GetUnitsResponse))
+
+CreateUnitsResponse

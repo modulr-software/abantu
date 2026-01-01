@@ -15,12 +15,6 @@
       (-> (ring/response {:message "Vocab not found"})
           (ring/status 404)))))
 
-(require '[abantu.db.interface :as db])
-(services/vocab-by-id (db/ds :master) {:id "2308"})
-(db/find (db/ds :master) {:tname :vocab
-                          :where [:= :id 2308]
-                          :ret :1})
-
 (defn post
   {:summary "Update a given vocab by id"
    :parameters (api/params :path api/IdPathParam

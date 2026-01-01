@@ -54,16 +54,15 @@
    [:unit-id :integer :not nil]
    [:question-type :text [:check [:in :question-type ["translation" "multiple-choice"]]]]
    [:question :text :not nil]
-   [:answer :text :not nil]
-   [:answer-id :integer]
+   [:options :text]
    (tables/foreign-key :unit-id :units :id)))
 
-(def exercise-options
+(def answers
   (tables/create-table-sql
-   :exercise-options
+   :answers
    (tables/table-id)
-   [:exercise-id :integer :not nil]
-   [:option :text :not nil]
+   [:text :text]
+   [:exercise-id :int]
    (tables/foreign-key :exercise-id :exercises :id)))
 
 (comment
