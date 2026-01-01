@@ -2,7 +2,6 @@
   (:require [abantu.services.interface :as services]
             [ring.util.response :as res]
             [clj-fuzzy.levenshtein :as levenshtein]
-            [abantu.routes.openapi :as openapi]
             [abantu.routes.openapi :as api]))
 
 

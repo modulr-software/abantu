@@ -63,6 +63,28 @@
 (def DeleteVocabResponse
   [:map [:message :string]])
 
+(def User
+  [:map
+   [:id :int]
+   [:email :string]
+   [:firstname :string]
+   [:lastname :string]
+   [:email-verified :boolean]
+   [:onboarded :boolean]
+   [:mobile :string]
+   [:profile-image :string]])
+
+(def GetUnitResult
+  [:map
+   [:id :int]
+   [:name :string]
+   [:description :string]
+   [:creator User]
+   [:question-type]])
+
+(def GetUnitsResponse
+  [:vector GetUnitsResponse])
+
 
 ;; HELPER FUNCTIONS
 
