@@ -11,6 +11,7 @@
   "computes a prepared statement for an sql map and executes select one
   or select all. returns results as unqualified lower maps by default."
   [ds sqlmap & {:keys [ret exec-opts]}]
+  (prn "sqlmap" sqlmap)
   (assert (and (some? ds) (some? sqlmap) (or (some? ret) (nil? ret))))
   (let [ps (sql/format sqlmap)
         exec-opts' (merge

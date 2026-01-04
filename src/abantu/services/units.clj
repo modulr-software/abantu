@@ -1,18 +1,23 @@
 (ns abantu.services.units
   (:require [abantu.db.interface :as db]
-            [malli.util :as mu]))
+            [malli.util :as mu]
+            [clojure.string :as str]))
 
 
 (defn- process-options [exercise]
   (update-in exercise
              [:options]
-             #(-> (clojure.string/split % #",")
+             #(-> (clojure.string/split % #";;")
                   (vec))))
 
-(defn- add-answers [ds {:keys [id] :as exercise}]
-  (assoc exercise :answers (db/find ds {:tname :answers
+(defn- add-answers [ds {:keys [id question-type] :as exercise}]
+  (let [answers (db/find ds {:tname :answers
                                         :where [:= :exercise-id id]
-                                        :ret :*})))
+                                        :ret :*})
+        answers (if (= question-type "multiple-choice")
+                  (mapv :text answers)
+                  (mapv #(str/split (:text %) #";;") answers))]
+  (assoc exercise :answers answers)))
 
 (defn get-exercises-for-unit [ds id]
     (->> (db/find ds {:tname :exercises
@@ -41,19 +46,47 @@
   (let [units (db/find ds {:tname :units
                            :ret :*})]
     (mapv (comp (partial add-exercises-to-unit ds)
-                (partial add-creator-to-unit ds)) units))
-  )
+                (partial add-creator-to-unit ds)) units)))
 
-(defn save-exercise! [ds {:keys [answers] :as exercise}]
-  (let [{:keys [id] :as result} (db/insert! ds {:tname :exercises
-                               :data (dissoc exercise :answers)
-                               :ret :1})
-        answers (mapv #(assoc % :exercise-id id) answers)
-        inserted-answers (when (seq answers)
-                           (db/insert! ds {:tname :answers
-                                           :data answers
-                                           :ret :*}))]
-    (assoc result :answers inserted-answers)))
+(defn get-question-type [ds exercise-id]
+  (->>
+   (db/find ds {:tname :exercises
+                :where [:= :id exercise-id]
+                :ret :1})
+   (:question-type)))
+
+(defn get-answers-for-exercise [ds exercise-id]
+  (let [question-type (get-question-type ds exercise-id)
+        answers (db/find ds {:tname :answers
+                             :where [:= :exercise-id exercise-id]
+                             :ret :*})]
+    (->> answers
+         (mapv (comp #(if (= question-type "translation")
+                        (str/split % #";;")
+                        %)
+                     :text)))))
+
+(defn save-answers-for-exercise! [ds exercise-id question-type answers]
+  (->> (mapv (comp #(assoc {} :text % :exercise-id exercise-id)
+                   #(if (= question-type "translation")
+                      (str/join ";;" %)
+                      %))
+             answers)
+       (assoc {:tname :answers :ret :*} :data)
+       (db/insert! ds)))
+
+
+(defn save-exercise! [ds {:keys [options answers question-type] :as exercise}]
+  (let [{:keys [id] :as result}
+        (db/insert! ds {:tname :exercises
+                        :data (-> (dissoc exercise :answers)
+                                  (assoc :options (str/join ";;" options)))
+                        :ret :1})]
+    (when (seq answers)
+      (save-answers-for-exercise! ds id question-type answers))
+    (assoc result
+           :answers (get-answers-for-exercise ds id)
+           :options options)))
 
 (defn save-exercises! [ds exercises]
   (run! (partial save-exercise! ds)
@@ -80,7 +113,7 @@
    ds (db/find
        ds {:tname :exercises
            :where [:= :id id]
-           :ret :*})))
+           :ret :1})))
 
 (defn update-exercise! [ds {:keys [answers id] :as exercise}]
   (when (seq answers)
@@ -94,8 +127,8 @@
                   :data (dissoc exercise :answers)}))
 
 (defn delete-exercise [ds id]
-  (let [exercise (get-exercise ds id)]
-    (when (seq (:answers exercise))
+  (let [{:keys [id answers] :as exercise} (get-exercise ds id)]
+    (when (seq answers)
       (db/delete! ds {:tname :answers
                       :where [:= :exercise-id id]
                       :ret :1}))
@@ -126,6 +159,26 @@
                                  :question "isiXhosa"
                                  :options "Xhosa,Xhosas,a,It's"
                                  :answers [{:text "Xhosa"}]}]}])
+  
+  (db/find ds {:tname :exercises
+               :ret :*})
+  
+  (get-exercises-for-unit ds 1)
+
+  (def test-insert (->> (get-exercises-for-unit ds 1)
+                        (first)))
+  (save-exercise! ds (-> (dissoc test-insert :id)
+                         (assoc :question "is this a test question?"
+                                :question-type "multiple-choice"
+                                :options ["yes" "no"]
+                                :answers ["yes"]
+                                :level 1)))
+  (save-exercise! ds (-> (dissoc test-insert :id)
+                         (assoc :question "what is the question?"
+                                :question-type "translation"
+                                :options ["umbuzo" "imibuzo" "yintoni" "ntoni" "untoni"]
+                                :answers [["yintoni" "umbuzo"] ["untoni" "umbuzo"]]
+                                :level 1)))
   
   (get-all-units ds)
 

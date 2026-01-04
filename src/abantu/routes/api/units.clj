@@ -63,11 +63,12 @@
 (defn add-exercises-to-unit
   {:summary "Add exercises to a unit with given id"
    :parameters (api/params :path api/IdPathParam
-                       :body api/ExerciseParams)
+                           :body api/ExerciseParams)
    :responses (api/success (api/response-schema))}
-  [{:keys [ds id body] :as _request}]
-  (res/response
-   (units/save-exercises! ds (mapv #(assoc % :unit-id id) body))))
+  [{:keys [ds path-params body] :as _request}]
+  (prn "body" body)
+  (units/save-exercises! ds (mapv #(assoc % :unit-id (:id path-params)) body))
+  (res/response {:message "successfully added exercises to unit"}))
 
 (defn get-exercise
   {:summary "Get an exercises by a given id"
@@ -88,7 +89,8 @@
   {:summary "Delete an exercise by a given id"
    :parameters (api/params :path api/IdPathParam)
    :responses (api/success (api/response-schema))}
-   
+
   [{:keys [ds path-params] :as _reqyuest}]
-  (res/response (units/delete-exercise ds (:id path-params))))
+  (units/delete-exercise ds (:id path-params))
+  (res/response {:message "Successfully deleted exercise"}))
 

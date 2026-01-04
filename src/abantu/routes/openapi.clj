@@ -221,11 +221,10 @@
 (def CreateUnitsResponse
   GetUnitResult)
 
-CreateUnitsResponse
-
 (def AnswerParam
-  [:map
-   [:text :string]])
+  [:or [:vector :string]
+   :string])
+
 (def AnswerParams
   [:vector AnswerParam])
 
@@ -239,20 +238,15 @@ CreateUnitsResponse
 (def ExerciseParams
   [:vector ExerciseParam])
 
-(def AnswerResult
-  [:map
-   [:id :int]
-   [:text :string]
-   [:exercise-id :int]])
 
 (def GetExerciseResult
   [:map
    [:id :int]
    [:unit-id :int]
-   [:question-type :string]
+   [:question-type [:enum ["translation" "multiple-choice"]]]
    [:question :string]
    [:options [:vector :string]]
-   [:answers [:vector AnswerResult]]])
+   [:answers AnswerParams]])
 
 (def GetExercisesResponse
   [:vector GetExerciseResult])
