@@ -3,13 +3,14 @@
             [abantu.routes.openapi :as api]
             [abantu.services.units :as units]))
 
-(defn get
+
+(defn get-all
   {:summary "get all units"
    :responses (api/success api/GetUnitsResponse)}
   [{:keys [ds] :as _request}]
   (res/response (units/get-all-units ds)))
 
-(defn post
+(defn create-units
   {:summary "Create new empty units"
    :parameters (api/params :body api/CreateUnitParams)
    :responses (api/success api/CreateUnitsResponse)}

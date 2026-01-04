@@ -9,13 +9,15 @@
 (defn get
   {:summary "get a unit by id"
    :parameters (api/params :path api/IdPathParam)
-   :responses (api/success api/GetUnitResponse)}
+   :responses (-> (api/success api/GetUnitResponse)
+                  (api/not-found (api/error))
+                  (api/bad-request (api/error)))}
   [{:keys [ds path-params] :as _request}]
   (let [{:keys [id]} path-params]
     (res/response  (units/get-unit ds id))))
 
 (defn post
-  {:summary "Create new empty units"
+  {:summary "Update a unit with a given id"
    :parameters (api/params :body api/CreateUnitParams)
    :responses (api/success api/CreateUnitsResponse)}
    [{:keys [body ds] :as _request}]

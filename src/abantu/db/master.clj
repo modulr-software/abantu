@@ -12,7 +12,9 @@
    [:email-verified :integer [:default 0]]
    [:onboarded :integer [:default 0]]
    [:mobile :text]
-   [:profile-image :text]))
+   [:profile-image :text]
+   [:user-type-id :int]
+   (tables/foreign-key :user-type-id :user-types :id)))
 
 (def user-types
   (tables/create-table-sql
@@ -38,14 +40,15 @@
    [:type :text :not nil]
    [:noun-class :text]))
 
-(def units 
+(def units
   (tables/create-table-sql
-    :units
-    (tables/table-id)
-    [:name :text :not nil]
-    [:description :text]
-    [:creator-id :integer]
-    (tables/foreign-key :creator-id :users :id)))
+   :units
+   (tables/table-id)
+   [:name :text :not nil]
+   [:description :text]
+   [:creator-id :integer]
+   [:level :int]
+   (tables/foreign-key :creator-id :users :id)))
 
 (def exercises
   (tables/create-table-sql
@@ -55,6 +58,7 @@
    [:question-type :text [:check [:in :question-type ["translation" "multiple-choice"]]]]
    [:question :text :not nil]
    [:options :text]
+   [:level :int]
    (tables/foreign-key :unit-id :units :id)))
 
 (def answers

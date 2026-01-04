@@ -80,5 +80,4 @@
       (wrap-defaults (assoc site-defaults :session false :security {:anti-forgery false}))
       (ring/wrap-json-response)
       (ring/wrap-json-body {:keywords? true})
-      (multipart-params/wrap-multipart-params)
       (cookies/wrap-cookies)))

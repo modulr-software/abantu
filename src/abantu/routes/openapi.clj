@@ -1,7 +1,8 @@
-(ns abantu.routes.openapi 
+(ns abantu.routes.openapi
   (:require
-    [abantu.routes.openapi :as openapi]
-    [abantu.routes.openapi :as api]))
+   [abantu.routes.openapi :as openapi]
+   [abantu.routes.openapi :as api]
+   [malli.util :as mu]))
 
 
 ;; HELPER FUNCTIONS
@@ -28,7 +29,7 @@
 (defn- assoc-param [acc [key schema]]
   (assoc acc key schema))
 
-;; what i want: (WrapResponse {} 200 openapi/WrapError ...) => {200 {:body openapi/VocabSearchResult}}
+;; what i want: (api/response {} 200 (api/success)  404 (api/error)...) => {200 {:body openapi/VocabSearchResult}}
 (defn response
   [& opts]
   (let [map-first? (map? (first opts))
@@ -61,7 +62,7 @@
    (response (if (map? responses) responses {})
              404 (error data-schema))))
 
-(defn bad-request 
+(defn bad-request
   "Retuns a map that can be used as the responses field for an
    openapi handler meta data"
   ([] (bad-request {} nil))
@@ -88,7 +89,7 @@
    (response (if (map? responses) responses {})
              401 (error schema))))
 
-(defn params 
+(defn params
   "Returns a map of the openapi parameter schemas path, body, query.
    Optionally accepts an openapi parameters map as the first argument
    updating it and returning the result."
@@ -98,13 +99,19 @@
         opts (if map-first? (rest opts) opts)]
     (merge parameters (reduce assoc-param {} (partition 2 opts)))))
 
+(defn- sometimes-entry [[k _ s]] [k {:optional true} [:maybe s]])
+(defn- maybe-keys [schema]
+  (mu/transform-entries
+   schema
+   #(mapv sometimes-entry %)))
+
 
 (comment
 
-{:summary "lkjdlfkjslkdjflksjdf"
- :parameters (params :path VocabByIdParams)
- :responses (-> (success VocabByIdResult)
-                (not-found))}
+  {:summary "lkjdlfkjslkdjflksjdf"
+   :parameters (params :path VocabByIdParams)
+   :responses (-> (success VocabByIdResult)
+                  (not-found))}
 
   ;; THIS
   (-> (response 200 openapi/InsertVocabResponse)
@@ -113,8 +120,7 @@
   (response  200 openapi/InsertVocabResponse)
 
   (error)
-  ()
-  )
+  ())
 
 
 
@@ -131,28 +137,28 @@
 
 (def VocabSearchParams
   [:map
-           (sometimes :type :string)
-           (sometimes :search :string)])
+   (sometimes :type :string)
+   (sometimes :search :string)])
 
 (def VocabSearchResult
-   [:map
-    [:id :int]
-    [:xhosa :string]
-    [:english :string]
-    (sometimes :illustration :string)
-    (sometimes :noun-class :string)
-    [:type :string]])
+  [:map
+   [:id :int]
+   [:xhosa :string]
+   [:english :string]
+   (sometimes :illustration :string)
+   (sometimes :noun-class :string)
+   [:type :string]])
 
 (def VocabSearchResponse
   [:vector VocabSearchResult])
 
 (def InsertVocab
   [:map
-    [:xhosa :string]
-    [:english :string]
-    (sometimes :illustration :string)
-    (sometimes :noun-class :string)
-    [:type :string]])
+   [:xhosa :string]
+   [:english :string]
+   (sometimes :illustration :string)
+   (sometimes :noun-class :string)
+   [:type :string]])
 
 (def InsertVocabParams
   [:vector InsertVocab])
@@ -179,7 +185,7 @@
   [:map [:message :string]])
 
 (def User
-[:map
+  [:map
    [:id :int]
    [:email :string]
    [:firstname :string]
@@ -194,8 +200,8 @@
    [:id :int]
    [:name :string]
    [:description :string]
-   [:creator-id :int]
-   [:question-type :string]])
+   [:level :int]
+   [:creator-id :int]])
 
 (def GetUnitResponse
   GetUnitResult)
@@ -203,14 +209,71 @@
 (def GetUnitsResponse
   [:vector GetUnitResult])
 
-(def CreateUnitParams
+(def CreateUnitParam
   [:map
    [:name :string]
    [:description :string]
-   [:creator-id :int]
-   [:question-type :string]])
+   [:level :int]])
+
+(def CreateUnitParams
+  [:vector CreateUnitParam])
 
 (def CreateUnitsResponse
-  (response-schema GetUnitsResponse))
+  GetUnitResult)
 
 CreateUnitsResponse
+
+(def AnswerParam
+  [:map
+   [:text :string]])
+(def AnswerParams
+  [:vector AnswerParam])
+
+(def ExerciseParam
+  [:map
+   [:question-type [:enum ["translation" "multiple-choice"]]]
+   [:question :string]
+   [:options [:vector :string]]
+   (sometimes :answers AnswerParams)])
+
+(def ExerciseParams
+  [:vector ExerciseParam])
+
+(def AnswerResult
+  [:map
+   [:id :int]
+   [:text :string]
+   [:exercise-id :int]])
+
+(def GetExerciseResult
+  [:map
+   [:id :int]
+   [:unit-id :int]
+   [:question-type :string]
+   [:question :string]
+   [:options [:vector :string]]
+   [:answers [:vector AnswerResult]]])
+
+(def GetExercisesResponse
+  [:vector GetExerciseResult])
+
+(def UpdateExerciseParam
+  [:map
+   (sometimes :unit-id :int)
+   (sometimes :question-type [:enum ["translation" "multiple-choice"]])
+   (sometimes :question :string)
+   (sometimes :options [:vector :string])
+   (sometimes :answers  AnswerParams)])
+
+(def UpdateUnitParam
+  (-> GetUnitResult
+      (mu/optional-keys)
+      (mu/dissoc :creator-id)))
+
+
+
+
+
+
+
+

@@ -112,8 +112,10 @@
 
   (->>
    (find ds {:tname :vocab
-             :where [:= :type "verb"]
-             :ret :*}))
+             :where [:= :type "adjective"]
+             :ret :*})
+   (mapv :xhosa)
+   )
 
   
   (insert! ds {:tname :vocab
