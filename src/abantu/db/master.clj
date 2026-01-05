@@ -1,7 +1,6 @@
 (ns abantu.db.master
   (:require [abantu.db.tables :as tables]))
 
-
 (def users
   (tables/create-table-sql
    :users
@@ -13,8 +12,9 @@
    [:email-verified :integer [:default 0]]
    [:onboarded :integer [:default 0]]
    [:mobile :text]
-   [:profile-image :text]))
-
+   [:profile-image :text]
+   [:user-type-id :int]
+   (tables/foreign-key :user-type-id :user-types :id)))
 
 (def user-types
   (tables/create-table-sql
@@ -31,6 +31,43 @@
    (tables/foreign-key :user-id :users :id)
    (tables/foreign-key :user-type-id :user-types :id)))
 
+(def vocab
+  (tables/create-table-sql
+   :vocab
+   (tables/table-id)
+   [:xhosa :text :not nil]
+   [:english :text :not nil]
+   [:type :text :not nil]
+   [:noun-class :text]))
+
+(def units
+  (tables/create-table-sql
+   :units
+   (tables/table-id)
+   [:name :text :not nil]
+   [:description :text]
+   [:creator-id :integer]
+   [:level :int]
+   (tables/foreign-key :creator-id :users :id)))
+
+(def exercises
+  (tables/create-table-sql
+   :exercises
+   (tables/table-id)
+   [:unit-id :integer :not nil]
+   [:question-type :text [:check [:in :question-type ["translation" "multiple-choice"]]]]
+   [:question :text :not nil]
+   [:options :text]
+   [:level :int]
+   (tables/foreign-key :unit-id :units :id)))
+
+(def answers
+  (tables/create-table-sql
+   :answers
+   (tables/table-id)
+   [:text :text]
+   [:exercise-id :int]
+   (tables/foreign-key :exercise-id :exercises :id)))
 
 (comment
   (require '[honey.sql :as sql])

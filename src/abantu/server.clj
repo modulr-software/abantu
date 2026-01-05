@@ -2,14 +2,15 @@
   (:require [org.httpkit.server :as http]
             [abantu.db.interface :as db]
             [abantu.routes.interface :as routes]
-            [abantu.util :as util]))
+            [abantu.util :as util]
+            [abantu.config :as conf]))
 
 (defonce ^:private *components (atom nil))
 
 (defn initialise-server! [{:keys [ds]}]
   (http/run-server
    (routes/create-app {:ds ds})
-   {:port 3000}))
+   {:port (conf/read-value :port)}))
 
 
 (defn component-on? [component]
@@ -37,7 +38,7 @@
 (defn start-server []
   (cond (not (some? (:server @*components)))
         (do
-          (println "Starting server on port 3000...")
+          (println (str "Starting server on port " (conf/read-value :port) "..."))
           (initialise-components! [{:name :ds
                                     :init-fn (fn [_deps] (db/ds :master))
                                     :deps []}

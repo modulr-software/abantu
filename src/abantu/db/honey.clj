@@ -11,6 +11,7 @@
   "computes a prepared statement for an sql map and executes select one
   or select all. returns results as unqualified lower maps by default."
   [ds sqlmap & {:keys [ret exec-opts]}]
+  (prn "sqlmap" sqlmap)
   (assert (and (some? ds) (some? sqlmap) (or (some? ret) (nil? ret))))
   (let [ps (sql/format sqlmap)
         exec-opts' (merge
@@ -100,11 +101,45 @@
 
   (def ds (db.util/conn :master))
 
+  (def unique-classes
+    (->>
+     (find ds {:tname :vocab
+               :ret :*})
+     (mapv :type)
+     (filterv identity)
+     (set)))
+
+  unique-classes
+
   (->>
    (find ds {:tname :vocab
+             :where [:= :type "adjective"]
              :ret :*})
-   ;;(count)
+   (mapv :xhosa)
    )
+
+  
+  (insert! ds {:tname :vocab
+               :values (-> (slurp "resources/dict.json")
+                           (clojure.data.json/read-str {:key-fn keyword}))
+               :ret :*})
+
+
+  (->> {:tname :vocab
+        :ret :*}
+       (find ds)
+       (filterv #(clojure.string/includes? (:type %) "interjection"))
+       (mapv #(update! ds {:tname :vocab
+                           :where (:id %)
+                           :values {:type "interjection"}
+                           :ret :*})))
+  
+  (find ds {:tname :units
+            :ret :*})
+  
+  (find ds {:tname :users
+            :ret :*})
+
 
 
   ()
