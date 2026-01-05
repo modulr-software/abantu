@@ -40,15 +40,24 @@
    [:type :text :not nil]
    [:noun-class :text]))
 
+(def courses
+  (tables/create-table-sql
+   :courses
+   (tables/table-id)
+   [:name :text]
+   [:language :text]
+   [:status :text [:check [:in :status  ["in-progress" "review" "published"]]]]
+   [:creator-id :int]))
+
 (def units
   (tables/create-table-sql
    :units
    (tables/table-id)
    [:name :text :not nil]
    [:description :text]
-   [:creator-id :integer]
    [:level :int]
-   (tables/foreign-key :creator-id :users :id)))
+   [:course-id :int]
+   (tables/foreign-key :course-id :courses :id)))
 
 (def exercises
   (tables/create-table-sql

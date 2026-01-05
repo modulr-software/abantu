@@ -140,6 +140,8 @@
   (find ds {:tname :users
             :ret :*})
 
+  (find ds {:tname :courses
+            :ret :*})
 
 
   ()
