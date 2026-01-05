@@ -19,14 +19,18 @@
                   (mapv #(str/split (:text %) #";;") answers))]
   (assoc exercise :answers answers)))
 
-(defn get-exercises-for-unit [ds id]
+(defn get-exercises-for-unit
+  "Get all exercises with answers for a given unit-id"
+  [ds id]
     (->> (db/find ds {:tname :exercises
                       :where [:= :unit-id id]
                       :ret :*})
          (mapv (comp process-options
                      (partial add-answers ds)))))
 
-(defn get-unit [ds id]
+(defn get-unit
+  "get a unit with all exercises for a given unit-id"
+  [ds id]
   (let [unit (db/find ds {:tname :units
                           :where [:= :id id]
                           :ret :1})
@@ -34,6 +38,14 @@
     (cond-> unit
       (seq exercises)
       (assoc :exercises exercises))))
+
+(defn get-units
+  "Get all units with exercises for a given course-id"
+  [ds course-id]
+  (->> (db/find ds {:tname :units
+               :where [:= :course-id course-id]
+               :ret :*})
+       (mapv #(get-exercises-for-unit ds (:id %)))))
 
 (defn- add-exercises-to-unit [ds {:keys [id] :as unit}]
   (assoc unit :exercises (get-exercises-for-unit ds id)))
