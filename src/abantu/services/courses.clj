@@ -11,4 +11,24 @@
                             :where [:= :id id]
                             :ret :1})
         units (units/get-units ds id)]
-    (assoc course :units units)))
+    (when (some? course)
+     (assoc course :units units))))
+
+(defn save-course! [ds course]
+  )
+(defn save-courses! [ds courses]
+  )
+
+(defn update-course [ds course]
+  )
+
+(defn delete-course [ds id]
+  )
+
+
+(comment
+  (def ds (db/ds :master))
+  (get-all ds)
+  (get-course ds 1)
+  ()
+  )

@@ -264,6 +264,20 @@
       (mu/optional-keys)
       (mu/dissoc :creator-id)))
 
+(def CourseStatus [:enum ["in-progress" "review" "published"]])
+(def GetCourseResponse
+  [:map
+   [:id :int]
+   [:name :string]
+   [:language :string]
+   [:status CourseStatus]
+   [:creator-id User]
+   [:units GetUnitsResponse]])
+
+(def GetCoursesResponse
+  [:vector GetCourseResponse])
+
+
 
 
 
