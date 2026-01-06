@@ -3,15 +3,35 @@
             [reitit.swagger :as swagger]
             [reitit.swagger-ui :as swagger-ui]
             [reitit.openapi :as openapi]
+            [reitit.coercion.malli :as coercion]
             [abantu.middleware.interface :as mw]
-            [malli.util :as mu]))
+            [malli.util :as mu]
+            [ring.util.response :as res]))
 
 (defn- extract-openapi-meta [handler]
   (-> (util/metadata handler)
       (dissoc :arglists :line :column :file :name :ns)))
 
+(defn- validate-param [request [param-type schema]]
+  (-> (cond
+        (= param-type :body) (:body request)
+        (= param-type :path) (:path-params request)
+        (= param-type :query) (:query-params request))
+      (util/validate schema)))
+
 (defn- attach-handler [handler openapi-meta]
-  (assoc openapi-meta :handler handler))
+  (if (some? (:parameters openapi-meta))
+    (assoc openapi-meta
+     :handler
+     (fn [request]
+       (let [errors (->> (mapv (partial validate-param request) (:parameters openapi-meta))
+                         (filter #(:error %))
+                         (mapv :error))]
+         (if (seq errors)
+           (-> (res/response errors)
+               (res/status 400))
+           (handler request)))))
+    (assoc openapi-meta :handler handler)))
 
 (defn- merge-route-map [acc [method handler]]
   (->> (extract-openapi-meta handler)
@@ -23,7 +43,7 @@
   (let [map-first? (map? (first opts))
         route-map (if map-first? (first opts) {})
         opts (if map-first? (rest opts) opts)]
-  [route-map (vec opts)]))
+    [route-map (vec opts)]))
 
 (defn route
   [& opts]
@@ -44,7 +64,6 @@
 (defn get [& opts]
   (apply (resolve-route-map :get) (vec opts)))
 
-
 (defn post [& opts]
   (apply (resolve-route-map :post) (vec opts)))
 
@@ -59,7 +78,6 @@
                                                   :urls.primaryName "swagger"
                                                   :operationsSorter "alpha"}}))
 
-
 (defn swagger-route []
   ["/swagger.json" {:get {:no-doc true
                           :swagger {:info {:title "abantu-api"
@@ -72,7 +90,6 @@
                                                                     :in :header
                                                                     :name "Authorization"}}}
                           :handler (swagger/create-swagger-handler)}}])
-
 
 (defn openapi-route []
   ["/openapi.json" {:get {:no-doc true
@@ -89,7 +106,7 @@
                           :handler (openapi/create-openapi-handler)}}])
 
 (defn data-map [ds]
-  {:data {:coercion (reitit.coercion.malli/create
+  {:data {:coercion (coercion/create
                      {:error-keys #{#_:type :coercion :in :schema :value :errors :humanized #_:transformed}
                       :compile mu/closed-schema
                       :strip-extra-keys true
