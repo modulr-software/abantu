@@ -32,8 +32,9 @@
                                                 :ret :1})
         units (when (seq units)
                 (->> (mapv #(assoc % :course-id id) units)
-                     (units/save-units! ds)))]
-     (assoc result :units (or units []))))
+                     (units/save-units! ds)))
+        result' (append-creator ds result)]
+     (assoc result' :units (or units []))))
 
 (defn save-courses! [ds courses]
   (mapv (partial save-course! ds) courses))
@@ -68,7 +69,7 @@
                      (:id))
         units []]
     (prn "user-id" user-id)
-    (save-course! ds {:name "some course"
+    (save-course! ds {:name "the best course ever again"
                       :language "xhosa"
                       :status "in-progress"
                       :units units
@@ -98,7 +99,7 @@
   (get-all ds)
 
   ;;update a course = pass
-  (update-course! ds {:id 17
+  (update-course! ds {:id 1
                       :name "some unit whatever"})
 
 
