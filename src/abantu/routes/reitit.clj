@@ -1,11 +1,10 @@
 (ns abantu.routes.reitit
   (:require [reitit.ring :as ring]
-            [abantu.middleware.interface :as mw]
             [abantu.db.interface :as db]
             [reitit.coercion.malli]
             [abantu.routes.api.vocab :as vocab]
             [abantu.routes.api.units :as units]
-            [abantu.routes.courses :as courses]
+            [abantu.routes.api.courses :as courses]
             [abantu.routes.util :refer [get post delete] :as rutil]))
 
 

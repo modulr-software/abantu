@@ -1,6 +1,11 @@
 (ns abantu.services.users
   (:require [abantu.db.interface :as db]))
 
+(defn get-user [ds id]
+  (-> (db/find-one ds {:tname :users
+                   :where [:= :id id]})
+      (dissoc :password)))
+
 (defn get-user-type-id [ds role]
   (->> (db/find ds {:tname :user-types
                     :where [:= :name role]
@@ -13,13 +18,16 @@
 
 (defn get-all-admins [ds]
   (let [id (get-user-type-id ds "admin")]
-    (db/find ds {:tname :users
+    (->> (db/find ds {:tname :users
                  :where [:= :user-type-id id]
-                 :ret :*})))
+                 :ret :*})
+         (mapv #(dissoc % :password)))))
 
 (defn get-all-users [ds]
-  (db/find ds {:tname :users
-               :ret :*}))
+  (->> (db/find ds {:tname :users
+               :ret :*})
+       (mapv #(dissoc % :password)))
+  )
 
 
 (comment
