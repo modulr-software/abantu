@@ -1,10 +1,10 @@
 (ns abantu.routes.reitit
   (:require [reitit.ring :as ring]
-            [abantu.middleware.interface :as mw]
             [abantu.db.interface :as db]
             [reitit.coercion.malli]
             [abantu.routes.api.vocab :as vocab]
             [abantu.routes.api.units :as units]
+            [abantu.routes.api.courses :as courses]
             [abantu.routes.util :refer [get post delete] :as rutil]))
 
 
@@ -24,11 +24,19 @@
          ["/vocab/:id" (-> (get vocab/get-one)
                            (post vocab/update)
                            (delete vocab/delete))]
+         
+         ;;courses
+         ["/courses" (-> (get courses/get-all-courses)
+                         (post courses/create-course))]
+         
+         ["/courses/:id" (-> (get courses/get-course)
+                             (post courses/update-course)
+                             (delete courses/delete-course))]
+         
+         ["/courses/:id/units" (-> (get units/get-units)
+                                   (post units/create-units))]
 
          ;;units
-         ["/units" (-> (get units/get-all)
-                       (post units/create-units))]
-
          ["/units/:id" (-> (get units/get-by-id)
                            (delete units/delete-unit)
                            (post units/update-unit))]

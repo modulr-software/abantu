@@ -19,14 +19,18 @@
                   (mapv #(str/split (:text %) #";;") answers))]
   (assoc exercise :answers answers)))
 
-(defn get-exercises-for-unit [ds id]
+(defn get-exercises-for-unit
+  "Get all exercises with answers for a given unit-id"
+  [ds id]
     (->> (db/find ds {:tname :exercises
                       :where [:= :unit-id id]
                       :ret :*})
          (mapv (comp process-options
                      (partial add-answers ds)))))
 
-(defn get-unit [ds id]
+(defn get-unit
+  "get a unit with all exercises for a given unit-id"
+  [ds id]
   (let [unit (db/find ds {:tname :units
                           :where [:= :id id]
                           :ret :1})
@@ -35,18 +39,22 @@
       (seq exercises)
       (assoc :exercises exercises))))
 
+(defn get-units
+  "Get all units with exercises for a given course-id"
+  [ds course-id]
+  (->> (db/find ds {:tname :units
+               :where [:= :course-id course-id]
+               :ret :*})
+       (mapv #(assoc % :exercises
+                     (get-exercises-for-unit ds (:id %))))))
+
 (defn- add-exercises-to-unit [ds {:keys [id] :as unit}]
   (assoc unit :exercises (get-exercises-for-unit ds id)))
-(defn- add-creator-to-unit [ds {:keys [creator-id] :as unit}]
-  (-> (dissoc unit :creator-id)
-      (assoc :creator (db/find ds {:tname :users
-                                   :where [:= :id creator-id]
-                                   :ret :1}))))
+
 (defn get-all-units [ds]
   (let [units (db/find ds {:tname :units
                            :ret :*})]
-    (mapv (comp (partial add-exercises-to-unit ds)
-                (partial add-creator-to-unit ds)) units)))
+    (mapv (partial add-exercises-to-unit ds) units)))
 
 (defn get-question-type [ds exercise-id]
   (->>
@@ -89,16 +97,16 @@
            :options options)))
 
 (defn save-exercises! [ds exercises]
-  (run! (partial save-exercise! ds)
+  (mapv (partial save-exercise! ds)
         exercises))
 
 (defn save-unit! [ds {:keys [exercises] :as unit}]
   (let [{:keys [id] :as result} (db/insert! ds {:tname :units
                                :data (dissoc unit :exercises)
                                :ret :1})]
-    (when (seq exercises)
-      (save-exercises! ds (mapv #(assoc % :unit-id id) exercises)))
-    result))
+    (->> (when (seq exercises)
+           (save-exercises! ds (mapv #(assoc % :unit-id id) exercises)))
+         (assoc result :exercises))))
 
 (defn save-units! [ds units]
   (mapv (partial save-unit! ds) units))

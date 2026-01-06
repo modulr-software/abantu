@@ -29,7 +29,14 @@
     (tables/create-tables!
      ds-master
      :abantu.db.master
-     [:user-assigned-types :user-types :users :vocab :units :exercises :answers])
+     [:user-assigned-types
+      :user-types
+      :users
+      :vocab
+      :courses
+      :units
+      :exercises
+      :answers])
 
     ;; load in the vocab from dict.json into db
     (->>
