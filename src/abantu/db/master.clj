@@ -47,7 +47,8 @@
    [:name :text]
    [:language :text]
    [:status :text [:check [:in :status  ["in-progress" "review" "published"]]]]
-   [:creator-id :int]))
+   [:creator-id :int]
+   (tables/foreign-key :creator-id :users :id)))
 
 (def units
   (tables/create-table-sql
