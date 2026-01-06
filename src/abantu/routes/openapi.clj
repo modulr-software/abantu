@@ -215,7 +215,7 @@
    [:description :string]
    [:level :int]])
 
-(def CreateUnitParams
+(def CreateUnitsParam
   [:vector CreateUnitParam])
 
 (def CreateUnitsResponse
@@ -271,13 +271,24 @@
    [:name :string]
    [:language :string]
    [:status CourseStatus]
-   [:creator-id User]
+   (sometimes :creator User) ;TODO: this should be required once user auth exists
    [:units GetUnitsResponse]])
 
 (def GetCoursesResponse
   [:vector GetCourseResponse])
 
+(def CreateCourseParam
+  [:map 
+   [:name :string]
+   [:language :string]
+   [:units CreateUnitsParam]])
 
+(def UpdateCourseParam 
+  [:map 
+   (sometimes :name :string)
+   (sometimes :language :string)
+   (sometimes :status CourseStatus)
+   (sometimes :creator-id :int)])
 
 
 

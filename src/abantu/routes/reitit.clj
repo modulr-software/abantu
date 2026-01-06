@@ -26,14 +26,14 @@
                            (delete vocab/delete))]
          
          ;;courses
-         ["/courses" (-> (get courses/get-all)
-                         (post courses/create-courses))]
+         ["/courses" (-> (get courses/get-all-courses)
+                         (post courses/create-course))]
          
          ["/courses/:id" (-> (get courses/get-course)
                              (post courses/update-course)
                              (delete courses/delete-course))]
          
-         ["/courses/:id/units" (-> (get courses/get-courses)
+         ["/courses/:id/units" (-> (get units/get-units-in-course)
                                    (post units/create-units))]
 
          ;;units
