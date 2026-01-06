@@ -4,18 +4,12 @@
             [abantu.services.units :as units]
             [abantu.services.users :as users]))
 
-(defn get-all-units
-  {:summary "get all units"
-   :responses (api/success api/GetUnitsResponse)}
-  [{:keys [ds] :as _request}]
-  (res/response (units/get-all-units ds)))
-
-(defn get-units-in-course
+(defn get-units
   {:summary "get all units with the given course id"
    :parameters (api/params :path api/IdPathParam)
    :responses (api/success api/GetUnitsResponse)}
   [{:keys [ds path-params] :as _request}]
-  (res/response (units/get-all-units ds {:where [:= :course-id (:id path-params)]})))
+  (res/response (units/get-units ds (:id path-params))))
 
 (defn create-units
   {:summary "Create new empty units"

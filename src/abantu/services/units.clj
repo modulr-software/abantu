@@ -51,9 +51,8 @@
 (defn- add-exercises-to-unit [ds {:keys [id] :as unit}]
   (assoc unit :exercises (get-exercises-for-unit ds id)))
 
-(defn get-all-units [ds & {:keys [where] :as _opts}]
+(defn get-all-units [ds]
   (let [units (db/find ds {:tname :units
-                           :where where
                            :ret :*})]
     (mapv (partial add-exercises-to-unit ds) units)))
 

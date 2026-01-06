@@ -4,7 +4,6 @@
    [abantu.routes.openapi :as api]
    [malli.util :as mu]))
 
-
 ;; HELPER FUNCTIONS
 
 (defn response-schema
@@ -15,13 +14,11 @@
       (some? data-schema)
       (concat [[:data data-schema]])))))
 
-
 (defn error
   "A function that wraps an optional error data schema in a standard error message schema"
   ([] (error nil))
   ([data-schema]
    (response-schema data-schema)))
-
 
 (defn- assoc-response [acc [key schema]]
   (assoc acc key {:body schema}))
@@ -76,7 +73,6 @@
    (response (if (map? responses) responses {})
              400 (error data-schema))))
 
-
 (defn unauthenticated
   ([schema] (unauthenticated {} schema))
   ([responses schema]
@@ -105,7 +101,6 @@
    schema
    #(mapv sometimes-entry %)))
 
-
 (comment
 
   {:summary "lkjdlfkjslkdjflksjdf"
@@ -121,8 +116,6 @@
 
   (error)
   ())
-
-
 
 ;; MALLI SCHEMAS
 
@@ -238,7 +231,6 @@
 (def ExerciseParams
   [:vector ExerciseParam])
 
-
 (def GetExerciseResult
   [:map
    [:id :int]
@@ -265,26 +257,28 @@
       (mu/dissoc :creator-id)))
 
 (def CourseStatus [:enum ["in-progress" "review" "published"]])
-(def GetCourseResponse
+(def
+  ^{:tech/debt "creator key should be required once user auth exists"}
+  GetCourseResponse
   [:map
    [:id :int]
    [:name :string]
    [:language :string]
    [:status CourseStatus]
-   (sometimes :creator User) ;TODO: this should be required once user auth exists
+   (sometimes :creator User)
    [:units GetUnitsResponse]])
 
 (def GetCoursesResponse
   [:vector GetCourseResponse])
 
 (def CreateCourseParam
-  [:map 
+  [:map
    [:name :string]
    [:language :string]
    [:units CreateUnitsParam]])
 
-(def UpdateCourseParam 
-  [:map 
+(def UpdateCourseParam
+  [:map
    (sometimes :name :string)
    (sometimes :language :string)
    (sometimes :status CourseStatus)

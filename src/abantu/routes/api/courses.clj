@@ -20,9 +20,9 @@
 (defn create-course
   {:summary "Create a new course"
    :parameters (api/params :body api/CreateCourseParam)
-   :responses (api/success api/GetCourseResponse)}
+   :responses (api/success api/GetCourseResponse)
+   :tech/debt "replace creator-id with a real user-id, probably gotten from authz middleware"}
   [{:keys [ds body] :as _request}]
-  ;TODO: replace creator-id with a real user-id, probably gotten from authz middleware
   (let [course (merge body {:status "in-progress"
                             :creator-id nil})]
     (res/response (courses/save-course! ds course))))
@@ -41,7 +41,7 @@
       (-> (res/response {:message (str "The course with the id '" id "' does not exist.")})
           (res/status 404)))))
 
-(defn delete-course 
+(defn delete-course
   {:summary "Delete the course and all associated units with the given course id"
    :parameters (api/params :path api/IdPathParam)
    :responses (api/success (api/response-schema))}

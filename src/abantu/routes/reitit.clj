@@ -33,7 +33,7 @@
                              (post courses/update-course)
                              (delete courses/delete-course))]
          
-         ["/courses/:id/units" (-> (get units/get-units-in-course)
+         ["/courses/:id/units" (-> (get units/get-units)
                                    (post units/create-units))]
 
          ;;units
