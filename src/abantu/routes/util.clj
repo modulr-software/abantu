@@ -6,37 +6,39 @@
             [reitit.coercion.malli :as coercion]
             [abantu.middleware.interface :as mw]
             [malli.util :as mu]
-            [ring.util.response :as res]))
+            [ring.util.response :as res]
+            [abantu.routes.openapi :as api]
+            [clojure.string :as string]))
 
 (defn- extract-openapi-meta [handler]
   (-> (util/metadata handler)
       (dissoc :arglists :line :column :file :name :ns)))
 
 (defn- validate-param [request [param-type schema]]
-  (-> (cond
-        (= param-type :body) (:body request)
-        (= param-type :path) (:path-params request)
-        (= param-type :query) (:query-params request))
-      (util/validate schema)))
+  (let [validated (-> (cond
+                        (= param-type :body) (:body request)
+                        (= param-type :path) (:path-params request)
+                        (= param-type :query) (:query-params request))
+                      (util/validate schema))]
+    (assoc validated :error (str "In " (name param-type) ": " (:error validated)))))
+
+(defn validation-wrapped-handler [handler openapi-meta]
+  (fn [request]
+    (let [errors (->> (mapv (partial validate-param request) (:parameters openapi-meta))
+                      (filter #(:error %))
+                      (mapv :error))]
+      (if (seq errors)
+        (-> (res/response {:message (string/join "\n" errors)})
+            (res/status 400))
+        (handler request)))))
 
 (defn- attach-handler [handler openapi-meta]
-  (if (some? (:parameters openapi-meta))
-    (assoc openapi-meta
-           :handler
-           (fn [request]
-             (let [errors (->> (mapv (partial validate-param request) (:parameters openapi-meta))
-                               (filter #(:error %))
-                               (mapv :error))]
-               (if (seq errors)
-                 (-> (res/response errors)
-                     (res/status 400))
-                 (handler request))))
+  (cond-> openapi-meta
+    (some? (:parameters openapi-meta))
+    (assoc :middleware [[validation-wrapped-handler openapi-meta]]
            :responses (merge (:responses openapi-meta)
-                             {400 {:body [:vector
-                                          [:map
-                                           [:input [:map-of :keyword :any]]
-                                           [:errors [:or [:map-of :keyword [:vector :string]] [:vector :string]]]]]}}))
-    (assoc openapi-meta :handler handler)))
+                             (api/bad-request)))
+    true (assoc :handler handler)))
 
 (defn- merge-route-map [acc [method handler]]
   (->> (extract-openapi-meta handler)
