@@ -20,7 +20,7 @@
                         (= param-type :path) (:path-params request)
                         (= param-type :query) (:query-params request))
                       (util/validate schema))]
-    (assoc validated :error (str "In " (name param-type) ": " (:error validated)))))
+    (assoc validated :error (str "In " (name param-type) ":\n" (:error validated)))))
 
 (defn validation-wrapped-handler [handler openapi-meta]
   (fn [request]
