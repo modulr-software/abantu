@@ -68,7 +68,7 @@
     (try
       (str "Object { " (reduce (fn [acc pair]
                                  (str acc (string/join ": " (mapv name pair)) "; "))
-                               "" (rest [:map [:message :string] [:a :int]])) "}")
+                               "" (rest schema)) "}")
       (catch Exception _ "Object {}"))))
 
 (defn append-humanised-error [acc error-map]
