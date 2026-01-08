@@ -6,43 +6,23 @@
             [reitit.coercion.malli :as coercion]
             [abantu.middleware.interface :as mw]
             [malli.util :as mu]
-            [ring.util.response :as res]
-            [abantu.routes.openapi :as api]
-            [clojure.string :as string]))
+            [abantu.routes.openapi :as api]))
 
 (defn- extract-openapi-meta [handler]
   (-> (util/metadata handler)
       (dissoc :arglists :line :column :file :name :ns)))
 
-(defn- validate-param [request [param-type schema]]
-  (let [validated (-> (cond
-                        (= param-type :body) (:body request)
-                        (= param-type :path) (:path-params request)
-                        (= param-type :query) (:query-params request))
-                      (util/validate schema))]
-    (assoc validated :error (str "In " (name param-type) ":\n" (:error validated)))))
-
-(defn validation-wrapped-handler [handler openapi-meta]
-  (fn [request]
-    (let [errors (->> (mapv (partial validate-param request) (:parameters openapi-meta))
-                      (filter #(:error %))
-                      (mapv :error))]
-      (if (seq errors)
-        (-> (res/response {:message (string/join "\n" errors)})
-            (res/status 400))
-        (handler request)))))
-
-(defn- attach-handler [handler openapi-meta]
+(defn- attach-handler [handler validation-mw openapi-meta]
   (cond-> openapi-meta
     (some? (:parameters openapi-meta))
-    (assoc :middleware [[validation-wrapped-handler openapi-meta]]
+    (assoc :middleware [[validation-mw openapi-meta]]
            :responses (merge (:responses openapi-meta)
                              (api/bad-request)))
     true (assoc :handler handler)))
 
-(defn- merge-route-map [acc [method handler]]
+(defn- merge-route-map [validation-mw acc [method handler]]
   (->> (extract-openapi-meta handler)
-       (attach-handler handler)
+       (attach-handler handler validation-mw)
        (assoc {} method)
        (merge acc)))
 
@@ -56,7 +36,7 @@
   [& opts]
   (let [[route-map opts] (apply parse-route-opts opts)]
     (->> (partition 2 opts)
-         (reduce merge-route-map {})
+         (reduce (partial merge-route-map mw/apply-validation) {})
          (merge route-map))))
 
 (defn- resolve-route-map [method]

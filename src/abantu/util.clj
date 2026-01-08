@@ -118,7 +118,6 @@
   (require '[abantu.routes.business :as business])
   (require '[abantu.routes.analytics.creator.top :as ctop])
   (validate business/post {:cheese "modulr"})
-  (validate ctop/get {:mindate "2025-12-02" :maxdate "2025-12-02" :n "10" :contenttype 1 :top "post"} :query)
   (sha256 "1")
 
   (validate {:message "yeet"
