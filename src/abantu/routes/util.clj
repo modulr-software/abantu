@@ -22,15 +22,20 @@
 (defn- attach-handler [handler openapi-meta]
   (if (some? (:parameters openapi-meta))
     (assoc openapi-meta
-     :handler
-     (fn [request]
-       (let [errors (->> (mapv (partial validate-param request) (:parameters openapi-meta))
-                         (filter #(:error %))
-                         (mapv :error))]
-         (if (seq errors)
-           (-> (res/response errors)
-               (res/status 400))
-           (handler request)))))
+           :handler
+           (fn [request]
+             (let [errors (->> (mapv (partial validate-param request) (:parameters openapi-meta))
+                               (filter #(:error %))
+                               (mapv :error))]
+               (if (seq errors)
+                 (-> (res/response errors)
+                     (res/status 400))
+                 (handler request))))
+           :responses (merge (:responses openapi-meta)
+                             {400 {:body [:vector
+                                          [:map
+                                           [:input [:map-of :keyword :any]]
+                                           [:errors [:or [:map-of :keyword [:vector :string]] [:vector :string]]]]]}}))
     (assoc openapi-meta :handler handler)))
 
 (defn- merge-route-map [acc [method handler]]
