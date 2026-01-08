@@ -78,6 +78,7 @@
                                         (str "[" p "]"))) (:path error-map)))
         k (if (or (nil? path) (= path "")) "" (str path ": "))
         value (:value error-map)
+        value (if (nil? value) "null" (:value error-map))
         schema (m/form (:schema error-map))
         error-type (cond
                      (= (:type error-map) :malli.core/missing-key) :missing
