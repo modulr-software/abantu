@@ -170,9 +170,9 @@
    (sometimes :noun-class :string)
    (sometimes :type :string)])
 
-(def VocabByIdParams [:map [:id :string]])
+(def VocabByIdParams [:map [:id :int]])
 
-(def IdPathParam [:map [:id :string]])
+(def IdPathParam [:map [:id :int]])
 
 (def DeleteVocabResponse
   [:map [:message :string]])
