@@ -284,7 +284,27 @@
    (sometimes :status CourseStatus)
    (sometimes :creator-id :int)])
 
+(def RegisterStudentParams
+  [:map
+   [:email :string]
+   [:password :string]
+   [:confirm-password :string]
+   [:device-uuid :string]])
 
+(def RegisterStudentResponse
+  [:map
+   [:access-token :string]
+   [:refresh-token :string]])
+
+(def LoginParams
+  [:map
+   [:email :string]
+   [:password :string]])
+
+(def LoginResponse
+  [:map
+   [:access-token :string]
+   [:refresh-token :string]])
 
 
 

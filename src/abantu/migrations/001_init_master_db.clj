@@ -30,6 +30,7 @@
      ds-master
      :abantu.db.master
      [:user-assigned-types
+      :devices
       :user-types
       :users
       :vocab

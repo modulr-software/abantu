@@ -1,9 +1,7 @@
 (ns abantu.services.users
   (:require [abantu.db.interface :as db]
             [abantu.util :as util]
-            [abantu.password :as password]
-            [abantu.email.gmail :as gmail]
-            [abantu.config :as conf]))
+            [abantu.password :as password]))
 
 
 (defn- process-bools [user]
@@ -59,14 +57,6 @@
                           (db/insert! ds))]
     (get-user ds id)))
 
-(defn can-register-user? [ds {:keys [email password confirm-password] :as _user}]
-  (cond
-    (db/exists? ds {:tname :users
-                    :where [:= :email email]})
-    {:success false :error "User with this email alrady exists."}
-    (not (= password confirm-password))
-    {:success false :error "passwords do not match."}
-    :else {:success true}))
 
 (defn get-user-by-email-hash [ds hash]
   (let [user (db/find-one ds {:tname :users
@@ -82,18 +72,6 @@
                       :where [:= :id id]})
       (dissoc user :hash))))
 
-(defn create-email-verification-url [hash]
-  (str (conf/read-value :email :verification-link) "/" hash))
-
-;; todo: send a email verification email
-(defn register-noob! [ds user]
-  (let [hash (util/uuid)]
-  (create-user! ds user)
-  (gmail/send-email {:to "kaidan13th@gmail.com"
-                     :subject "abantu email verification"
-                     :body (str "Please click on the below link to verify your email:\n\n"
-                                (create-email-verification-url hash))
-                     :type :text/plain})))
 
 (comment
   (def ds (db/ds :master))
@@ -108,10 +86,6 @@
   (create-user! ds {:email "keagan@nonce.com"
                     :role "admin"
                     :password "hellothere"})
-  
-  (register-noob! ds {:email "kaidan13th@gmail.com"
-                      :role "student"
-                      :password "micro"})
   
   (db/delete! ds {:tname :users
                   :where [:= :email "kaidan13th@gmail.com"]})

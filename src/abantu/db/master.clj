@@ -16,6 +16,14 @@
    [:user-type-id :int]
    (tables/foreign-key :user-type-id :user-types :id)))
 
+(def devices
+  (tables/create-table-sql
+   :devices
+   (tables/table-id)
+   [:uuid :text]
+   [:user-id :int]
+   (tables/foreign-key :user-id :users :id)))
+
 (def user-types
   (tables/create-table-sql
    :user-types
