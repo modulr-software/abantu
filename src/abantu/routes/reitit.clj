@@ -5,6 +5,7 @@
             [abantu.routes.api.vocab :as vocab]
             [abantu.routes.api.units :as units]
             [abantu.routes.api.courses :as courses]
+            [abantu.routes.api.auth :as auth]
             [abantu.routes.util :refer [get post delete] :as rutil]))
 
 
@@ -18,6 +19,12 @@
         (rutil/openapi-route)
 
         ["/api" 
+
+         ;;auth
+         ["/auth/register/student" (-> (post auth/register-student))]
+         ["/auth/login" (-> (post auth/login))]
+         ["/auth/email/verify" (-> (post auth/verify-email))]
+         
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
                        (post vocab/add))]

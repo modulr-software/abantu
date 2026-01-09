@@ -8,6 +8,14 @@
   (:import (java.math BigInteger)
            (java.security MessageDigest)))
 
+
+(defn parse-bool-map-entry [keys [k v]]
+  [k (if (contains? keys k) (> v 0) v)])
+
+(defn parse-bool-keys [m ks]
+  (->> (mapv (partial parse-bool-map-entry (set ks)) m)
+       (into {})))
+
 (defn vectors?
   "Returns true if coll is a 2d vector"
   [coll]

@@ -6,4 +6,7 @@
  :env #or [#env ENV "dev"]
  :database {:dir #or [#env DATABASE_DIR ".db/"]
             :type "sqlite"}
- :openai #env OPENAI_API_KEY}
+ :openai #env OPENAI_API_KEY
+ :email {:username #env EMAIL_USERNAME
+         :password #env EMAIL_PASSWORD
+         :verification-link #env EMAIL_VERIFICATION_LINK}}

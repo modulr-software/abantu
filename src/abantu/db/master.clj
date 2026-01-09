@@ -10,11 +10,19 @@
    [:firstname :text]
    [:lastname :text]
    [:email-verified :integer [:default 0]]
-   [:onboarded :integer [:default 0]]
    [:mobile :text]
+   [:email-hash :string]
    [:profile-image :text]
    [:user-type-id :int]
    (tables/foreign-key :user-type-id :user-types :id)))
+
+(def devices
+  (tables/create-table-sql
+   :devices
+   (tables/table-id)
+   [:uuid :text]
+   [:user-id :int]
+   (tables/foreign-key :user-id :users :id)))
 
 (def user-types
   (tables/create-table-sql
