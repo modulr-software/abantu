@@ -7,12 +7,11 @@
   {:summary "Registers a user as a student"
    :parameters (api/params :body api/RegisterStudentParams)
    :responses (-> (api/success api/RegisterStudentResponse)
-                (api/unauthorized [:map [:message :string]]))}
+                  (api/unauthorized [:map [:message :string]]))}
   [{:keys [ds body] :as _request}]
-  (let [{:keys [success error]} (auth/can-register-user? ds body)
-        {:keys [uuid confirm-password] :as user} body]
+  (let [{:keys [success error]} (auth/can-register-user? ds body)]
     (if success
-      (res/response (auth/register-noob! ds (dissoc user :confirm-password :uuid)))
+      (res/response (auth/register-noob! ds (dissoc body :confirm-password :device-uuid)))
       (-> (res/response {:message error})
           (res/status 403)))))
 

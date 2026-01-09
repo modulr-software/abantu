@@ -16,14 +16,13 @@
     {:success false :error "passwords do not match."}
     :else {:success true}))
 
-
 (defn create-email-verification-url [hash]
   (str (conf/read-value :email :verification-link) "/" hash))
 
 ;; todo: send a email verification email
 (defn register-noob! [ds user]
   (let [hash (util/uuid)
-        user (users/create-user! ds (user :email-hash hash))]
+        user (users/create-user! ds (assoc user :email-hash hash))]
     (gmail/send-email {:to (:email user)
                        :subject "abantu email verification"
                        :body (str "Please go to the below link to verify your email:\n\n"
