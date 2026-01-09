@@ -1,8 +1,6 @@
 (ns abantu.routes.openapi
-  (:require
-   [abantu.routes.openapi :as openapi]
-   [abantu.routes.openapi :as api]
-   [malli.util :as mu]))
+  (:require [abantu.routes.openapi :as api]
+            [malli.util :as mu]))
 
 ;; HELPER FUNCTIONS
 
@@ -306,6 +304,6 @@
    [:access-token :string]
    [:refresh-token :string]])
 
-
-
-
+(def EmailVerificationParams
+  [:map
+   [:email-hash :string]])

@@ -33,12 +33,20 @@
 
 (defn login-user [ds {:keys [email password]}]
   (let [{:keys [id] :as user} (db/find-one ds {:tname :users
-                              :where [:= :email email]})
+                                               :where [:= :email email]})
         password-match? (password/verify-password password (:password user))
         user (users/get-user ds id)]
     (if password-match?
       {:success true :data (mw/create-session user)}
       {:success false :error "Incorrect username or password"})))
+
+(defn verify-email [ds email-hash]
+  (let [{:keys [id] :as user} (users/remove-user-email-hash! ds email-hash)]
+    (when user
+      (db/update! ds {:tname :users
+                      :data {:email-verified true}
+                      :where [:= :id id]
+                      :ret :1}))))
 
 (comment
 
@@ -46,6 +54,6 @@
   (register-noob! ds {:email "kaidan13th@gmail.com"
                       :role "student"
                       :password "micro"})
-  
+
   (users/get-all-users ds)
   ())

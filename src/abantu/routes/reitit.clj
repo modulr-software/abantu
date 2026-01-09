@@ -23,6 +23,7 @@
          ;;auth
          ["/auth/register/student" (-> (post auth/register-student))]
          ["/auth/login" (-> (post auth/login))]
+         ["/auth/email/verify" (-> (post auth/verify-email))]
          
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
