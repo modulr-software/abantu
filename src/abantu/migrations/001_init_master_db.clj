@@ -29,12 +29,15 @@
     (tables/create-tables!
      ds-master
      :abantu.db.master
-     [:user-assigned-types
+     [:practice-sessions
+      :exercises-completed
+      :user-assigned-types
       :devices
       :user-types
       :users
       :vocab
       :courses
+      :user-courses
       :units
       :exercises
       :answers])
