@@ -6,6 +6,8 @@
             [abantu.routes.api.units :as units]
             [abantu.routes.api.courses :as courses]
             [abantu.routes.api.auth :as auth]
+            [abantu.routes.api.student :as student]
+            [abantu.middleware.auth.core :as authmw]
             [abantu.routes.util :refer [get post delete] :as rutil]))
 
 
@@ -24,6 +26,12 @@
          ["/auth/register/student" (-> (post auth/register-student))]
          ["/auth/login" (-> (post auth/login))]
          ["/auth/email/verify" (-> (post auth/verify-email))]
+
+         ["/student/courses" (-> (get student/get-courses)
+                                 (assoc :middleware [[authmw/wrap-auth]]))]
+         
+         ["/student/courses/:id" (-> (get student/get-course)
+                                     (assoc :middleware [[authmw/wrap-auth]]))]
          
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
