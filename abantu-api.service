@@ -1,0 +1,12 @@
+[Unit]
+Description=Abantu REST API Startup Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/merv/Developer/abantu/merv_startup.sh
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

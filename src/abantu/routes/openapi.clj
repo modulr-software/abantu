@@ -1,6 +1,5 @@
 (ns abantu.routes.openapi
-  (:require [abantu.routes.openapi :as api]
-            [malli.util :as mu]))
+  (:require [malli.util :as mu]))
 
 ;; HELPER FUNCTIONS
 
@@ -107,10 +106,10 @@
                   (not-found))}
 
   ;; THIS
-  (-> (response 200 openapi/InsertVocabResponse)
+  (-> (response 200 InsertVocabResponse)
       (response 404 (error InsertVocabParams)))
 
-  (response  200 openapi/InsertVocabResponse)
+  (response  200 InsertVocabResponse)
 
   (error)
   ())
