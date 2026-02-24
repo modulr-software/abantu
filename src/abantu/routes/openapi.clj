@@ -307,3 +307,8 @@
 (def EmailVerificationParams
   [:map
    [:email-hash :string]])
+
+(def StartSessionResponse
+  [:map
+   [:exercises GetExercisesResponse]
+   [:level :int]])

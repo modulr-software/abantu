@@ -69,12 +69,6 @@
                              :course-id course-id}
                       :ret :1}))))
 
-(defn remove-course-from-user! [ds user-id course-id]
-  (db/delete! ds {:tname :user-courses
-                  :where [:and
-                          [:= :user-id user-id]
-                          [:= :course-id course-id]]
-                  :ret :1}))
 
 (defn courses-by-user [ds user-id]
   (let [course-ids (mapv :course-id (db/find ds {:tname :user-courses
@@ -86,12 +80,22 @@
     (mapv (comp (partial append-units ds)
                 (partial append-creator ds)) courses)))
 
+
 (defn course-by-user [ds user-id course-id]
   (when (db/find-one ds {:tname :user-courses
                            :where [:and
                                    [:= :user-id user-id]
                                    [:= :course-id course-id]]})
     (get-course ds course-id)))
+
+
+(defn remove-course-from-user! [ds user-id course-id]
+  (db/delete! ds {:tname :user-courses
+                  :where [:and
+                          [:= :user-id user-id]
+                          [:= :course-id course-id]]
+                  :ret :1})
+  (not (course-by-user ds user-id course-id)))
 
 (comment
   (def ds (db/ds :master))

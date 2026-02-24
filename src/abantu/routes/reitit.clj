@@ -8,7 +8,7 @@
             [abantu.routes.api.auth :as auth]
             [abantu.routes.api.student :as student]
             [abantu.middleware.auth.core :as authmw]
-            [abantu.routes.util :refer [get post delete] :as rutil]))
+            [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
 
 
 (defn create-app
@@ -23,47 +23,79 @@
         ["/api" 
 
          ;;auth
-         ["/auth/register/student" (-> (post auth/register-student))]
-         ["/auth/login" (-> (post auth/login))]
-         ["/auth/email/verify" (-> (post auth/verify-email))]
+         ["/auth/register/student" (-> (post auth/register-student)
+                                       (tag :auth))]
+
+         ["/auth/login" (-> (post auth/login)
+                            (tag :auth))]
+
+         ["/auth/email/verify" (-> (post auth/verify-email)
+                                   (tag :auth))]
+         
+         
+         ["/student/session/start/:id" (-> (post student/start-session!)
+                                           (mw authmw/wrap-auth)
+                                           (tag :student))]
+         ["/student/session/end/:id" (-> (post student/end-session!))]
+
 
          ["/student/courses" (-> (get student/get-courses)
-                                 (assoc :middleware [[authmw/wrap-auth]]))]
+                                 (mw authmw/wrap-auth)
+                                 (tag :student))]
+         
+         ["/student/available-courses" (-> (get student/subscribable-courses)
+                                           (mw authmw/wrap-auth)
+                                           (tag :student))]
+
          
          ["/student/courses/:id" (-> (get student/get-course)
-                                     (assoc :middleware [[authmw/wrap-auth]]))]
+                                     (post student/assign-course!)
+                                     (delete student/remove-course!)
+                                     (mw authmw/wrap-auth)
+                                     (tag :student))]
+
          
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
-                       (post vocab/add))]
+                       (post vocab/add)
+                       (tag :vocab))]
+
          ["/vocab/:id" (-> (get vocab/get-one)
                            (post vocab/update)
-                           (delete vocab/delete))]
+                           (delete vocab/delete)
+                           (tag :vocab))]
          
          ;;courses
          ["/courses" (-> (get courses/get-all-courses)
-                         (post courses/create-course))]
+                         (post courses/create-course)
+                         (tag :courses))]
          
          ["/courses/:id" (-> (get courses/get-course)
                              (post courses/update-course)
-                             (delete courses/delete-course))]
+                             (delete courses/delete-course)
+                             (tag :courses))]
          
          ["/courses/:id/units" (-> (get units/get-units)
-                                   (post units/create-units))]
+                                   (post units/create-units)
+                                   (tag :units :courses))]
 
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
                            (delete units/delete-unit)
-                           (post units/update-unit))]
+                           (post units/update-unit)
+                           (tag :units))]
 
 
          ;;exercises
          ["/units/:id/exercises" (-> (get units/get-exercises-for-unit)
-                                     (post units/add-exercises-to-unit))]
+                                     (post units/add-exercises-to-unit)
+                                     (tag :exercises))]
 
          ["/exercises/:id" (-> (get units/get-exercise)
                                (post units/update-exercise)
-                               (delete units/delete-exercise))]]]
+                               (delete units/delete-exercise)
+                               (tag :exercises))]]]
+
        (rutil/data-map ds))
       (ring/routes
        (rutil/swagger-ui-handler)

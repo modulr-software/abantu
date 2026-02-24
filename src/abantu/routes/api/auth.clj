@@ -22,6 +22,7 @@
    :responses (-> (api/success api/LoginResponse)
                   (api/unauthorized (api/response-schema)))}
   [{:keys [ds body] :as _request}]
+  (prn "login" body)
   (let [{:keys [success data error]} (auth/login-user ds body)]
     (if success
       (res/response data)

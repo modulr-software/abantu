@@ -6,7 +6,8 @@
             [reitit.coercion.malli :as coercion]
             [abantu.middleware.interface :as mw]
             [malli.util :as mu]
-            [abantu.routes.openapi :as api]))
+            [abantu.routes.openapi :as api]
+            [clojure.string :as str]))
 
 (defn- extract-openapi-meta [handler]
   (-> (util/metadata handler)
@@ -56,6 +57,39 @@
 
 (defn delete [& opts]
   (apply (resolve-route-map :delete) (vec opts)))
+
+(defn- process-tag [kw]
+  (let [n (name kw)]
+    (cond-> n
+      (str/includes? n "-") (str/replace "-" " ")
+      :then (str/capitalize))))
+
+
+(defn tag
+  "Take a variable number of tags and associates them onto a route-map.
+   When the first argument is a map, it is assumed to be an existing route-map object.
+   If the first argument is not a map, an empty route-map will be created for the tags."
+  [& tags]
+  (let [[route-map tags] (apply parse-route-opts tags)]
+    (->> tags
+         (mapv process-tag)
+         (set)
+         (assoc route-map :tags))))
+
+
+(defn middleware [& middlewares]
+  (let [[route-map mws] (apply parse-route-opts middlewares)
+      middleware (:middleware route-map)
+      mws (-> (or middleware [])
+              (concat mws))]
+  (->> mws
+       (mapv #(if (vector? %) % [%]))
+       (assoc route-map :middleware))))
+
+(defn mw [& middlewares]
+  (apply middleware middlewares))
+
+
 
 (defn swagger-ui-handler []
   (swagger-ui/create-swagger-ui-handler {:path "/"
