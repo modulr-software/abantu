@@ -158,7 +158,6 @@
     (some? unit)))
 
 (comment
-  
   (def ds (db/ds :master))
   (save-units! ds [{:name "some unit 1"
                     :description "some unit type shit"
@@ -194,7 +193,7 @@
                :where [:= :exercise-id nil]
                :ret :*})
   (db/delete! ds {:tname :units
-                 :where [:= :id 2]
+                 :where [:= :id 1]
                  :ret :*})
 
   (db/delete! ds {:tname :units

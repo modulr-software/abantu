@@ -13,8 +13,8 @@
   []
   (try
     (-> (conf/read-value :admins-encrypted-path)
-        (crypt/read-file-crypt (conf/read-value :supersecretkey))
-        (json/read-json))
+        (crypt/read-file-crypt (conf/read-value :supersecretkey)) 
+        (json/read-str))
     (catch Exception e
       (println (str "Couldn't read the admins file: " (.getMessage e)))
       [])))

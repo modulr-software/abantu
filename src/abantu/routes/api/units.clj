@@ -15,10 +15,10 @@
   {:summary "Create new empty units"
    :parameters (api/params :path api/IdPathParam :body api/CreateUnitsParam)
    :responses (api/success api/CreateUnitsResponse)}
-  [{:keys [body ds] :as _request}]
+  [{:keys [body ds path-params] :as _request}]
   (let [{:keys [id]} (-> (users/get-all-admins ds)
                          (first))
-        units (->> (mapv #(assoc % :creator-id id) body)
+        units (->> (mapv #(assoc % :creator-id id :course-id (:id path-params)) body)
                    (units/save-units! ds))]
     (res/response {:message "Successfully added units"
                    :data units})))

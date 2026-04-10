@@ -3,7 +3,6 @@
             [abantu.db.master]
             [abantu.db.honey :as db]
             [abantu.db.tables :as tables]
-            [abantu.password :as password]
             [abantu.services.users :as users]
             [clojure.data.json :as json]))
 
@@ -12,12 +11,10 @@
    {:name "creator"}
    {:name "admin"}])
 
-(defn insert-admin! [ds {:keys [password] :as admin}]
+(defn insert-admin! [ds admin]
   (prn "admin" admin)
   (db/insert! ds {:tname :users
-                  :values [(assoc admin
-                                  :password
-                                  (password/hash-password password))]}))
+                  :data admin}))
 
 (defn add-admin-type-id [id admin]
   (assoc admin :user-type-id id))
@@ -68,4 +65,5 @@
     (tables/drop-all-tables! ds-master)))
 
 (comment
+
   ())

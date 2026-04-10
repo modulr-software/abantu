@@ -8,8 +8,8 @@
             [abantu.routes.api.auth :as auth]
             [abantu.routes.api.student :as student]
             [abantu.middleware.auth.core :as authmw]
-            [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
-
+            [abantu.routes.util :refer [get post delete tag mw] :as rutil]
+            [abantu.db.util :as db.util]))
 
 (defn create-app
   ([] (create-app {:ds (db/ds :master)}))
@@ -20,7 +20,7 @@
        [(rutil/swagger-route)
         (rutil/openapi-route)
 
-        ["/api" 
+        ["/api"
 
          ;;auth
          ["/auth/register/student" (-> (post auth/register-student)
@@ -31,31 +31,27 @@
 
          ["/auth/email/verify" (-> (post auth/verify-email)
                                    (tag :auth))]
-         
-         
+
          ["/student/session/start/:id" (-> (post student/start-session!)
                                            (mw authmw/wrap-auth)
                                            (tag :student))]
          ["/student/session/end/:id" (-> (post student/end-session!))]
 
-
          ["/student/courses" (-> (get student/get-courses)
                                  (mw authmw/wrap-auth)
                                  (tag :student))]
-         
+
          ["/student/available-courses" (-> (get student/subscribable-courses)
                                            (mw authmw/wrap-auth)
                                            (tag :student))]
 
-         
          ["/student/courses/:id" (-> (get student/get-course)
                                      (post student/assign-course!)
                                      (delete student/remove-course!)
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
 
-         
-         ;; vocab
+;; vocab
          ["/vocab" (-> (get vocab/get-all)
                        (post vocab/add)
                        (tag :vocab))]
@@ -64,17 +60,17 @@
                            (post vocab/update)
                            (delete vocab/delete)
                            (tag :vocab))]
-         
+
          ;;courses
          ["/courses" (-> (get courses/get-all-courses)
                          (post courses/create-course)
                          (tag :courses))]
-         
+
          ["/courses/:id" (-> (get courses/get-course)
                              (post courses/update-course)
                              (delete courses/delete-course)
                              (tag :courses))]
-         
+
          ["/courses/:id/units" (-> (get units/get-units)
                                    (post units/create-units)
                                    (tag :units :courses))]
@@ -85,8 +81,7 @@
                            (post units/update-unit)
                            (tag :units))]
 
-
-         ;;exercises
+;;exercises
          ["/units/:id/exercises" (-> (get units/get-exercises-for-unit)
                                      (post units/add-exercises-to-unit)
                                      (tag :exercises))]

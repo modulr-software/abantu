@@ -75,6 +75,7 @@
    [:description :text]
    [:level :int]
    [:course-id :int]
+   [:creator-id :int]
    (tables/foreign-key :course-id :courses :id)))
 
 (def exercises
