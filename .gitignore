@@ -9,4 +9,5 @@ source-users
 target/
 
 .db
-admins.json
+resources/admins.json
+resources/admins_encrypted.json
