@@ -4,17 +4,20 @@
             [abantu.db.honey :as db]
             [abantu.db.tables :as tables]
             [abantu.services.users :as users]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [abantu.password :as password]))
 
 (def user-types-seed
   [{:name "student"}
    {:name "creator"}
    {:name "admin"}])
 
-(defn insert-admin! [ds admin]
+(defn insert-admin! [ds {:keys [password] :as admin}]
   (prn "admin" admin)
   (db/insert! ds {:tname :users
-                  :data admin}))
+                  :data (assoc admin
+                               :password
+                               (password/hash-password password))}))
 
 (defn add-admin-type-id [id admin]
   (assoc admin :user-type-id id))

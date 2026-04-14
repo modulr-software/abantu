@@ -8,8 +8,7 @@
             [abantu.routes.api.auth :as auth]
             [abantu.routes.api.student :as student]
             [abantu.middleware.auth.core :as authmw]
-            [abantu.routes.util :refer [get post delete tag mw] :as rutil]
-            [abantu.db.util :as db.util]))
+            [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
 
 (defn create-app
   ([] (create-app {:ds (db/ds :master)}))
