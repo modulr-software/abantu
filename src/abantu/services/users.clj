@@ -4,7 +4,8 @@
             [abantu.password :as password]))
 
 (defn- process-bools [user]
-  (util/parse-bool-keys user [:onboarded :email-verified]))
+  (util/parse-bool-keys user [:email-verified]))
+
 
 (defn get-user-role [ds user-type-id]
   (->> (db/find ds {:tname :user-types

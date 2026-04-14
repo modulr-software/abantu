@@ -58,6 +58,15 @@
    [:creator-id :int]
    (tables/foreign-key :creator-id :users :id)))
 
+(def user-courses
+  (tables/create-table-sql
+   :user-courses
+   (tables/table-id)
+   [:user-id :int :not nil]
+   [:course-id :int :not nil]
+   (tables/foreign-key :user-id :users :id)
+   (tables/foreign-key :course-id :courses :id)))
+
 (def units
   (tables/create-table-sql
    :units
@@ -66,6 +75,7 @@
    [:description :text]
    [:level :int]
    [:course-id :int]
+   [:creator-id :int]
    (tables/foreign-key :course-id :courses :id)))
 
 (def exercises
@@ -87,9 +97,43 @@
    [:exercise-id :int]
    (tables/foreign-key :exercise-id :exercises :id)))
 
+(def practice-sessions
+  (tables/create-table-sql
+   :practice-sessions
+   (tables/table-id)
+   [:user-id :int :not nil]
+   [:unit-id :int :not nil]
+   [:timestamp :int :not nil]))
+
+(def exercises-completed
+  (tables/create-table-sql
+   :exercises-completed
+   (tables/table-id)
+   [:user-id :int :not nil]
+   [:exercise-id :int :not nil]
+   [:unit-id :int :not nil]
+   [:correct :int [:default 0]]
+   [:timestamp :int :not nil]
+   [:practice-session-id :int]
+   (tables/foreign-key :user-id :users :id)
+   (tables/foreign-key :exercise-id :exercises :id)
+   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :practice-session-id :practice-sessions :id)))
+
 (comment
   (require '[honey.sql :as sql])
 
   (sql/format users)
+  (sql/format devices)
+  (sql/format user-types)
+  (sql/format user-assigned-types)
+  (sql/format vocab)
+  (sql/format courses)
+  (sql/format user-courses)
+  (sql/format units)
+  (sql/format exercises)
+  (sql/format answers)
+  (sql/format practice-sessions)
+  (sql/format exercises-completed)
 
   ())

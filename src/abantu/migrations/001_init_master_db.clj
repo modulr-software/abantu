@@ -3,9 +3,9 @@
             [abantu.db.master]
             [abantu.db.honey :as db]
             [abantu.db.tables :as tables]
-            [abantu.password :as password]
             [abantu.services.users :as users]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [abantu.password :as password]))
 
 (def user-types-seed
   [{:name "student"}
@@ -15,9 +15,9 @@
 (defn insert-admin! [ds {:keys [password] :as admin}]
   (prn "admin" admin)
   (db/insert! ds {:tname :users
-                  :values [(assoc admin
-                                  :password
-                                  (password/hash-password password))]}))
+                  :data (assoc admin
+                               :password
+                               (password/hash-password password))}))
 
 (defn add-admin-type-id [id admin]
   (assoc admin :user-type-id id))
@@ -29,12 +29,15 @@
     (tables/create-tables!
      ds-master
      :abantu.db.master
-     [:user-assigned-types
+     [:practice-sessions
+      :exercises-completed
+      :user-assigned-types
       :devices
       :user-types
       :users
       :vocab
       :courses
+      :user-courses
       :units
       :exercises
       :answers])
@@ -65,4 +68,5 @@
     (tables/drop-all-tables! ds-master)))
 
 (comment
+
   ())

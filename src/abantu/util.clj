@@ -8,7 +8,6 @@
   (:import (java.math BigInteger)
            (java.security MessageDigest)))
 
-
 (defn parse-bool-map-entry [keys [k v]]
   [k (if (contains? keys k) (> v 0) v)])
 

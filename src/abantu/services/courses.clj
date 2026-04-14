@@ -23,8 +23,8 @@
                             :where [:= :id id]
                             :ret :1})]
     (when (some? course)
-     (->> (append-units ds course)
-          (append-creator ds)))))
+      (->> (append-units ds course)
+           (append-creator ds)))))
 
 (defn save-course! [ds {:keys [units] :as course}]
   (let [{:keys [id] :as result} (db/insert! ds {:tname :courses
@@ -34,7 +34,7 @@
                 (->> (mapv #(assoc % :course-id id) units)
                      (units/save-units! ds)))
         result' (append-creator ds result)]
-     (assoc result' :units (or units []))))
+    (assoc result' :units (or units []))))
 
 (defn save-courses! [ds courses]
   (mapv (partial save-course! ds) courses))
@@ -42,7 +42,7 @@
 (defn update-course! [ds {:keys [id] :as course}]
   (let [exists? (db/exists? ds {:tname :courses
                                 :where [:= :id id]})]
-    (when exists? 
+    (when exists?
       (db/update! ds {:tname :courses
                       :data (dissoc course :id)
                       :where [:= :id id]}))
@@ -58,9 +58,52 @@
       (db/delete! ds {:tname :courses
                       :where [:= :id id]}))))
 
+(defn assign-course-to-user! [ds user-id course-id]
+  (let [exists? (db/exists? ds {:tname :user-courses
+                                :where [:and
+                                        [:= :user-id user-id]
+                                        [:= :course-id course-id]]})]
+    (when (not exists?)
+      (db/insert! ds {:tname :user-courses
+                      :data {:user-id user-id
+                             :course-id course-id}
+                      :ret :1}))))
+
+
+(defn courses-by-user [ds user-id]
+  (let [course-ids (mapv :course-id (db/find ds {:tname :user-courses
+                                                 :where [:= :user-id user-id]
+                                                 :ret :*}))
+        courses (db/find ds {:tname :courses
+                             :where [:in :id course-ids]
+                             :ret :*})]
+    (mapv (comp (partial append-units ds)
+                (partial append-creator ds)) courses)))
+
+
+(defn course-by-user [ds user-id course-id]
+  (when (db/find-one ds {:tname :user-courses
+                           :where [:and
+                                   [:= :user-id user-id]
+                                   [:= :course-id course-id]]})
+    (get-course ds course-id)))
+
+
+(defn remove-course-from-user! [ds user-id course-id]
+  (db/delete! ds {:tname :user-courses
+                  :where [:and
+                          [:= :user-id user-id]
+                          [:= :course-id course-id]]
+                  :ret :1})
+  (not (course-by-user ds user-id course-id)))
 
 (comment
   (def ds (db/ds :master))
+
+  (require '[honey.sql.helpers :as hsql])
+  (-> (hsql/where {:where [:= :user-id 1]} := :course-id 1)
+      )
+  
 
   ;; create a course with or without units = pass
   (let [email "merveillevaneck@gmail.com"
@@ -93,7 +136,6 @@
                       :units units
                       :creator-id user-id}))
 
-
   ;;delete a course = pass
   (delete-course! ds 16)
   (get-all ds)
@@ -102,6 +144,11 @@
   (update-course! ds {:id 1
                       :name "some unit whatever"})
 
+  (assign-course-to-user! ds 1 1)
+  (remove-course-from-user! ds 1 1)
+  (courses-by-user ds 1)
+  (users/get-user ds 1)
+  (course-by-user ds 1 1)
 
   ()
   )

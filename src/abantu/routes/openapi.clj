@@ -1,6 +1,5 @@
 (ns abantu.routes.openapi
-  (:require [abantu.routes.openapi :as api]
-            [malli.util :as mu]))
+  (:require [malli.util :as mu]))
 
 ;; HELPER FUNCTIONS
 
@@ -107,10 +106,10 @@
                   (not-found))}
 
   ;; THIS
-  (-> (response 200 openapi/InsertVocabResponse)
+  (-> (response 200 InsertVocabResponse)
       (response 404 (error InsertVocabParams)))
 
-  (response  200 openapi/InsertVocabResponse)
+  (response  200 InsertVocabResponse)
 
   (error)
   ())
@@ -179,12 +178,12 @@
   [:map
    [:id :int]
    [:email :string]
-   [:firstname :string]
-   [:lastname :string]
+   (sometimes :firstname :string)
+   (sometimes ::lastname :string)
    [:email-verified :boolean]
-   [:onboarded :boolean]
-   [:mobile :string]
-   [:profile-image :string]])
+   (sometimes :mobile :string)
+   (sometimes :profile-image :string)
+   [:role :string]])
 
 (def GetUnitResult
   [:map
@@ -221,7 +220,7 @@
 
 (def ExerciseParam
   [:map
-   [:question-type [:enum ["translation" "multiple-choice"]]]
+   [:question-type :string]
    [:question :string]
    [:options [:vector :string]]
    (sometimes :answers AnswerParams)])
@@ -233,7 +232,7 @@
   [:map
    [:id :int]
    [:unit-id :int]
-   [:question-type [:enum ["translation" "multiple-choice"]]]
+   [:question-type :string]
    [:question :string]
    [:options [:vector :string]]
    [:answers AnswerParams]])
@@ -244,7 +243,7 @@
 (def UpdateExerciseParam
   [:map
    (sometimes :unit-id :int)
-   (sometimes :question-type [:enum ["translation" "multiple-choice"]])
+   (sometimes :question-type :string)
    (sometimes :question :string)
    (sometimes :options [:vector :string])
    (sometimes :answers  AnswerParams)])
@@ -254,7 +253,7 @@
       (mu/optional-keys)
       (mu/dissoc :creator-id)))
 
-(def CourseStatus [:enum ["in-progress" "review" "published"]])
+(def CourseStatus :string)
 (def
   ^{:tech/debt "creator key should be required once user auth exists"}
   GetCourseResponse
@@ -307,3 +306,8 @@
 (def EmailVerificationParams
   [:map
    [:email-hash :string]])
+
+(def StartSessionResponse
+  [:map
+   [:exercises GetExercisesResponse]
+   [:level :int]])
