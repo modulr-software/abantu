@@ -129,8 +129,9 @@
     (db/insert! ds {:tname :answers
                     :data (mapv #(assoc % :exercise-id id) answers)
                     :ret :*}))
-  (db/update! ds {:tname :exercise
-                  :data (dissoc exercise :answers)}))
+  (db/update! ds {:tname :exercises
+                  :data (dissoc exercise :answers)
+                  :where [:= :id id]}))
 
 (defn delete-exercise [ds id]
   (let [{:keys [id answers] :as exercise} (get-exercise ds id)]
