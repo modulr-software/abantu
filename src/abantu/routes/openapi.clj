@@ -212,9 +212,11 @@
   GetUnitResult)
 
 (def AnswerParam
-  [:or
-   [:vector :string]
-   :string])
+  [:map
+   [:text [:or
+           [:vector :string]
+           :string]]
+   (sometimes :audio :string)])
 
 (def AnswerParams
   [:vector AnswerParam])

@@ -1,8 +1,8 @@
 (ns abantu.services.units
   (:require [abantu.db.interface :as db]
-            [malli.util :as mu]
-            [clojure.string :as str]))
-
+            [clojure.string :as str]
+            [abantu.db.util :as db.util]
+            [abantu.db.honey :as hon]))
 
 (defn- process-options [exercise]
   (update-in exercise
@@ -10,23 +10,23 @@
              #(-> (clojure.string/split % #";;")
                   (vec))))
 
-(defn- add-answers [ds {:keys [id question-type] :as exercise}]
+(defn- add-answers [ds {:keys [id answer-type] :as exercise}]
   (let [answers (db/find ds {:tname :answers
-                                        :where [:= :exercise-id id]
-                                        :ret :*})
-        answers (if (= question-type "multiple-choice")
-                  (mapv :text answers)
-                  (mapv #(str/split (:text %) #";;") answers))]
-  (assoc exercise :answers answers)))
+                             :where [:= :exercise-id id]
+                             :ret :*})
+        answers (if (= answer-type "bubbles")
+                  (mapv #(assoc % :text (str/split (:text %) #";;")) answers)
+                  answers)]
+    (assoc exercise :answers answers)))
 
 (defn get-exercises-for-unit
   "Get all exercises with answers for a given unit-id"
   [ds id]
-    (->> (db/find ds {:tname :exercises
-                      :where [:= :unit-id id]
-                      :ret :*})
-         (mapv (comp process-options
-                     (partial add-answers ds)))))
+  (->> (db/find ds {:tname :exercises
+                    :where [:= :unit-id id]
+                    :ret :*})
+       (mapv (comp process-options
+                   (partial add-answers ds)))))
 
 (defn get-unit
   "get a unit with all exercises for a given unit-id"
@@ -43,8 +43,8 @@
   "Get all units with exercises for a given course-id"
   [ds course-id]
   (->> (db/find ds {:tname :units
-               :where [:= :course-id course-id]
-               :ret :*})
+                    :where [:= :course-id course-id]
+                    :ret :*})
        (mapv #(assoc % :exercises
                      (get-exercises-for-unit ds (:id %))))))
 
@@ -56,28 +56,27 @@
                            :ret :*})]
     (mapv (partial add-exercises-to-unit ds) units)))
 
-(defn get-question-type [ds exercise-id]
+(defn get-answer-type [ds exercise-id]
   (->>
    (db/find ds {:tname :exercises
                 :where [:= :id exercise-id]
                 :ret :1})
-   (:question-type)))
+   (:answer-type)))
 
 (defn get-answers-for-exercise [ds exercise-id]
-  (let [question-type (get-question-type ds exercise-id)
+  (let [answer-type (get-answer-type ds exercise-id)
         answers (db/find ds {:tname :answers
                              :where [:= :exercise-id exercise-id]
                              :ret :*})]
     (->> answers
-         (mapv (comp #(if (= question-type "translation")
-                        (str/split % #";;")
-                        %)
-                     :text)))))
+         (mapv #(if (= answer-type "bubbles")
+                  (assoc % :text (str/split (:text %) #";;"))
+                  %)))))
 
 (defn save-answers-for-exercise! [ds exercise-id answer-type answers]
-  (->> (mapv (comp #(assoc {} :text % :exercise-id exercise-id)
+  (->> (mapv (comp #(merge {:exercise-id exercise-id} %)
                    #(if (= answer-type "bubbles")
-                      (str/join ";;" %)
+                      (assoc % :text (str/join ";;" (:text %)))
                       %))
              answers)
        (assoc {:tname :answers :ret :*} :data)
@@ -101,8 +100,8 @@
 
 (defn save-unit! [ds {:keys [exercises] :as unit}]
   (let [{:keys [id] :as result} (db/insert! ds {:tname :units
-                               :data (dissoc unit :exercises)
-                               :ret :1})]
+                                                :data (dissoc unit :exercises)
+                                                :ret :1})]
     (->> (when (seq exercises)
            (save-exercises! ds (mapv #(assoc % :unit-id id) exercises)))
          (assoc result :exercises))))
@@ -144,16 +143,15 @@
                       :where [:= :id id]
                       :ret :1}))))
 
-
 (defn delete-unit! [ds id]
   (let [unit (get-unit ds id)
         exercises (:exercises unit)]
     (when (seq exercises)
       (run! (partial delete-exercise ds) (mapv :id exercises)))
     (when (some? unit)
-    (db/delete! ds {:tname :units
-                    :where [:= :id id]
-                    :ret :1}))
+      (db/delete! ds {:tname :units
+                      :where [:= :id id]
+                      :ret :1}))
     (some? unit)))
 
 (comment
@@ -165,10 +163,10 @@
                                  :question "isiXhosa"
                                  :options "Xhosa,Xhosas,a,It's"
                                  :answers [{:text "Xhosa"}]}]}])
-  
+
   (db/find ds {:tname :exercises
                :ret :*})
-  
+
   (get-exercises-for-unit ds 1)
 
   (def test-insert (->> (get-exercises-for-unit ds 1)
@@ -185,19 +183,18 @@
                                 :options ["umbuzo" "imibuzo" "yintoni" "ntoni" "untoni"]
                                 :answers [["yintoni" "umbuzo"] ["untoni" "umbuzo"]]
                                 :level 1)))
-  
+
   (get-all-units ds)
 
   (db/find ds {:tname :answers
                :where [:= :exercise-id nil]
                :ret :*})
   (db/delete! ds {:tname :units
-                 :where [:= :id 1]
-                 :ret :*})
+                  :where [:= :id 1]
+                  :ret :*})
 
   (db/delete! ds {:tname :units
-                 :where [:= :creator-id nil] 
-                 :ret :*})
+                  :where [:= :creator-id nil]
+                  :ret :*})
 
-  ()
-  )
+  ())

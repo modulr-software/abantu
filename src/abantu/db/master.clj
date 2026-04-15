@@ -86,9 +86,9 @@
    [:instruction :text :not nil]
    [:question-content :text :not nil]
    [:audio :text]
-   [:answer-type :text [:check [:in :question-type ["freetext" "bubbles"]]]]
+   [:answer-type :text [:check [:in :answer-type ["freetext" "bubbles"]]]]
    [:options :text]
-   [:level :int]
+   [:level :int [:default 1]]
    (tables/foreign-key :unit-id :units :id)))
 
 (def answers
