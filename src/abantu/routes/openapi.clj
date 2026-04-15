@@ -239,7 +239,7 @@
    [:unit-id :int]
    [:instruction :string]
    [:question-content :string]
-   [:answer-type :string]
+   [:answer-type [:enum "freetext" "bubbles"]]
    (sometimes :audio :string)
    [:options [:vector :string]]
    [:answers AnswerParams]])
