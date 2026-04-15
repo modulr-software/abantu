@@ -74,24 +74,23 @@
                         %)
                      :text)))))
 
-(defn save-answers-for-exercise! [ds exercise-id question-type answers]
+(defn save-answers-for-exercise! [ds exercise-id answer-type answers]
   (->> (mapv (comp #(assoc {} :text % :exercise-id exercise-id)
-                   #(if (= question-type "translation")
+                   #(if (= answer-type "bubbles")
                       (str/join ";;" %)
                       %))
              answers)
        (assoc {:tname :answers :ret :*} :data)
        (db/insert! ds)))
 
-
-(defn save-exercise! [ds {:keys [options answers question-type] :as exercise}]
+(defn save-exercise! [ds {:keys [options answers answer-type] :as exercise}]
   (let [{:keys [id] :as result}
         (db/insert! ds {:tname :exercises
                         :data (-> (dissoc exercise :answers)
                                   (assoc :options (str/join ";;" options)))
                         :ret :1})]
     (when (seq answers)
-      (save-answers-for-exercise! ds id question-type answers))
+      (save-answers-for-exercise! ds id answer-type answers))
     (assoc result
            :answers (get-answers-for-exercise ds id)
            :options options)))
