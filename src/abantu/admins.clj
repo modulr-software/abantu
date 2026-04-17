@@ -14,7 +14,7 @@
   (try
     (-> (conf/read-value :admins-encrypted-path)
         (crypt/read-file-crypt (conf/read-value :supersecretkey)) 
-        (json/read-str))
+        (json/read-str {:key-fn keyword}))
     (catch Exception e
       (println (str "Couldn't read the admins file: " (.getMessage e)))
       [])))

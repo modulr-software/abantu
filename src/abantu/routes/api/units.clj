@@ -84,7 +84,8 @@
                        :body api/UpdateExerciseParam)
    :responses (api/success api/GetExerciseResult)}
   [{:keys [ds path-params body] :as _request}]
-  (res/response (units/update-exercise! ds (assoc body :id (:id path-params)))))
+  (units/update-exercise! ds (assoc body :id (:id path-params)))
+  (res/response {:message "Successfully updated exercise"}))
 
 (defn delete-exercise
   {:summary "Delete an exercise by a given id"

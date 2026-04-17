@@ -212,16 +212,21 @@
   GetUnitResult)
 
 (def AnswerParam
-  [:or [:vector :string]
-   :string])
+  [:map
+   [:text [:or
+           [:vector :string]
+           :string]]
+   (sometimes :audio :string)])
 
 (def AnswerParams
   [:vector AnswerParam])
 
 (def ExerciseParam
   [:map
-   [:question-type :string]
-   [:question :string]
+   [:instruction :string]
+   [:question-content :string]
+   (sometimes :audio :string)
+   [:answer-type [:enum "freetext" "bubbles"]]
    [:options [:vector :string]]
    (sometimes :answers AnswerParams)])
 
@@ -232,8 +237,10 @@
   [:map
    [:id :int]
    [:unit-id :int]
-   [:question-type :string]
-   [:question :string]
+   [:instruction :string]
+   [:question-content :string]
+   [:answer-type [:enum "freetext" "bubbles"]]
+   (sometimes :audio :string)
    [:options [:vector :string]]
    [:answers AnswerParams]])
 
@@ -243,10 +250,12 @@
 (def UpdateExerciseParam
   [:map
    (sometimes :unit-id :int)
-   (sometimes :question-type :string)
-   (sometimes :question :string)
+   (sometimes :instruction :string)
+   (sometimes :question-content :string)
+   (sometimes :audio :string)
+   (sometimes :answer-type [:enum "freetext" "bubbles"])
    (sometimes :options [:vector :string])
-   (sometimes :answers  AnswerParams)])
+   (sometimes :answers AnswerParams)])
 
 (def UpdateUnitParam
   (-> GetUnitResult

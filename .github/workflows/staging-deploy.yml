@@ -1,0 +1,29 @@
+name: Staging Deploy
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    concurrency: deploy-group
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: mervstation.tail4f070.ts.net
+
+      - name: Execute remote SSH commands
+        run: |
+          ssh -o StrictHostKeyChecking=no merv@mervstation.tail4f070.ts.net '
+            cd /home/merv/Developer/abantu
+            git pull
+            ./build.sh
+            sudo /bin/systemctl restart abantu-api
+          '
