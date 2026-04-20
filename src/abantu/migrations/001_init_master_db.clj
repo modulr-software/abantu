@@ -2,7 +2,9 @@
   (:require [abantu.db.master]
             [abantu.db.honey :as db]
             [abantu.db.tables :as tables]
-            [abantu.password :as password]))
+            [abantu.password :as password]
+            [abantu.admins :as admins]
+            [abantu.services.users :as users]))
 
 (def user-types-seed
   [{:name "student"}
@@ -21,8 +23,7 @@
 
 (defn run-up! [context]
   (let [ds-master (:db-master context)
-        ;; admins (admins/read)
-        ]
+        admins (admins/read)]
 
     (tables/create-tables!
      ds-master
@@ -43,7 +44,10 @@
     (db/insert! ds-master {:tname :user-types
                            :values user-types-seed})
 
-    ))
+    (let [admin-type-id (users/get-user-type-id ds-master "admin")]
+      (run! (comp (partial insert-admin! ds-master)
+                  (partial add-admin-type-id admin-type-id))
+            admins))))
 
 (defn run-down! [context]
   (let [ds-master (:db-master context)]
