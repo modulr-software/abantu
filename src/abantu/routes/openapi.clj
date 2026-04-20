@@ -191,7 +191,7 @@
    [:name :string]
    [:description :string]
    [:level :int]
-   [:creator-id :int]])
+   (sometimes :creator-id :int)])
 
 (def GetUnitResponse
   GetUnitResult)
@@ -209,7 +209,9 @@
   [:vector CreateUnitParam])
 
 (def CreateUnitsResponse
-  GetUnitResult)
+  [:map
+   [:message :string]
+   [:data [:vector GetUnitResult]]])
 
 (def AnswerParam
   [:map
