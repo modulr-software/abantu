@@ -2,7 +2,8 @@
   (:require [abantu.routes.openapi :as api]
             [ring.util.response :as res]
             [abantu.services.auth :as auth]
-            [abantu.services.users :as users]))
+            [abantu.migrate :as migrate]))
+
 
 (defn register-student
   {:summary "Registers a user as a student"
@@ -12,7 +13,14 @@
   [{:keys [ds body] :as _request}]
   (let [{:keys [success error]} (auth/can-register-user? ds body)]
     (if success
-      (res/response (auth/register-noob! ds (dissoc body :confirm-password :device-uuid)))
+      (let [result (auth/register-noob! ds (-> (dissoc body :confirm-password :device-uuid)
+                                               (assoc :role "student")))
+            {:keys [success error]} (migrate/create-student-db! (get-in result [:user :id]))]
+        (if success
+          (res/response result)
+          (-> (res/response {:message "could not create user database!"
+                             :error error})
+              (res/status 500))))
       (-> (res/response {:message error})
           (res/status 403)))))
 
