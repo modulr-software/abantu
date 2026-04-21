@@ -28,16 +28,19 @@
        (mapv (comp process-options
                    (partial add-answers ds)))))
 
+(defn- add-exercises-to-unit [ds {:keys [id] :as unit}]
+  (let [exercises (get-exercises-for-unit ds id)]
+    (if (seq exercises)
+      (assoc unit :exercises exercises)
+      unit)))
+
 (defn get-unit
   "get a unit with all exercises for a given unit-id"
   [ds id]
   (let [unit (db/find ds {:tname :units
                           :where [:= :id id]
-                          :ret :1})
-        exercises (get-exercises-for-unit ds id)]
-    (cond-> unit
-      (seq exercises)
-      (assoc :exercises exercises))))
+                          :ret :1})]
+    (add-exercises-to-unit ds unit)))
 
 (defn get-units
   "Get all units with exercises for a given course-id"

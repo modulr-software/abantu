@@ -190,8 +190,7 @@
    [:id :int]
    [:name :string]
    [:description :string]
-   [:level :int]
-   [:creator-id :int]])
+   [:level :int]])
 
 (def GetUnitResponse
   GetUnitResult)
@@ -209,13 +208,13 @@
   [:vector CreateUnitParam])
 
 (def CreateUnitsResponse
-  GetUnitResult)
+  [:map
+   [:message :string]
+   [:data [:vector GetUnitResult]]])
 
 (def AnswerParam
   [:map
-   [:text [:or
-           [:vector :string]
-           :string]]
+   [:text {:optional true} [:maybe [:or [:vector :string] :string]]]
    (sometimes :audio :string)])
 
 (def AnswerParams

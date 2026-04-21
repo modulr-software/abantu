@@ -134,6 +134,9 @@
                            :values {:type "interjection"}
                            :ret :*})))
   
+  (find ds {:tname :sqlite-master
+            :ret :*})
+  
   (find ds {:tname :units
             :ret :*})
   
@@ -142,6 +145,12 @@
 
   (find ds {:tname :courses
             :ret :*})
+  
+  
+  (jdbc/execute! (db.util/conn :master) ["select * from sqlite_master"])
+  (jdbc/execute! ds ["select * from courses"])
+  (jdbc/execute! ds ["select * from users"])
+  (jdbc/execute! ds ["select * from units"])
 
 
   ()

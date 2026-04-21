@@ -5,11 +5,14 @@
 
 (defn- append-units [ds {:keys [id] :as course}]
   (let [units (units/get-units ds id)]
-    (assoc course :units (or units []))))
+    (assoc course :units (mapv #(dissoc % :creator-id) (or units [])))))
 
 (defn- append-creator [ds {:keys [creator-id] :as course}]
-  (let [creator (users/get-user ds creator-id)]
-    (-> (assoc course :creator (or creator nil))
+  (if creator-id
+    (let [creator (users/get-user ds creator-id)]
+      (-> (assoc course :creator (or creator nil))
+          (dissoc :creator-id)))
+    (-> (assoc course :creator nil)
         (dissoc :creator-id))))
 
 (defn get-all [ds]
@@ -139,6 +142,11 @@
   ;;delete a course = pass
   (delete-course! ds 16)
   (get-all ds)
+
+
+  (db/find ds {:tname :courses})
+  (abantu.db.honey/execute! ds {:select [:*]
+                                :from :courses})
 
   ;;update a course = pass
   (update-course! ds {:id 1
