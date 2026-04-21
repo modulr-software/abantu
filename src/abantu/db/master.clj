@@ -39,15 +39,6 @@
    (tables/foreign-key :user-id :users :id)
    (tables/foreign-key :user-type-id :user-types :id)))
 
-(def vocab
-  (tables/create-table-sql
-   :vocab
-   (tables/table-id)
-   [:xhosa :text :not nil]
-   [:english :text :not nil]
-   [:type :text :not nil]
-   [:noun-class :text]))
-
 (def courses
   (tables/create-table-sql
    :courses
@@ -130,7 +121,6 @@
   (sql/format devices)
   (sql/format user-types)
   (sql/format user-assigned-types)
-  (sql/format vocab)
   (sql/format courses)
   (sql/format user-courses)
   (sql/format units)
