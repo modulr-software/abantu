@@ -48,3 +48,12 @@
   [{:keys [ds path-params] :as _request}]
   (courses/delete-course! ds (:id path-params))
   (res/response {:message "Successfully deleted course"}))
+
+
+(defn used-instructions
+  {:summary "Get all previously entered instructions for exercises in a given course."
+   :parameters (api/params :path api/IdPathParam)
+   :responses  (api/success [:vector :string])}
+  [{:keys [ds path-params] :as _request}]
+  (res/response
+   (courses/used-instructions ds (:id path-params))))

@@ -91,6 +91,16 @@
                                    [:= :course-id course-id]]})
     (get-course ds course-id)))
 
+(defn exercises-for-course [ds id]
+  (db/find ds {:tname :exercises
+               :where [:= :course-id id]
+               :ret :*}))
+
+(defn used-instructions [ds id]
+    (->> (exercises-for-course ds id) 
+         (mapv :instruction)
+         set))
+
 
 (defn remove-course-from-user! [ds user-id course-id]
   (db/delete! ds {:tname :user-courses
@@ -157,6 +167,8 @@
   (courses-by-user ds 1)
   (users/get-user ds 1)
   (course-by-user ds 1 1)
+
+  (used-instructions ds 1)
 
   ()
   )
