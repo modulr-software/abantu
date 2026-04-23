@@ -321,3 +321,13 @@
   [:map
    [:exercises GetExercisesResponse]
    [:level :int]])
+
+(def EndSessionParams
+  [:map
+   [:session-id :int]
+   [:answers [:vector
+              [:map
+               [:exercise-id :int]
+               [:answer [:or [:vector :string] :string]]
+               [:started-at :string]
+               [:ended-at :string]]]]])
