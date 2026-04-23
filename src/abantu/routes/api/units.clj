@@ -68,8 +68,9 @@
    :responses (api/success (api/response-schema))}
   [{:keys [ds path-params body] :as _request}]
   (prn "body" body)
-  (units/save-exercises! ds (mapv #(assoc % :unit-id (:id path-params)) body))
-  (res/response {:message "successfully added exercises to unit"}))
+  (let [{:keys [id course-id]} (units/get-unit ds (:id path-params))]
+    (units/save-exercises! ds (mapv #(assoc % :unit-id id :course-id course-id) body))
+    (res/response {:message "successfully added exercises to unit"})))
 
 (defn get-exercise
   {:summary "Get an exercises by a given id"

@@ -1,11 +1,11 @@
 (ns abantu.services.users
   (:require [abantu.db.interface :as db]
             [abantu.util :as util]
-            [abantu.password :as password]))
+            [abantu.password :as password]
+            [abantu.migrate :as migrate]))
 
 (defn- process-bools [user]
   (util/parse-bool-keys user [:email-verified]))
-
 
 (defn get-user-role [ds user-type-id]
   (->> (db/find ds {:tname :user-types
@@ -54,8 +54,10 @@
                               (assoc :user-type-id (get-user-type-id ds role)
                                      :password (password/hash-password password)))
                           (assoc {:tname :users :ret :1} :values)
-                          (db/insert! ds))]
-    (get-user ds id)))
+                          (db/insert! ds))
+        user (get-user ds id)]
+    (migrate/create-student-db! user)
+    user))
 
 (defn get-user-by-email-hash [ds hash]
   (let [user (db/find-one ds {:tname :users

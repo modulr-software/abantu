@@ -188,6 +188,7 @@
 (def GetUnitResult
   [:map
    [:id :int]
+   [:course-id :int]
    [:name :string]
    [:description :string]
    [:level :int]])
@@ -224,6 +225,7 @@
   [:map
    [:instruction :string]
    [:question-content :string]
+   [:course-id :int]
    (sometimes :audio :string)
    [:answer-type [:enum "freetext" "bubbles"]]
    [:options [:vector :string]]

@@ -74,13 +74,15 @@
    :exercises
    (tables/table-id)
    [:unit-id :integer :not nil]
+   [:course-id :integer :not nil]
    [:instruction :text :not nil]
    [:question-content :text :not nil]
    [:audio :text]
    [:answer-type :text [:check [:in :answer-type ["freetext" "bubbles"]]]]
    [:options :text]
    [:level :int [:default 1]]
-   (tables/foreign-key :unit-id :units :id)))
+   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :course-id :course :id)))
 
 (def answers
   (tables/create-table-sql

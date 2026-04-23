@@ -39,8 +39,11 @@
          ["/student/courses" (-> (get student/get-courses)
                                  (mw authmw/wrap-auth)
                                  (tag :student))]
+         
 
-         ["/student/available-courses" (-> (get student/subscribable-courses)
+         ["/courses/:id/instructions" (-> (get courses/used-instructions))]
+
+         ["/student/subscribable" (-> (get student/subscribable-courses)
                                            (mw authmw/wrap-auth)
                                            (tag :student))]
 
@@ -49,6 +52,7 @@
                                      (delete student/remove-course!)
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
+         
 
 ;; vocab
          ["/vocab" (-> (get vocab/get-all)

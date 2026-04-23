@@ -52,9 +52,13 @@
   [{:keys [ds user] :as _request}]
   (let [user-id (:id user)
         course-ids (->> (courses/courses-by-user ds user-id)
-                        (set))]
-    (res/response (->> (courses/get-all ds)
-                       (remove #(contains? course-ids (:id %)))))))
+                        (set))
+        all-courses (courses/get-all ds)
+        mod (remove #(contains? course-ids (:id %)) all-courses)]
+    (println "user-id" user-id)
+    (println "courses" all-courses)
+    (println "mod" mod)
+    (res/response mod)))
 
 
 (defn start-session!
