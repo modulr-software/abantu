@@ -4,7 +4,6 @@
             [k16.mallard.loader.fs :as loader.fs]
             [next.jdbc :as jdbc]
             [abantu.db.util :as db.util]
-            [clojure.java.io :as io]
             [abantu.db.honey :as db]))
 
 ;; This is our interface for running migrations.
@@ -20,7 +19,6 @@
 
 (def ^:private student-migrations
   (loader.fs/load! "src/abantu/student_migrations"))
-
 
 (defn run-student-migration! [id direction]
   (let [dir (name direction)
@@ -43,8 +41,6 @@
     (when (seq users)
       (run! #(run-student-migration! (:id %) direction) users))))
 
-
-
 (defn create-student-db! [{:keys [id] :as user}]
   (try
     (run-student-migration! id :up)
@@ -61,7 +57,6 @@
       {:success false
        :error (ex-info (str "failed to delete user database for id " id) {:user user})})))
 
-
 (defn run-migrations [args]
   (let [context {:db-master (db.util/conn :master)}
         db-migrate (jdbc/get-datasource {:dbname (db.util/db-path "migrate")
@@ -77,7 +72,6 @@
                  args)
     (when (= (name (first args)) "up")
       (run-student-migrations! (first args)))))
-
 
 (defn -main [& args]
   (run-migrations args))
