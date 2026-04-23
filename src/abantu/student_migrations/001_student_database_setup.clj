@@ -9,7 +9,9 @@
     (tables/create-tables!
      ds-student
      :abantu.db.student
-     [:events])))
+     [:events
+      :sessions
+      :session-answers])))
 
 (defn run-down! [context]
   (let [ds-student (:ds-student context)

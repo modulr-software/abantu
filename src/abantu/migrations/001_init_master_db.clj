@@ -3,8 +3,7 @@
             [abantu.db.honey :as db]
             [abantu.db.tables :as tables]
             [abantu.password :as password]
-            [abantu.admins :as admins]
-            [abantu.services.users :as users]))
+            [abantu.admins :as admins]))
 
 (def user-types-seed
   [{:name "student"}
@@ -44,7 +43,10 @@
     (db/insert! ds-master {:tname :user-types
                            :values user-types-seed})
 
-    (let [admin-type-id (users/get-user-type-id ds-master "admin")]
+    (let [admin-type-id (->> (db/find ds-master {:tname :user-types
+                                                 :where [:= :name "admin"]
+                                                 :ret :1})
+                             (:id))]
       (run! (comp (partial insert-admin! ds-master)
                   (partial add-admin-type-id admin-type-id))
             admins))))
