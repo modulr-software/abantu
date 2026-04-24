@@ -66,9 +66,10 @@
    :responses (api/success api/StartSessionResponse)}
   [{:keys [ds path-params user] :as _request}]
   (with-open [student-ds (db.util/conn :student (:id user))]
-    (let [unit (units/get-unit ds (:id path-params))]
-      (sessions/start-session! student-ds unit)
-      (res/response (select-keys unit [:level :exercises])))))
+    (let [unit (units/get-unit ds (:id path-params))
+          session (sessions/start-session! student-ds unit)]
+      (res/response (assoc (select-keys unit [:level :exercises])
+                           :session-id (:id session))))))
 
 (defn end-session!
   {:summary "End a practice session by posting back analytics data!"

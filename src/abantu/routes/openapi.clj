@@ -319,6 +319,7 @@
 
 (def StartSessionResponse
   [:map
+   [:session-id :int]
    [:exercises GetExercisesResponse]
    [:level :int]])
 

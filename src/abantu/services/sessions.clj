@@ -1,8 +1,7 @@
 (ns abantu.services.sessions
   (:require [abantu.db.honey :as hon]
             [abantu.util :as util]
-            [clojure.string :as str]
-            [abantu.db.util :as db.util]))
+            [clojure.string :as str]))
 
 (defn start-session!
   "Accepts a db connection and a unit map.
@@ -12,11 +11,10 @@
                    :data {:unit-id id
                           :course-id course-id
                           :started-at (util/get-utc-timestamp-string)
-                          :completed 0}}))
+                          :completed 0}
+                   :ret :1}))
 
 (defn- insert-session-answer! [ds {:keys [unit-id course-id exercise-id answer correct started-at ended-at session-id]}]
-  (println (hon/find ds {:tname :sqlite_schema
-                         :ret :*}))
   (let [answer (if (vector? answer)
                  (str/join ";;" answer)
                  answer)]
