@@ -1,8 +1,7 @@
 (ns abantu.routes.api.units
   (:require [ring.util.response :as res]
             [abantu.routes.openapi :as api]
-            [abantu.services.units :as units]
-            [abantu.services.users :as users]))
+            [abantu.services.units :as units]))
 
 (defn get-units
   {:summary "get all units with the given course id"
@@ -15,10 +14,8 @@
   {:summary "Create new empty units"
    :parameters (api/params :path api/IdPathParam :body api/CreateUnitsParam)
    :responses (api/success api/CreateUnitsResponse)}
-  [{:keys [body ds path-params] :as _request}]
-  (let [{:keys [id]} (-> (users/get-all-admins ds)
-                         (first))
-        units (->> (mapv #(assoc % :creator-id id :course-id (:id path-params)) body)
+  [{:keys [body ds path-params user] :as _request}]
+  (let [units (->> (mapv #(assoc % :creator-id (:id user) :course-id (:id path-params)) body)
                    (units/save-units! ds))]
     (res/response {:message "Successfully added units"
                    :data units})))
@@ -40,10 +37,10 @@
   [{:keys [body ds] :as _request}]
   (let [{:keys [id]} body
         _result (units/update-unit! ds body)]
-  (res/response
-   (units/get-unit ds id))))
+    (res/response
+     (units/get-unit ds id))))
 
-(defn delete-unit 
+(defn delete-unit
   {:summary "delete new empty units"
    :parameters (api/params :path api/IdPathParam)
    :responses (-> (api/success (api/response-schema))
@@ -82,7 +79,7 @@
 (defn update-exercise
   {:summary "Update an exercises by a given id"
    :parameters (api/params :path api/IdPathParam
-                       :body api/UpdateExerciseParam)
+                           :body api/UpdateExerciseParam)
    :responses (api/success api/GetExerciseResult)}
   [{:keys [ds path-params body] :as _request}]
   (units/update-exercise! ds (assoc body :id (:id path-params)))

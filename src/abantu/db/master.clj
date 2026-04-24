@@ -65,6 +65,7 @@
    [:name :text :not nil]
    [:description :text]
    [:level :int]
+   [:type :text [:check [:in :type ["lesson" "practice"]]]]
    [:course-id :int]
    [:creator-id :int]
    (tables/foreign-key :course-id :courses :id)))

@@ -80,7 +80,7 @@
   (run-migrations '("up"))
   (run-migrations '("down"))
 
-  (run-student-migration! 1 :up)
+  (run-student-migration! 3 :up)
 
   (create-student-db! {:id 1})
   (remove-student-db! {:id 1})

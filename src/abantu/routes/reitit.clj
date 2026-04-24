@@ -34,25 +34,25 @@
          ["/student/session/start/:id" (-> (post student/start-session!)
                                            (mw authmw/wrap-auth)
                                            (tag :student))]
-         ["/student/session/end/:id" (-> (post student/end-session!))]
+         ["/student/session/end/:id" (-> (post student/end-session!)
+                                         (mw authmw/wrap-auth)
+                                         (tag :student))]
 
          ["/student/courses" (-> (get student/get-courses)
                                  (mw authmw/wrap-auth)
                                  (tag :student))]
-         
 
          ["/courses/:id/instructions" (-> (get courses/used-instructions))]
 
          ["/student/subscribable" (-> (get student/subscribable-courses)
-                                           (mw authmw/wrap-auth)
-                                           (tag :student))]
+                                      (mw authmw/wrap-auth)
+                                      (tag :student))]
 
          ["/student/courses/:id" (-> (get student/get-course)
                                      (post student/assign-course!)
                                      (delete student/remove-course!)
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
-         
 
 ;; vocab
          ["/vocab" (-> (get vocab/get-all)
@@ -67,21 +67,25 @@
          ;;courses
          ["/courses" (-> (get courses/get-all-courses)
                          (post courses/create-course)
+                         (mw authmw/wrap-auth)
                          (tag :courses))]
 
          ["/courses/:id" (-> (get courses/get-course)
                              (post courses/update-course)
                              (delete courses/delete-course)
+                             (mw authmw/wrap-auth)
                              (tag :courses))]
 
          ["/courses/:id/units" (-> (get units/get-units)
                                    (post units/create-units)
+                                   (mw authmw/wrap-auth)
                                    (tag :units :courses))]
 
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
                            (delete units/delete-unit)
                            (post units/update-unit)
+                           (mw authmw/wrap-auth)
                            (tag :units))]
 
 ;;exercises

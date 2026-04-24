@@ -2,14 +2,15 @@
   (:require [ring.util.response :as res]
             [abantu.services.courses :as courses]
             [abantu.routes.openapi :as api]
-            [abantu.services.units :as units]))
-
+            [abantu.services.units :as units]
+            [abantu.services.sessions :as sessions]
+            [abantu.db.util :as db.util]))
 
 (defn get-courses
   {:summary "Get all courses a student has started for a given student id"
    :responses (-> (api/success api/GetCoursesResponse))}
   [{:keys [ds user] :as _request}]
-    (res/response (courses/courses-by-user ds (:id user))))
+  (res/response (courses/courses-by-user ds (:id user))))
 
 (defn get-course
   {:summary "Get course progress info for a given course with units"
@@ -45,7 +46,6 @@
             (res/status 500)))
       (res/response {:message "This course is not yet assigned to the user!"}))))
 
-
 (defn subscribable-courses
   {:summary "Get the courses that a user has not yet subscribed to!"
    :responses (api/success api/GetCoursesResponse)}
@@ -60,34 +60,40 @@
     (println "mod" mod)
     (res/response mod)))
 
-
 (defn start-session!
   {:summary "Start a practice session for a given id (yay)!"
    :parameters (api/params :path api/IdPathParam)
    :responses (api/success api/StartSessionResponse)}
-  [{:keys [ds path-params] :as _request}]
-  (let [unit (units/get-unit ds (:id path-params))]
-    (res/response (select-keys unit [:level :exercises]))))
+  [{:keys [ds path-params user] :as _request}]
+  (with-open [student-ds (db.util/conn :student (:id user))]
+    (let [unit (units/get-unit ds (:id path-params))
+          session (sessions/start-session! student-ds unit)]
+      (res/response (assoc (select-keys unit [:level :exercises])
+                           :session-id (:id session))))))
 
 (defn end-session!
   {:summary "End a practice session by posting back analytics data!"
-   :parameters (api/params :path api/IdPathParam)
+   :parameters (api/params :path api/IdPathParam :body api/EndSessionParams)
    :responses (api/success [:map [:message :string]])}
-  [_request]
-  (res/response {:message "success!"}))
+  [{:keys [ds path-params body user] :as _req}]
+  (with-open [student-ds (db.util/conn :student (:id user))]
+    (let [unit (units/get-unit ds (:id path-params))
+          {:keys [session-id answers]} body]
+      (sessions/end-session! student-ds session-id unit answers)
+      (res/response {:message "success!"}))))
 
 (comment
-  
+
   (require '[abantu.db.interface :as db])
   (def ds (db/ds :master))
   (db/find ds {:tname :courses
                :ret :*})
-  
+
   (db/find ds {:tname :user-courses
                :ret :*})
-  
+
   (db/delete! ds {:tname :user-courses
                   :where [:= :id 1]})
-  
+
   ())
 
