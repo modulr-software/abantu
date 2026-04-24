@@ -191,6 +191,7 @@
    [:course-id :int]
    [:name :string]
    [:description :string]
+   [:type [:enum "lesson" "practice"]]
    [:level :int]])
 
 (def GetUnitResponse
@@ -203,6 +204,7 @@
   [:map
    [:name :string]
    [:description :string]
+   [:type [:enum "lesson" "practice"]]
    [:level :int]])
 
 (def CreateUnitsParam

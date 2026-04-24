@@ -67,21 +67,25 @@
          ;;courses
          ["/courses" (-> (get courses/get-all-courses)
                          (post courses/create-course)
+                         (mw authmw/wrap-auth)
                          (tag :courses))]
 
          ["/courses/:id" (-> (get courses/get-course)
                              (post courses/update-course)
                              (delete courses/delete-course)
+                             (mw authmw/wrap-auth)
                              (tag :courses))]
 
          ["/courses/:id/units" (-> (get units/get-units)
                                    (post units/create-units)
+                                   (mw authmw/wrap-auth)
                                    (tag :units :courses))]
 
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
                            (delete units/delete-unit)
                            (post units/update-unit)
+                           (mw authmw/wrap-auth)
                            (tag :units))]
 
 ;;exercises

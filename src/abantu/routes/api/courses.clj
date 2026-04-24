@@ -20,11 +20,10 @@
 (defn create-course
   {:summary "Create a new course"
    :parameters (api/params :body api/CreateCourseParam)
-   :responses (api/success api/GetCourseResponse)
-   :tech/debt "replace creator-id with a real user-id, probably gotten from authz middleware"}
-  [{:keys [ds body] :as _request}]
+   :responses (api/success api/GetCourseResponse)}
+  [{:keys [ds body user] :as _request}]
   (let [course (merge body {:status "in-progress"
-                            :creator-id nil})]
+                            :creator-id (:id user)})]
     (res/response (courses/save-course! ds course))))
 
 (defn update-course
@@ -48,7 +47,6 @@
   [{:keys [ds path-params] :as _request}]
   (courses/delete-course! ds (:id path-params))
   (res/response {:message "Successfully deleted course"}))
-
 
 (defn used-instructions
   {:summary "Get all previously entered instructions for exercises in a given course."
