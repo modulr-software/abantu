@@ -33,7 +33,7 @@
 (defn update-unit
   {:summary "Update a unit with a given id"
    :parameters (api/params :path api/IdPathParam :body api/UpdateUnitParam)
-   :responses (api/success api/CreateUnitsResponse)}
+   :responses (api/success api/UpdateUnitResponse)}
   [{:keys [body ds] :as _request}]
   (let [{:keys [id]} body
         _result (units/update-unit! ds body)]

@@ -215,6 +215,9 @@
    [:message :string]
    [:data [:vector GetUnitResult]]])
 
+(def UpdateUnitResponse
+  GetUnitResult)
+
 (def AnswerParam
   [:map
    [:text {:optional true} [:maybe [:or [:vector :string] :string]]]
