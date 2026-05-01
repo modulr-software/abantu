@@ -24,7 +24,7 @@
          ;;auth
          ["/auth/register/student" (-> (post auth/register-student)
                                        (tag :auth))]
-         
+
          ["/auth/jag" (-> (get auth/jag)
                           (mw authmw/wrap-auth)
                           (tag :auth))]
@@ -100,7 +100,9 @@
          ["/exercises/:id" (-> (get units/get-exercise)
                                (post units/update-exercise)
                                (delete units/delete-exercise)
-                               (tag :exercises))]]]
+                               (tag :exercises))]
+
+         ["/exercises/move" (post units/move-exercises)]]]
 
        (rutil/data-map ds))
       (ring/routes

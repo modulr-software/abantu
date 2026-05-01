@@ -269,6 +269,11 @@
    (sometimes :correct-message :string)
    (sometimes :incorrect-message :string)])
 
+(def MoveExercisesParam
+  [:map
+   [:unit-id {:description "Target Unit ID"} :int]
+   [:exercise-ids [:vector :int]]])
+
 (def UpdateUnitParam
   (-> GetUnitResult
       (mu/optional-keys)

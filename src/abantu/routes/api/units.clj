@@ -1,7 +1,8 @@
 (ns abantu.routes.api.units
   (:require [ring.util.response :as res]
             [abantu.routes.openapi :as api]
-            [abantu.services.units :as units]))
+            [abantu.services.units :as units]
+            [abantu.db.honey :as hon]))
 
 (defn get-units
   {:summary "get all units with the given course id"
@@ -94,3 +95,12 @@
   (units/delete-exercise ds (:id path-params))
   (res/response {:message "Successfully deleted exercise"}))
 
+(defn move-exercises
+  {:summary "Move all the exercises with the given ids to a different unit"
+   :parameters (api/params :body api/MoveExercisesParam)
+   :responses (api/success (api/response-schema))}
+  [{:keys [ds body] :as _request}]
+  (when (seq (:exercise-ids body))
+    (hon/update! ds {:tname :exercises
+                     :where [:in :id (:exercise-ids body)]
+                     :data {:unit-id (:unit-id body)}})))
