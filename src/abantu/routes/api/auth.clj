@@ -2,8 +2,14 @@
   (:require [abantu.routes.openapi :as api]
             [ring.util.response :as res]
             [abantu.services.auth :as auth]
-            [abantu.migrate :as migrate]))
+            [abantu.migrate :as migrate]
+            [abantu.services.users :as users]))
 
+(defn jag
+  {:summary "Register a user as a student"
+   :responses (-> (api/success api/User))}
+  [{:keys [ds user] :as _request}]
+  (res/response (users/user ds (:id user))))
 
 (defn register-student
   {:summary "Registers a user as a student"

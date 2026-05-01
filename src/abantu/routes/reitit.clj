@@ -24,6 +24,10 @@
          ;;auth
          ["/auth/register/student" (-> (post auth/register-student)
                                        (tag :auth))]
+         
+         ["/auth/jag" (-> (get auth/jag)
+                          (mw authmw/wrap-auth)
+                          (tag :auth))]
 
          ["/auth/login" (-> (post auth/login)
                             (tag :auth))]

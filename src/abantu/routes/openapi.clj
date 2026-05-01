@@ -231,7 +231,9 @@
    (sometimes :audio :string)
    [:answer-type [:enum "freetext" "bubbles"]]
    [:options [:vector :string]]
-   (sometimes :answers AnswerParams)])
+   (sometimes :answers AnswerParams)
+   (sometimes :correct-message :string)
+   (sometimes :incorrect-message :string)])
 
 (def ExerciseParams
   [:vector ExerciseParam])
@@ -244,6 +246,8 @@
    [:question-content :string]
    [:answer-type [:enum "freetext" "bubbles"]]
    (sometimes :audio :string)
+   (sometimes :correct-message :string)
+   (sometimes :incorrect-message :string)
    [:options [:vector :string]]
    [:answers AnswerParams]])
 
@@ -258,7 +262,9 @@
    (sometimes :audio :string)
    (sometimes :answer-type [:enum "freetext" "bubbles"])
    (sometimes :options [:vector :string])
-   (sometimes :answers AnswerParams)])
+   (sometimes :answers AnswerParams)
+   (sometimes :correct-message :string)
+   (sometimes :incorrect-message :string)])
 
 (def UpdateUnitParam
   (-> GetUnitResult
@@ -273,6 +279,7 @@
    [:id :int]
    [:name :string]
    [:language :string]
+   (sometimes :description :string)
    [:status CourseStatus]
    (sometimes :creator User)
    [:units GetUnitsResponse]])
@@ -284,6 +291,7 @@
   [:map
    [:name :string]
    [:language :string]
+   (sometimes :description :string)
    [:units CreateUnitsParam]])
 
 (def UpdateCourseParam
@@ -291,6 +299,7 @@
    (sometimes :name :string)
    (sometimes :language :string)
    (sometimes :status CourseStatus)
+   (sometimes :description :string)
    (sometimes :creator-id :int)])
 
 (def RegisterStudentParams
