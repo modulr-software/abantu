@@ -34,6 +34,12 @@
   (-> (load-config)
       (get-in ks)))
 
+(defn read-cors-with-port []
+  (str (read-value :cors-origin) ":" (read-value :port)))
+
+(defn read-path-prefix []
+  (or (read-value :path-prefix) ""))
+
 (comment
   (read-value :supersecretkey)
   (read-value :database :dir)
@@ -41,5 +47,6 @@
   (read-value :cors-origin)
   (read-value :admins-path)
   (read-value :port)
-  (load-config))
+  (load-config)
+  (read-cors-with-port))
 

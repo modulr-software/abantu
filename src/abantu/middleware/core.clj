@@ -96,7 +96,7 @@
       (wrap-case-conversion)
       (wrap-query)
       (content-type/wrap-content-type)
-      (wrap-cors :access-control-allow-origin [(re-pattern (conf/read-value :cors-origin))]
+      (wrap-cors :access-control-allow-origin [(re-pattern (conf/read-cors-with-port))]
                  :access-control-allow-methods [:get :put :post :delete])
       (wrap-params)
       (wrap-defaults (assoc site-defaults :session false :security {:anti-forgery false}))

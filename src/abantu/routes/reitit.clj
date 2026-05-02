@@ -96,13 +96,13 @@
          ["/units/:id/exercises" (-> (get units/get-exercises-for-unit)
                                      (post units/add-exercises-to-unit)
                                      (tag :exercises))]
+         
+         ["/units/:id/exercises/move" (-> (post units/move-exercises))]
 
          ["/exercises/:id" (-> (get units/get-exercise)
                                (post units/update-exercise)
                                (delete units/delete-exercise)
-                               (tag :exercises))]
-
-         ["/exercises/move" (post units/move-exercises)]]]
+                               (tag :exercises))]]]
 
        (rutil/data-map ds))
       (ring/routes

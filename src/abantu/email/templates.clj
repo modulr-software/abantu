@@ -59,7 +59,7 @@
           [:br] [:br]
           "If you believe this was in error, you can reply to this email or click on the link below to leave us a message."]]
         (button {:text "Leave us a message"
-                 :redirect (str (conf/read-value :cors-origin) "/report-a-problem")})
+                 :redirect (str (conf/read-cors-with-port) "/report-a-problem")})
         [:tr
          [:td {:class "body"
                :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
@@ -94,7 +94,7 @@
           [:br] [:br]
           "Click on the link below to go to your dashboard and view your feed."]]
         (button {:text "View your feed"
-                 :redirect (str (conf/read-value :cors-origin) "/dashboard/feed/" feed-id)})
+                 :redirect (str (conf/read-cors-with-port) "/dashboard/feed/" feed-id)})
         [:tr
          [:td {:class "body"
                :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
