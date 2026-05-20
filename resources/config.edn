@@ -1,8 +1,8 @@
 {:supersecretkey #env SUPER_SECRET_KEY
- :port #or [#env PORT 3000]
+ :port #or [#env PORT 3010]
  :admins-path "resources/admins.json"
  :admins-encrypted-path "resources/admins_encrypted.json"
- :cors-origin #or [#env CORS_ORIGIN "http://localhost:8080"]
+ :cors-origin #or [#env CORS_ORIGIN "http://localhost"]
  :env #or [#env ENV "dev"]
  :database {:dir #or [#env DATABASE_DIR ".db/"]
             :type "sqlite"}

@@ -45,6 +45,7 @@
    (tables/table-id)
    [:name :text]
    [:language :text]
+   [:description :text]
    [:status :text [:check [:in :status  ["in-progress" "review" "published"]]]]
    [:creator-id :int]
    (tables/foreign-key :creator-id :users :id)))
@@ -82,6 +83,8 @@
    [:answer-type :text [:check [:in :answer-type ["freetext" "bubbles"]]]]
    [:options :text]
    [:level :int [:default 1]]
+   [:correct-message :text]
+   [:incorrect-message :text]
    (tables/foreign-key :unit-id :units :id)
    (tables/foreign-key :course-id :course :id)))
 

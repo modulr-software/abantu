@@ -23,6 +23,10 @@
        (process-bools)
        (process-role ds)))
 
+(defn user [ds id]
+    (-> (get-user ds id)
+        (dissoc :password :email-hash)))
+
 (defn get-user-type-id [ds role]
   (->> (db/find ds {:tname :user-types
                     :where [:= :name role]

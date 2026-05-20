@@ -115,7 +115,10 @@
 (defn update-unit! [ds {:keys [id] :as unit}]
   (db/update! ds {:tname :units
                   :where [:= :id id]
-                  :data (dissoc unit :id)}))
+                  :data (dissoc unit :id)})
+  (db/find-one ds {:tname :units
+                   :where [:= :id id]
+                   :ret :1}))
 
 (defn get-exercise [ds id]
   (add-answers

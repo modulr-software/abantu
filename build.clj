@@ -5,7 +5,7 @@
 (def jar-content (str build-folder "/classes"))
 
 (def basis (b/create-basis {:project "deps.edn"}))
-(def app-name "source-be")
+(def app-name "abantu-api")
 (def uber-file-name (format "%s/%s-standalone.jar" build-folder app-name)) ; path for result uber file
 
 (defn clean [_]

@@ -152,6 +152,7 @@
   ;;delete a course = pass
   (delete-course! ds 16)
   (get-all ds)
+  (get-course ds 1)
 
 
   (db/find ds {:tname :courses})
