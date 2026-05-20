@@ -1,7 +1,9 @@
-#!/usr/bin/env bash
-export $(grep '.*' staging.env | xargs)
+#!/bin/bash
+cd /home/merv/Developer/abantu-be-staging
+
+export $(grep '.*' .env | xargs)
 
 export JAVA_CMD="$JAVA_HOME/bin/java"
-clojure -M:migrate
+./migrate.sh up
 
-/home/merv/.jenv/shims/java -jar target/source-be-standalone.jar
+/home/merv/.jenv/shims/java -jar target/abantu-api-standalone.jar
