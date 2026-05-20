@@ -35,7 +35,9 @@
       (get-in ks)))
 
 (defn read-cors-with-port []
-  (str (read-value :cors-origin) ":" (read-value :port)))
+  #_(str (read-value :cors-origin) ":" (read-value :port))
+  #"^https?:\/\/localhost(?::\d+)?$"
+  )
 
 (defn read-path-prefix []
   (or (read-value :path-prefix) ""))
