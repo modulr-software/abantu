@@ -96,8 +96,7 @@
       (wrap-case-conversion)
       (wrap-query)
       (content-type/wrap-content-type)
-      (wrap-cors :access-control-allow-origin [(conf/read-cors-with-port)
-                                               "https://abantumobile.expo.app"]
+      (wrap-cors :access-control-allow-origin (conf/read-allowed-cors-origins) 
                  :access-control-allow-methods [:get :put :post :delete])
       (wrap-params)
       (wrap-defaults (assoc site-defaults :session false :security {:anti-forgery false}))
