@@ -41,7 +41,7 @@
 
 (defn read-allowed-cors-origins []
   [(read-cors-with-port)
-   #"^https?:\/\/\abantumobile\.expo\.app"])
+   #"^(?:https:\/\/)?abantumobile\.expo\.app\/?$"])
 
 (defn read-path-prefix []
   (or (read-value :path-prefix) ""))
