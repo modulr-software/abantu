@@ -12,7 +12,7 @@
   (res/response (users/user ds (:id user))))
 
 (defn register-student
-  {:summary "Registers a user as a student"
+  {:summary "Registers a user as a student like right now bro"
    :parameters (api/params :body api/RegisterStudentParams)
    :responses (-> (api/success api/RegisterStudentResponse)
                   (api/unauthorized [:map [:message :string]]))}
