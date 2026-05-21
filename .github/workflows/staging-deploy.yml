@@ -22,8 +22,6 @@ jobs:
       - name: Execute remote SSH commands
         run: |
           ssh -o StrictHostKeyChecking=no merv@mervstation.tail4f070.ts.net '
-            cd /home/merv/Developer/abantu
-            git pull
-            ./build.sh
-            sudo /bin/systemctl restart abantu-api
+            cd /home/merv/Developer/abantu-be-staging
+            ./deploy.sh
           '
