@@ -7,6 +7,7 @@
             [abantu.routes.api.courses :as courses]
             [abantu.routes.api.auth :as auth]
             [abantu.routes.api.student :as student]
+            [abantu.routes.api.audio :as audio]
             [abantu.middleware.auth.core :as authmw]
             [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
 
@@ -20,6 +21,12 @@
         (rutil/openapi-route)
 
         ["/api"
+         
+         ["/media/audio" (-> (post audio/upload-audio)
+                             (get audio/get-audio)
+                             (tag :audio))]
+         #_["/media/exercise/:id"]
+         
 
          ;;auth
          ["/auth/register/student" (-> (post auth/register-student)

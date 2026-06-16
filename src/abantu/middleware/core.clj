@@ -9,7 +9,6 @@
             [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
             [ring.middleware.json :as ring]
             [ring.middleware.cookies :as cookies]
-            [ring.middleware.multipart-params :as multipart-params]
             [clojure.walk :as walk]
             [abantu.util :as util]
             [clojure.string :as string]))
