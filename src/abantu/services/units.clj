@@ -132,14 +132,20 @@
        (add-answers ds)
        (process-options)))
 
+(defn- encode-answer [answer]
+  (update-in answer [:text] #(str/join ";;" %)))
+
 (defn update-exercise! [ds {:keys [answers id] :as exercise}]
+  (let [answers answers]
+    (prn "answers" answers))
   (when (seq answers)
     (db/delete! ds {:tname :answers
-                    :where [:= :exercise-id id]
+                    :where [:= :exercise-id (Integer/parseInt id)]
                     :ret :*})
     (db/insert! ds {:tname :answers
-                    :data (->> (mapv :text answers)
-                               (mapv #(assoc % :exercise-id id)))
+                    :data (->> answers
+                               (mapv #(assoc % :exercise-id id))
+                               (mapv encode-answer))
                     :ret :*}))
   (db/update! ds {:tname :exercises
                   :data (-> (dissoc exercise :answers)
@@ -179,7 +185,7 @@
                                  :options "Xhosa,Xhosas,a,It's"
                                  :answers [{:text "Xhosa"}]}]}])
 
-  (db/find ds {:tname :exercises
+  (db/find ds {:tname :answers
                :ret :*})
 
   (get-exercises-for-unit ds 1)

@@ -83,6 +83,7 @@
                            :body api/UpdateExerciseParam)
    :responses (api/success api/GetExerciseResult)}
   [{:keys [ds path-params body] :as _request}]
+  (prn "path-params" path-params)
   (units/update-exercise! ds (assoc body :id (:id path-params)))
   (res/response (units/get-exercise ds (:id path-params))))
 
