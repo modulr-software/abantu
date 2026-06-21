@@ -136,12 +136,10 @@
   (update-in answer [:text] #(str/join ";;" %)))
 
 (defn update-exercise! [ds {:keys [answers id] :as exercise}]
-  (let [answers answers]
-    (prn "answers" answers))
+  (db/delete! ds {:tname :answers
+                  :where [:= :exercise-id id]
+                  :ret :*})
   (when (seq answers)
-    (db/delete! ds {:tname :answers
-                    :where [:= :exercise-id (Integer/parseInt id)]
-                    :ret :*})
     (db/insert! ds {:tname :answers
                     :data (->> answers
                                (mapv #(assoc % :exercise-id id))
