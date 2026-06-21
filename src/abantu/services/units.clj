@@ -10,6 +10,11 @@
              #(-> (clojure.string/split % #";;")
                   (vec))))
 
+(defn- encode-options [{:keys [options] :as exercise}]
+  (update-in exercise
+             [:options]
+             #(str/join ";;" %)))
+
 (defn- add-answers [ds {:keys [id answer-type] :as exercise}]
   (let [answers (db/find ds {:tname :answers
                              :where [:= :exercise-id id]
@@ -121,11 +126,11 @@
                    :ret :1}))
 
 (defn get-exercise [ds id]
-  (add-answers
-   ds (db/find
-       ds {:tname :exercises
-           :where [:= :id id]
-           :ret :1})))
+  (->> (db/find ds {:tname :exercises
+                    :where [:= :id id]
+                    :ret :1})
+       (add-answers ds)
+       (process-options)))
 
 (defn update-exercise! [ds {:keys [answers id] :as exercise}]
   (when (seq answers)
@@ -133,11 +138,14 @@
                     :where [:= :exercise-id id]
                     :ret :*})
     (db/insert! ds {:tname :answers
-                    :data (mapv #(assoc % :exercise-id id) answers)
+                    :data (->> (mapv :text answers)
+                               (mapv #(assoc % :exercise-id id)))
                     :ret :*}))
   (db/update! ds {:tname :exercises
-                  :data (dissoc exercise :answers)
-                  :where [:= :id id]}))
+                  :data (-> (dissoc exercise :answers)
+                            (encode-options))
+                  :where [:= :id id]
+                  :ret :1}))
 
 (defn delete-exercise [ds id]
   (let [{:keys [id answers] :as exercise} (get-exercise ds id)]
