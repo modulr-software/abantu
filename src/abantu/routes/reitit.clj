@@ -25,6 +25,9 @@
          ["/media/audio" (-> (post audio/upload-audio)
                              (get audio/get-audio)
                              (tag :audio))]
+         
+         ["/media/audio/blob" (-> (get audio/get-blob)
+                                  (tag :audio))]
          #_["/media/exercise/:id"]
          
 

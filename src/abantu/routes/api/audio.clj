@@ -21,3 +21,21 @@
     (catch Exception _
       (-> (res/response {:audio nil})
           (res/status 404)))))
+
+(defn get-blob
+  {:summary "down a sound byte as blob to use on an exercise or question"
+   :parameters (api/params :query [:map [:id :string]])
+   :responses {200 {:description "a binary file blob"
+                    :content {"audio/wav" {:schema [:string {:json-schema/format "binary"}]}}}}}
+  [{:keys [params]}]
+  (prn "params" params)
+  (-> (str  ".db/audio/" (:id params))
+      (clojure.java.io/input-stream)
+      (res/response)
+      (res/header "Content-Type" "audio/wav")))
+
+(comment
+  
+  
+  (clojure.java.io/input-stream (str (System/getenv "HOME") "/Developer/abantu/.db/audio/" "correct_tone"))
+  :end)
