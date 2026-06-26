@@ -6,6 +6,9 @@
 
 (def ^:private audio-prefix ".db/audio/")
 
+(defn audio-path [id type]
+  (str audio-prefix id (if type (str "." type) ".wav")))
+
 (defn wav->flac [wav-path flac-path]
   (let [{:keys [out err exit]} (shell/sh "flac" wav-path "-o" flac-path)]
     (if (zero? exit)
@@ -27,18 +30,6 @@
        (base64-to-bytes)
        (write-bytes (str f extension))))
 
-(defn save-audio-file! [f type base64]
-  (let [extension (if type
-                    (str "." type)
-                    ".wav")]
-
-    (save-base64 f extension base64)
-
-    (when (= extension ".wav")
-      (wav->flac
-       (str audio-prefix f extension)
-       (str audio-prefix f ".flac")))))
-
 (defn read-base64 [f]
   (with-open [input (io/input-stream (str audio-prefix f))
               output (java.io.ByteArrayOutputStream.)]
@@ -59,6 +50,6 @@
   (codecs/str->bytes base64)
   (= (read-base64 "test-out.txt") base64)
 
-  (wav->flac ".db/audio/test.wav" ".db/audio/test.flac")
+  (wav->flac ".db/audio/umama_nabantwana_bakhe" ".db/audio/umama_nabantwana_bakhe.flac")
 
   ())

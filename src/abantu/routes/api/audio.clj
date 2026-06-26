@@ -2,8 +2,7 @@
   (:require [abantu.routes.openapi :as api]
             [abantu.io.file :as io]
             [ring.util.response :as res]
-            ;; TODO - this can just be java-io
-            [clojure.java.io :as jio]))
+            [clojure.java.io :as java.io]))
 
 (defn upload-audio
   {:summary "Upload a sound byte to use on an exercise or question"
@@ -15,7 +14,14 @@
                         [:type {:optional true} :string]]])
    :responses (api/success [:map [:message :string]])}
   [{:keys [body]}]
-  (run! #(io/save-audio-file! (:id %) (:type %) (:audio %)) body)
+  (run! (fn [{:keys [audio id type]}]
+          (let [extension (if type (str "." type) ".wav")]
+            (io/save-base64 id extension audio)
+            (when (= extension ".wav")
+              (io/wav->flac
+               (io/audio-path id extension)
+               (io/audio-path id "flac"))))) body)
+
   (res/response {:message "successfully uploaded audio!"}))
 
 (defn get-audio
@@ -29,7 +35,6 @@
       (-> (res/response {:audio nil})
           (res/status 404)))))
 
-
 (defn get-blob
   {:summary "down a sound byte as blob to use on an exercise or question"
    :parameters (api/params :query [:map
@@ -41,18 +46,16 @@
   [{:keys [params]}]
 
   (let [{:keys [id type]} params
-        ;; TODO - this needs to be a helper function in io/file.clj
-        filepath (str ".db/audio/" id (when type (str "." type)))]
-    (if (.exists (jio/file filepath))
+        filepath (io/audio-path id type)]
+    (if (.exists (java.io/file filepath))
       (-> filepath
-          (jio/input-stream)
+          (java.io/input-stream)
           (res/response)
-          ;; TODO - this type needs to reflect what is being fetched
-          (res/header "Content-Type" "audio/wav"))
+          (res/header "Content-Type" (if type (str "audio/" type) "audio/flac")))
 
       (-> (res/response {:message (str "The audio file at '" filepath "' does not exist.")})
           (res/status 404)))))
 
 (comment
-  (jio/input-stream (str (System/getenv "HOME") "/Developer/abantu/.db/audio/" "correct_tone"))
+  (java.io/input-stream (str (System/getenv "HOME") "/Developer/abantu/.db/audio/" "correct_tone"))
   :end)
