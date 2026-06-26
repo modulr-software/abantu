@@ -1,10 +1,27 @@
 (ns abantu.io.file
   (:require [buddy.core.codecs :as codecs]
             [clojure.java.io :as io]
-            [clojure.java.shell :as shell])
+            [clojure.java.shell :as shell]
+            [clojure.string :as str])
   (:import (java.util Base64)))
 
 (def ^:private audio-prefix ".db/audio/")
+
+(defn list-paths [dir-path]
+  (->> (io/file dir-path)
+       .listFiles
+       (mapv #(.getPath %))))
+
+(defn remove-extension [filename]
+  (str/replace filename #"\.[^.]+$" ""))
+
+(defn wav-header? [file-path]
+  (with-open [is (java.io.FileInputStream. (io/file file-path))]
+    (let [buffer (byte-array 12)]
+      (when (= 12 (.read is buffer))
+        (let [header (String. buffer 0 4 "US-ASCII")
+              format (String. buffer 8 4 "US-ASCII")]
+          (and (= "RIFF" header) (= "WAVE" format)))))))
 
 (defn audio-path [id type]
   (str audio-prefix id (if type (str "." type) ".flac")))
@@ -51,5 +68,8 @@
   (= (read-base64 "test-out.txt") base64)
 
   (wav->flac ".db/audio/umama_nabantwana_bakhe" ".db/audio/umama_nabantwana_bakhe.flac")
+  (wav-header? ".db/audio/person")
+
+  (list-paths ".db/audio")
 
   ())
