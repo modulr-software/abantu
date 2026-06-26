@@ -21,17 +21,16 @@
         (rutil/openapi-route)
 
         ["/api"
-         
+
          ["/media/audio" (-> (post audio/upload-audio)
                              (get audio/get-audio)
                              (tag :audio))]
-         
+
          ["/media/audio/blob" (-> (get audio/get-blob)
                                   (tag :audio))]
          #_["/media/exercise/:id"]
-         
 
-         ;;auth
+;;auth
          ["/auth/register/student" (-> (post auth/register-student)
                                        (tag :auth))]
 
@@ -106,7 +105,7 @@
          ["/units/:id/exercises" (-> (get units/get-exercises-for-unit)
                                      (post units/add-exercises-to-unit)
                                      (tag :exercises))]
-         
+
          ["/units/:id/exercises/move" (-> (post units/move-exercises))]
 
          ["/exercises/:id" (-> (get units/get-exercise)
