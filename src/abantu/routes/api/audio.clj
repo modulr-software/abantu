@@ -2,10 +2,9 @@
   (:require [abantu.routes.openapi :as api]
             [abantu.io.file :as io]
             [ring.util.response :as res]
+            ;; TODO - this can just be java-io
             [clojure.java.io :as jio]))
 
-;; TODO - save files here with a file type extension. follow the todo of get-blob for details.
-;; if no input is specified for type, just use wav and compress the file to flac (do this as a third step not right now).
 (defn upload-audio
   {:summary "Upload a sound byte to use on an exercise or question"
    :parameters (api/params
@@ -30,10 +29,7 @@
       (-> (res/response {:audio nil})
           (res/status 404)))))
 
-;; TODO - this needs to also take the file type
-;; we look up the file locally by scanning .db/audio for id + "." + type
-;; only if the file exists in the desired filetype do we actually return it as blob
-;; otherwise no (404)
+
 (defn get-blob
   {:summary "down a sound byte as blob to use on an exercise or question"
    :parameters (api/params :query [:map
@@ -45,11 +41,13 @@
   [{:keys [params]}]
 
   (let [{:keys [id type]} params
+        ;; TODO - this needs to be a helper function in io/file.clj
         filepath (str ".db/audio/" id (when type (str "." type)))]
     (if (.exists (jio/file filepath))
       (-> filepath
           (jio/input-stream)
           (res/response)
+          ;; TODO - this type needs to reflect what is being fetched
           (res/header "Content-Type" "audio/wav"))
 
       (-> (res/response {:message (str "The audio file at '" filepath "' does not exist.")})
