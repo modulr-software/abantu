@@ -7,7 +7,7 @@
 (def ^:private audio-prefix ".db/audio/")
 
 (defn audio-path [id type]
-  (str audio-prefix id (if type (str "." type) ".wav")))
+  (str audio-prefix id (if type (str "." type) ".flac")))
 
 (defn wav->flac [wav-path flac-path]
   (let [{:keys [out err exit]} (shell/sh "flac" wav-path "-o" flac-path)]

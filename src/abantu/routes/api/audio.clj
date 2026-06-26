@@ -41,7 +41,7 @@
                                    [:id :string]
                                    [:type {:optional true} :string]])
    :responses {200 {:description "a binary file blob"
-                    :content {"audio/wav" {:schema [:string {:json-schema/format "binary"}]}}}
+                    :content {"audio/flac" {:schema [:string {:json-schema/format "binary"}]}}}
                404 {:body [:map [:message :string]]}}}
   [{:keys [params]}]
 
