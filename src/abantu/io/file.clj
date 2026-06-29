@@ -26,8 +26,11 @@
 (defn audio-path [id type]
   (str audio-prefix id (if type (str "." type) ".flac")))
 
-(defn wav->flac [wav-path flac-path]
-  (let [{:keys [out err exit]} (shell/sh "flac" wav-path "-o" flac-path)]
+
+(defn wav->flac 
+  {:dev/debt "use clojure to remove the file manually instead of relying on flac to overwrite it"}
+  [wav-path flac-path]
+  (let [{:keys [out err exit]} (shell/sh "flac" "-f" wav-path "-o" flac-path)]
     (if (zero? exit)
       (do
         (println out)
@@ -67,7 +70,7 @@
   (codecs/str->bytes base64)
   (= (read-base64 "test-out.txt") base64)
 
-  (wav->flac ".db/audio/umama_nabantwana_bakhe" ".db/audio/umama_nabantwana_bakhe.flac")
+  (wav->flac ".db/audio/cheese.wav" ".db/audio/cheese.flac")
   (wav-header? ".db/audio/person")
 
   (list-paths ".db/audio")
