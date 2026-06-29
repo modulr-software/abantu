@@ -17,10 +17,9 @@
   (run! (fn [{:keys [audio id type]}]
           (let [extension (if type (str "." type) ".wav")]
             (io/save-base64 id extension audio)
-            (when (= extension ".wav")
-              (io/wav->flac
-               (io/audio-path id extension)
-               (io/audio-path id "flac"))))) body)
+            (io/wav->flac
+             (io/audio-path id type)
+             (io/audio-path id "flac")))) body)
 
   (res/response {:message "successfully uploaded audio!"}))
 
