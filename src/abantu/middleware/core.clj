@@ -96,7 +96,7 @@
       (wrap-query)
       (content-type/wrap-content-type)
       (wrap-cors :access-control-allow-origin (conf/read-allowed-cors-origins) 
-                 :access-control-allow-methods [:get :put :post :delete])
+                 :access-control-allow-methods [:get :put :post :delete :options])
       (wrap-params)
       (wrap-defaults (assoc site-defaults :session false :security {:anti-forgery false}))
       (ring/wrap-json-response)
