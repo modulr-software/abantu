@@ -67,7 +67,12 @@
                                   [:message :string]])
    :responses (api/success (api/response-schema))}
   [{:keys [body] :as _request}]
+  (println body)
   (gmail/send-email {:to (conf/read-value :email :username)
                      :subject "Abantu - Creator Admission Request"
                      :body (templates/creator-admission-request body)
+                     :type :text/html})
+  (gmail/send-email {:to (:email body)
+                     :subject "Abantu - We received your request!"
+                     :body (templates/creator-admission-request-acknowledgement (:firstname body))
                      :type :text/html}))

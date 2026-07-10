@@ -10,8 +10,8 @@
 (defn header []
   [:tr
    [:td {:class "header"
-         :style "background-color: #0F172A; padding: 40px; text-align: center; color: white; font-size: 36px;"}
-    "Source"]])
+         :style "background-color: #232523; padding: 40px; text-align: center; color: #7BF1A8; font-size: 36px;"}
+    "ABANTU"]])
 
 (defn button [{:keys [text redirect]}]
   [:tr
@@ -28,8 +28,8 @@
 (defn footer []
   [:tr
    [:td {:class "footer"
-         :style "background-color: #0F172A; padding: 20px; text-align: center; color: white; font-size: 14px;"}
-    "Copyright © 2025 | Wearesource"]])
+         :style "background-color: #232523; padding: 20px; text-align: center; color: #7BF1A8; font-size: 14px;"}
+    "Copyright © 2026 | Abantu"]])
 
 (defn feed-rejection
   "Returns the completed HTML for a feed rejection email"
@@ -146,44 +146,71 @@
             "This is an automated message. Please do not reply directly to this email."]]
           (footer)]]]]])))
 
+(defn creator-admission-request-acknowledgement
+  "Returns the completed HTML for a creator admission request acknowledgement email"
+  [{:keys [firstname]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " firstname ",")
+          [:br] [:br]
+          "Thank you for your interest in Abantu."
+          [:br] [:br]
+          "We have received your submission to become a Course Creator. Our Admin Team is reveiwing your request and will get back to you shortly."
+          [:br] [:br]
+          "Sincerely"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
+
 (defn creator-admission-request
   "Returns the completed HTML for a creator admission request email"
   [{:keys [email firstname lastname message]}]
-  (let [shortened-message (if (> (count message) 15)
-                            (str (subs message 0 15) "...")
-                            message)]
-    (h/html5
-     {:lang "en"}
-     (head-metadata)
-     [:body {:style "font-family: 'Switzer', sans-serif"}
-      [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
-       [:tr
-        [:td {:align "center" :style "padding: 20px;"}
-         [:table {:class "content"
-                  :width "600"
-                  :border "0"
-                  :cellspacing "0"
-                  :cellpadding "0"
-                  :style "border-collapse: collapse; border: 1px solid #cccccc;"}
-          (header)
-          [:tr
-           [:td {:class "body"
-                 :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
-            "A user has reported a problem:"
-            [:br] [:br]
-            message
-            [:br] [:br]
-            (str "User email address: " email)
-            [:br]
-            (str "First name: " firstname)
-            [:br]
-            (str "Last name: " lastname)
-            [:br]
-            "Click on the link below to respond"]]
-          (button {:text "Respond"
-                   :redirect (str "mailto:" email "?subject=Source Team Re:" shortened-message)})
-          [:tr
-           [:td {:class "body"
-                 :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
-            "This is an automated message. Please do not reply directly to this email."]]
-          (footer)]]]]])))
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          "A user has requested admission to become a Course Creator:"
+          [:br] [:br]
+          message
+          [:br] [:br]
+          (str "User email address: " email)
+          [:br]
+          (str "First name: " firstname)
+          [:br]
+          (str "Last name: " lastname)
+          [:br]]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]]]]]]))
