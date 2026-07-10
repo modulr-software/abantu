@@ -3,7 +3,10 @@
             [ring.util.response :as res]
             [abantu.services.auth :as auth]
             [abantu.migrate :as migrate]
-            [abantu.services.users :as users]))
+            [abantu.services.users :as users]
+            [abantu.email.gmail :as gmail]
+            [abantu.email.templates :as templates]
+            [abantu.config :as conf]))
 
 (defn jag
   {:summary "Register a user as a student"
@@ -54,3 +57,17 @@
       (res/response {:message "successfully verified email"})
       (-> (res/response {:message "the email hash provided does not match an existing user"})
           (res/status 404)))))
+
+(defn creator-request
+  {:summary "request admission to become a course creator"
+   :parameters (api/params :body [:map
+                                  [:email :string]
+                                  [:firstname :string]
+                                  [:lastname :string]
+                                  [:message :string]])
+   :responses (api/success (api/response-schema))}
+  [{:keys [body] :as _request}]
+  (gmail/send-email {:to (conf/read-value :email :username)
+                     :subject "Abantu - Creator Admission Request"
+                     :body (templates/creator-admission-request body)
+                     :type :text/html}))

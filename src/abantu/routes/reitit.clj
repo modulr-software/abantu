@@ -44,6 +44,9 @@
          ["/auth/email/verify" (-> (post auth/verify-email)
                                    (tag :auth))]
 
+         ["/auth/creator/request" (-> (post auth/creator-request)
+                                      (tag :auth))]
+
          ["/student/session/start/:id" (-> (post student/start-session!)
                                            (mw authmw/wrap-auth)
                                            (tag :student))]
