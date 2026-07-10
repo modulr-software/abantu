@@ -192,6 +192,7 @@
    [:name :string]
    [:description :string]
    [:type [:enum "lesson" "practice"]]
+   [:position :int]
    [:level :int]])
 
 (def GetUnitResponse

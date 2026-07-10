@@ -110,6 +110,19 @@
                   :ret :1})
   (not (course-by-user ds user-id course-id)))
 
+(defn change-unit-order [ds unit-id position]
+  (let [unit (db/find-one ds {:tname :units
+                              :where [:= :id unit-id]
+                              :ret :1})]
+    (when (nil? unit)
+      (throw (ex-info (str "Unable to find unit with id " unit-id " and set its position to " position)
+                      {:panic? "Yes, some user's may not be able to change the order of units within a course."
+                       :next-steps "Debug this by comparing the input from the admin portal to the database state."})))
+    (db/update! ds {:tname :units
+                    :where [:= :id unit-id]
+                    :data {:position position}})
+    (some? unit)))
+
 (comment
   (def ds (db/ds :master))
 
@@ -152,7 +165,11 @@
   ;;delete a course = pass
   (delete-course! ds 16)
   (get-all ds)
-  (get-course ds 1)
+  (->> (get-course ds 1)
+       :units
+      (mapv (juxt :name :position))
+       (into {}))
+  
 
 
   (db/find ds {:tname :courses})

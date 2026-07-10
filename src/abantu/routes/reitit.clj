@@ -28,9 +28,8 @@
 
          ["/media/audio/blob" (-> (get audio/get-blob)
                                   (tag :audio))]
-         #_["/media/exercise/:id"]
 
-;;auth
+         ;;auth
          ["/auth/register/student" (-> (post auth/register-student)
                                        (tag :auth))]
 
@@ -70,7 +69,7 @@
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
 
-;; vocab
+         ;; vocab
          ["/vocab" (-> (get vocab/get-all)
                        (post vocab/add)
                        (tag :vocab))]
@@ -97,6 +96,10 @@
                                    (mw authmw/wrap-auth)
                                    (tag :units :courses))]
 
+         ["/courses/:id/units/order/change" (-> (post courses/change-units-order)
+                                                (mw authmw/wrap-auth)
+                                                (tag :courses))]
+
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
                            (delete units/delete-unit)
@@ -104,7 +107,7 @@
                            (mw authmw/wrap-auth)
                            (tag :units))]
 
-;;exercises
+         ;;exercises
          ["/units/:id/exercises" (-> (get units/get-exercises-for-unit)
                                      (post units/add-exercises-to-unit)
                                      (tag :exercises))]

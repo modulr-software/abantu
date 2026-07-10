@@ -52,6 +52,7 @@
   [ds course-id]
   (->> (db/find ds {:tname :units
                     :where [:= :course-id course-id]
+                    :order-by [[:position :asc]]
                     :ret :*})
        (mapv #(assoc % :exercises
                      (get-exercises-for-unit ds (:id %))))))
@@ -106,9 +107,13 @@
   (mapv (partial save-exercise! ds)
         exercises))
 
-(defn save-unit! [ds {:keys [exercises] :as unit}]
-  (let [{:keys [id] :as result} (db/insert! ds {:tname :units
-                                                :data (dissoc unit :exercises)
+(defn save-unit! [ds {:keys [exercises course-id] :as unit}]
+  (let [existing-units (db/find ds {:tname :units
+                                    :where [:= :course-id (Integer/parseInt course-id)]
+                                    :ret :*})
+        {:keys [id] :as result} (db/insert! ds {:tname :units
+                                                :data (-> (dissoc unit :exercises)
+                                                          (assoc :position (inc (count existing-units)))) 
                                                 :ret :1})]
     (->> (when (seq exercises)
            (save-exercises! ds (mapv #(assoc % :unit-id id) exercises)))

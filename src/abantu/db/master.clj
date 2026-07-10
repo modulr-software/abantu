@@ -69,6 +69,7 @@
    [:type :text [:check [:in :type ["lesson" "practice"]]]]
    [:course-id :int]
    [:creator-id :int]
+   [:position :int]
    (tables/foreign-key :course-id :courses :id)))
 
 (def exercises
