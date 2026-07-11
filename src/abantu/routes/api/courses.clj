@@ -58,13 +58,15 @@
 
 (defn change-units-order
   {:summary "Set the order of the units in a given course"
-   :parameters (api/params :body [:vector [:map
+   :parameters (api/params :path api/IdPathParam
+                           :body [:vector [:map
                                            [:unit-id :int]
                                            [:position :int]]])
    :responses (api/success [:map [:message :string]])}
   [{:keys [ds body] :as _request}]
   (try
     (run! #(courses/change-unit-order ds (:unit-id %) (:position %)) body)
+    (res/response {:message "Successfully changed unit order"})
     (catch Exception e
       (prn e)
       (-> (res/response {:message "Unable to change unit order"})

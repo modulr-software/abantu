@@ -86,6 +86,7 @@
    [:level :int [:default 1]]
    [:correct-message :text]
    [:incorrect-message :text]
+   [:position :int]
    (tables/foreign-key :unit-id :units :id)
    (tables/foreign-key :course-id :course :id)))
 

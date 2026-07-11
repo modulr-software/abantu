@@ -29,6 +29,7 @@
   [ds id]
   (->> (db/find ds {:tname :exercises
                     :where [:= :unit-id id]
+                    :order-by [[:position :asc]]
                     :ret :*})
        (mapv (comp process-options
                    (partial add-answers ds)))))
@@ -91,11 +92,15 @@
        (assoc {:tname :answers :ret :*} :data)
        (db/insert! ds)))
 
-(defn save-exercise! [ds {:keys [options answers answer-type] :as exercise}]
-  (let [{:keys [id] :as result}
+(defn save-exercise! [ds {:keys [options answers answer-type unit-id] :as exercise}]
+  (let [existing-exercises (db/find ds {:tname :exercises
+                                        :where [:= :unit-id unit-id]
+                                        :ret :*})
+        {:keys [id] :as result}
         (db/insert! ds {:tname :exercises
                         :data (-> (dissoc exercise :answers)
-                                  (assoc :options (str/join ";;" options)))
+                                  (assoc :options (str/join ";;" options)
+                                         :position (inc (count existing-exercises))))
                         :ret :1})]
     (when (seq answers)
       (save-answers-for-exercise! ds id answer-type answers))
@@ -109,7 +114,7 @@
 
 (defn save-unit! [ds {:keys [exercises course-id] :as unit}]
   (let [existing-units (db/find ds {:tname :units
-                                    :where [:= :course-id (Integer/parseInt course-id)]
+                                    :where [:= :course-id course-id]
                                     :ret :*})
         {:keys [id] :as result} (db/insert! ds {:tname :units
                                                 :data (-> (dissoc unit :exercises)
@@ -166,6 +171,19 @@
       (db/delete! ds {:tname :exercises
                       :where [:= :id id]
                       :ret :1}))))
+
+(defn change-exercise-order [ds exercise-id position]
+  (let [exercise (db/find-one ds {:tname :exercises
+                                  :where [:= :id exercise-id]
+                                  :ret :1})]
+    (when (nil? exercise)
+      (throw (ex-info (str "Unable to find exercise with id " exercise-id " and set its position to " position)
+                      {:panic? "Yes, some user's may not be able to change the order of exercises within a unit."
+                       :next-steps "Debug this by comparing the input from the admin portal to the database state."})))
+    (db/update! ds {:tname :exercises
+                    :where [:= :id exercise-id]
+                    :data {:position position}})
+    (some? exercise)))
 
 (defn delete-unit! [ds id]
   (let [unit (get-unit ds id)

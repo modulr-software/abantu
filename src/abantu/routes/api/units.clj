@@ -105,3 +105,19 @@
     (hon/update! ds {:tname :exercises
                      :where [:in :id (:exercise-ids body)]
                      :data {:unit-id (:unit-id body)}})))
+
+(defn change-exercises-order
+  {:summary "Set the order of the exercises in a given unit"
+   :parameters (api/params :path api/IdPathParam
+                           :body [:vector [:map
+                                           [:exercise-id :int]
+                                           [:position :int]]])
+   :responses (api/success [:map [:message :string]])}
+  [{:keys [ds body] :as _request}]
+  (try
+    (run! #(units/change-exercise-order ds (:exercise-id %) (:position %)) body)
+    (res/response {:message "Successfully changed exercise order"})
+    (catch Exception e
+      (prn e)
+      (-> (res/response {:message "Unable to change exercise order"})
+          (res/status 400)))))

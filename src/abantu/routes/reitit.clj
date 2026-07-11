@@ -114,6 +114,10 @@
 
          ["/units/:id/exercises/move" (-> (post units/move-exercises))]
 
+         ["/units/:id/exercises/order/change" (-> (post units/change-exercises-order)
+                                                  (mw authmw/wrap-auth)
+                                                  (tag :exercises))]
+
          ["/exercises/:id" (-> (get units/get-exercise)
                                (post units/update-exercise)
                                (delete units/delete-exercise)
