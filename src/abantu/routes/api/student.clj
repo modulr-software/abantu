@@ -52,6 +52,7 @@
   [{:keys [ds user] :as _request}]
   (let [user-id (:id user)
         course-ids (->> (courses/courses-by-user ds user-id)
+                        (map :id)
                         (set))
         all-courses (courses/get-all ds)
         mod (remove #(contains? course-ids (:id %)) all-courses)]
