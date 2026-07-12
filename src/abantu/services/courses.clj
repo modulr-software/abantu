@@ -73,6 +73,14 @@
                       :ret :1}))))
 
 
+(defn courses-by-creator [ds creator-id]
+  (let [courses (db/find ds {:tname :courses
+                             :where [:= :creator-id creator-id]
+                             :ret :*})]
+    (mapv (comp (partial append-units ds)
+                (partial append-creator ds)) courses)))
+
+
 (defn courses-by-user [ds user-id]
   (let [course-ids (mapv :course-id (db/find ds {:tname :user-courses
                                                  :where [:= :user-id user-id]

@@ -5,11 +5,22 @@
             [ring.util.response :as res]))
 
 (defn get-all-courses
-  {:summary "Get all courses"
-   :responses (api/success api/GetCoursesResponse)}
-  [{:keys [ds] :as _request}]
-  (res/response
-   (courses/get-all ds)))
+  {:summary "Get all courses. Admins receive every course; users above student receive only
+             the courses they created; students are forbidden."
+   :responses (-> (api/success api/GetCoursesResponse)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds user] :as _request}]
+  (let [role (:role (users/get-user ds (:id user)))]
+    (cond
+      (= "admin" role)
+      (res/response (courses/get-all ds))
+
+      (and (some? role) (not= "student" role))
+      (res/response (courses/courses-by-creator ds (:id user)))
+
+      :else
+      (-> (res/response {:message "Forbidden: students are not permitted to view courses."})
+          (res/status 403)))))
 
 (defn get-course
   {:summary "Get a specific course with all units by id"
