@@ -171,6 +171,8 @@
 
 (def IdPathParam [:map [:id :int]])
 
+(def CourseUserPathParams [:map [:id :int] [:user-id :int]])
+
 (def DeleteVocabResponse
   [:map [:message :string]])
 
@@ -295,6 +297,12 @@
 
 (def GetCoursesResponse
   [:vector GetCourseResponse])
+
+(def GetCourseStudentsResponse
+  [:vector User])
+
+(def GetUsersResponse
+  [:vector User])
 
 (def CreateCourseParam
   [:map

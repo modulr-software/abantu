@@ -91,6 +91,14 @@
                                    [:= :course-id course-id]]})
     (get-course ds course-id)))
 
+(defn students-by-course
+  "Returns the public user records of every student subscribed to the given course."
+  [ds course-id]
+  (let [user-ids (mapv :user-id (db/find ds {:tname :user-courses
+                                             :where [:= :course-id course-id]
+                                             :ret :*}))]
+    (mapv (partial users/user ds) user-ids)))
+
 (defn exercises-for-course [ds id]
   (db/find ds {:tname :exercises
                :where [:= :course-id id]

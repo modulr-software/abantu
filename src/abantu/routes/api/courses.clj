@@ -1,6 +1,7 @@
 (ns abantu.routes.api.courses
   (:require [abantu.routes.openapi :as api]
             [abantu.services.courses :as courses]
+            [abantu.services.users :as users]
             [ring.util.response :as res]))
 
 (defn get-all-courses
@@ -16,6 +17,14 @@
    :responses (api/success api/GetCourseResponse)}
   [{:keys [ds path-params] :as _request}]
   (res/response (courses/get-course ds (:id path-params))))
+
+(defn get-course-students
+  {:summary "Get all students subscribed to a given course. Requires a role above student."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (api/success api/GetCourseStudentsResponse)}
+  [{:keys [ds path-params] :as _request}]
+  (res/response
+   (courses/students-by-course ds (parse-long (str (:id path-params))))))
 
 (defn create-course
   {:summary "Create a new course"
@@ -55,6 +64,70 @@
   [{:keys [ds path-params] :as _request}]
   (res/response
    (courses/used-instructions ds (:id path-params))))
+
+(defn assign-user-to-course!
+  {:summary "Assign a given user to a given course by user-id and course-id.
+             The requester must be above a student and the creator of the course."
+   :parameters (api/params :path api/CourseUserPathParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params user] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))
+        assignee-id (parse-long (str (:user-id path-params)))
+        role (:role (users/get-user ds (:id user)))
+        course (courses/get-course ds course-id)]
+    (cond
+      (nil? course)
+      (-> (res/response {:message (str "The course with the id '" course-id "' does not exist.")})
+          (res/status 404))
+
+      (not (and role (not= "student" role)))
+      (-> (res/response {:message "Unauthorized: your account is not permitted to assign users to courses."})
+          (res/status 403))
+
+      (not= (:id user) (get-in course [:creator :id]))
+      (-> (res/response {:message "Unauthorized: you are not the creator of this course."})
+          (res/status 403))
+
+      :else
+      (if (courses/assign-course-to-user! ds assignee-id course-id)
+        (res/response {:message (str "Successfully assigned user '" assignee-id "' to course '" course-id "'.")})
+        (res/response {:message (str "User '" assignee-id "' is already assigned to this course.")})))))
+
+(defn remove-user-from-course!
+  {:summary "Unsubscribe a given user from a given course by user-id and course-id.
+             The requester must be above a student and the creator of the course."
+   :parameters (api/params :path api/CourseUserPathParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params user] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))
+        assignee-id (parse-long (str (:user-id path-params)))
+        role (:role (users/get-user ds (:id user)))
+        course (courses/get-course ds course-id)]
+    (cond
+      (nil? course)
+      (-> (res/response {:message (str "The course with the id '" course-id "' does not exist.")})
+          (res/status 404))
+
+      (not (and role (not= "student" role)))
+      (-> (res/response {:message "Unauthorized: your account is not permitted to unsubscribe users from courses."})
+          (res/status 403))
+
+      (not= (:id user) (get-in course [:creator :id]))
+      (-> (res/response {:message "Unauthorized: you are not the creator of this course."})
+          (res/status 403))
+
+      (not (courses/course-by-user ds assignee-id course-id))
+      (res/response {:message (str "User '" assignee-id "' is not subscribed to this course.")})
+
+      :else
+      (if (courses/remove-course-from-user! ds assignee-id course-id)
+        (res/response {:message (str "Successfully unsubscribed user '" assignee-id "' from course '" course-id "'.")})
+        (-> (res/response {:message "Unable to unsubscribe the user from the course."})
+            (res/status 500))))))
 
 (defn change-units-order
   {:summary "Set the order of the units in a given course"

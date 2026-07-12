@@ -5,6 +5,7 @@
             [abantu.routes.api.vocab :as vocab]
             [abantu.routes.api.units :as units]
             [abantu.routes.api.courses :as courses]
+            [abantu.routes.api.users :as users]
             [abantu.routes.api.auth :as auth]
             [abantu.routes.api.student :as student]
             [abantu.routes.api.audio :as audio]
@@ -69,6 +70,11 @@
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
 
+         ;;users
+         ["/users" (-> (get users/get-all-users)
+                       (mw authmw/wrap-above-student)
+                       (tag :users))]
+
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
                        (post vocab/add)
@@ -99,6 +105,15 @@
          ["/courses/:id/units/order/change" (-> (post courses/change-units-order)
                                                 (mw authmw/wrap-auth)
                                                 (tag :courses))]
+
+         ["/courses/:id/users/:user-id" (-> (post courses/assign-user-to-course!)
+                                            (delete courses/remove-user-from-course!)
+                                            (mw authmw/wrap-auth)
+                                            (tag :courses))]
+
+         ["/courses/:id/students" (-> (get courses/get-course-students)
+                                      (mw authmw/wrap-above-student)
+                                      (tag :courses))]
 
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
