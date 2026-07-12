@@ -3,7 +3,7 @@
             [clojure.string :as str]))
 
 (defn run-up! [_context]
-  (let [files (io/list-paths ".db/audio")]
+  #_(let [files (io/list-paths ".db/audio")]
     (run! (fn [f]
             (when (io/wav-header? f)
               (let [o (str
