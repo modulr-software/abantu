@@ -64,6 +64,22 @@
                (res/response {:message "Unauthorized"})
                (res/status 403))))))
 
+(defn wrap-admin
+  "Ring middleware that only lets through authenticated users whose role is 'admin'.
+   Rejects all others with 403."
+  [handler]
+  (fn [{:keys [ds] :as request}]
+    (if-let [user (validate-request request)]
+      (let [role (:role (users/get-user ds (:id user)))]
+        (if (= "admin" role)
+          (-> request
+              (assoc :user user)
+              (handler))
+          (-> (res/response {:message "Forbidden: admin access required."})
+              (res/status 403))))
+      (-> (res/response {:message "Unauthorized"})
+          (res/status 401)))))
+
 (comment
 
   ())

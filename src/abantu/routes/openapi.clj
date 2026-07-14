@@ -341,6 +341,15 @@
    [:access-token :string]
    [:refresh-token :string]])
 
+(def AddUserParams
+  [:map
+   [:email :string]
+   [:password :string]
+   [:firstname :string]
+   [:lastname :string]
+   (sometimes :email-verified :string)
+   [:role :string]])
+
 (def EmailVerificationParams
   [:map
    [:email-hash :string]])

@@ -70,10 +70,14 @@
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
 
-         ;;users
-         ["/users" (-> (get users/get-all-users)
-                       (mw authmw/wrap-above-student)
-                       (tag :users))]
+          ;;users
+          ["/users" (-> (get users/get-all-users)
+                        (mw authmw/wrap-above-student)
+                        (tag :users))]
+
+          ["/users/add" (-> (post users/add-user)
+                            (mw authmw/wrap-admin)
+                            (tag :users :admin))]
 
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
