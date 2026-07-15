@@ -18,12 +18,20 @@
 (defn wrap-auth [handler]
   (fn [{:keys [ds] :as request}]
     (if-let [user (validate-request request)]
-      (if (:archived (users/get-user ds (:id user)))
-        (-> (res/response {:message "Forbidden: this user account has been archived."})
-            (res/status 403))
-        (-> request
-            (assoc :user user)
-            (handler)))
+      (let [db-user (users/get-user ds (:id user))]
+        (cond
+          (:archived db-user)
+          (-> (res/response {:message "Forbidden: this user account has been archived."})
+              (res/status 403))
+
+          (and (= "creator" (:role db-user)) (not (:approved db-user)))
+          (-> (res/response {:message "Forbidden: this user account has not been approved."})
+              (res/status 403))
+
+          :else
+          (-> request
+              (assoc :user user)
+              (handler))))
       (->
        (res/response {:message "Unauthorized"})
        (res/status 401)))))
@@ -46,6 +54,10 @@
         (cond
           (:archived db-user)
           (-> (res/response {:message "Forbidden: this user account has been archived."})
+              (res/status 403))
+
+          (and (= "creator" role) (not (:approved db-user)))
+          (-> (res/response {:message "Forbidden: this user account has not been approved."})
               (res/status 403))
 
           (and (some? role) (not= "student" role))

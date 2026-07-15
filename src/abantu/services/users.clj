@@ -5,7 +5,7 @@
             [abantu.migrate :as migrate]))
 
 (defn- process-bools [user]
-  (util/parse-bool-keys user [:email-verified :archived]))
+  (util/parse-bool-keys user [:email-verified :archived :approved]))
 
 (defn get-user-role [ds user-type-id]
   (->> (db/find ds {:tname :user-types
@@ -86,6 +86,27 @@
   (db/update! ds {:tname :users
                   :values {:archived 0}
                   :where [:= :id id]}))
+
+(defn register-creator! [ds {:keys [email firstname lastname]}]
+  (let [temp-password (str (java.util.UUID/randomUUID))]
+    (create-user! ds {:email email
+                       :firstname firstname
+                       :lastname lastname
+                       :role "creator"
+                       :password temp-password
+                       :approved 0})))
+
+(defn approve-user! [ds id]
+  (db/update! ds {:tname :users
+                  :values {:approved 1}
+                  :where [:= :id id]}))
+
+(defn set-password-reset-hash! [ds id]
+  (let [hash (util/uuid)]
+    (db/update! ds {:tname :users
+                    :values {:password-reset-hash hash}
+                    :where [:= :id id]})
+    hash))
 
 (comment
   (def ds (db/ds :master))

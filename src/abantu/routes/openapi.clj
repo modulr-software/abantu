@@ -184,6 +184,7 @@
    (sometimes ::lastname :string)
    [:email-verified :boolean]
    (sometimes :archived :boolean)
+   (sometimes :approved :boolean)
    (sometimes :mobile :string)
    (sometimes :profile-image :string)
    [:role :string]])

@@ -1,6 +1,8 @@
 (ns abantu.routes.api.users
   (:require [abantu.routes.openapi :as api]
             [abantu.services.users :as users]
+            [abantu.email.gmail :as gmail]
+            [abantu.email.templates :as templates]
             [ring.util.response :as res]))
 
 (defn get-all-users
@@ -49,4 +51,27 @@
     (catch Exception e
       (prn e)
       (-> (res/response {:message "Unable to unarchive user"})
+          (res/status 400)))))
+
+(defn approve-user
+  {:summary "Approve a creator user by id. Admin only."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success (api/response-schema))
+                  (api/response 400 (api/error)))}
+  [{:keys [ds path-params] :as _request}]
+  (try
+    (let [id (:id path-params)
+          user (users/get-user ds id)
+          hash (users/set-password-reset-hash! ds id)
+          set-password-url (str "https://abantu-portal.modulrza.app/register/set-password/" hash)]
+      (users/approve-user! ds id)
+      (gmail/send-email {:to (:email user)
+                         :subject "Abantu - Your Creator Account Has Been Approved!"
+                         :body (templates/creator-approved {:firstname (:firstname user)
+                                                           :set-password-url set-password-url})
+                         :type :text/html})
+      (res/response {:message "Successfully approved user"}))
+    (catch Exception e
+      (prn e)
+      (-> (res/response {:message "Unable to approve user"})
           (res/status 400)))))

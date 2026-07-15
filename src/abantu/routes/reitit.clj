@@ -87,6 +87,10 @@
                                       (mw authmw/wrap-admin)
                                       (tag :users :admin))]
 
+          ["/users/approve/:id" (-> (post users/approve-user)
+                                    (mw authmw/wrap-admin)
+                                    (tag :users :admin))]
+
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
                        (post vocab/add)
