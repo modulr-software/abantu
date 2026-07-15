@@ -5,7 +5,7 @@
             [abantu.migrate :as migrate]))
 
 (defn- process-bools [user]
-  (util/parse-bool-keys user [:email-verified]))
+  (util/parse-bool-keys user [:email-verified :archived]))
 
 (defn get-user-role [ds user-type-id]
   (->> (db/find ds {:tname :user-types
@@ -76,6 +76,16 @@
                       :values {:email-hash nil}
                       :where [:= :id id]})
       (dissoc user :email-hash))))
+
+(defn archive-user! [ds id]
+  (db/update! ds {:tname :users
+                  :values {:archived 1}
+                  :where [:= :id id]}))
+
+(defn unarchive-user! [ds id]
+  (db/update! ds {:tname :users
+                  :values {:archived 0}
+                  :where [:= :id id]}))
 
 (comment
   (def ds (db/ds :master))

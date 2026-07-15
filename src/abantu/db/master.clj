@@ -10,6 +10,7 @@
    [:firstname :text]
    [:lastname :text]
    [:email-verified :integer [:default 0]]
+   [:archived :integer [:default 0]]
    [:mobile :text]
    [:email-hash :string]
    [:profile-image :text]

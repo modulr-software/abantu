@@ -183,6 +183,7 @@
    (sometimes :firstname :string)
    (sometimes ::lastname :string)
    [:email-verified :boolean]
+   (sometimes :archived :boolean)
    (sometimes :mobile :string)
    (sometimes :profile-image :string)
    [:role :string]])

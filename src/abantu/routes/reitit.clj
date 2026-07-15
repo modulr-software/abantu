@@ -79,6 +79,14 @@
                             (mw authmw/wrap-admin)
                             (tag :users :admin))]
 
+          ["/users/archive/:id" (-> (delete users/archive-user)
+                            (mw authmw/wrap-admin)
+                            (tag :users :admin))]
+
+          ["/users/unarchive/:id" (-> (post users/unarchive-user)
+                                      (mw authmw/wrap-admin)
+                                      (tag :users :admin))]
+
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
                        (post vocab/add)

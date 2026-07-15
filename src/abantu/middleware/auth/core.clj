@@ -16,11 +16,14 @@
       (util/verify-jwt)))
 
 (defn wrap-auth [handler]
-  (fn [request]
+  (fn [{:keys [ds] :as request}]
     (if-let [user (validate-request request)]
-      (-> request
-          (assoc :user user)
-          (handler))
+      (if (:archived (users/get-user ds (:id user)))
+        (-> (res/response {:message "Forbidden: this user account has been archived."})
+            (res/status 403))
+        (-> request
+            (assoc :user user)
+            (handler)))
       (->
        (res/response {:message "Unauthorized"})
        (res/status 401)))))
@@ -38,11 +41,19 @@
   [handler]
   (fn [{:keys [ds] :as request}]
     (if-let [user (validate-request request)]
-      (let [role (:role (users/get-user ds (:id user)))]
-        (if (and (some? role) (not= "student" role))
+      (let [db-user (users/get-user ds (:id user))
+            role (:role db-user)]
+        (cond
+          (:archived db-user)
+          (-> (res/response {:message "Forbidden: this user account has been archived."})
+              (res/status 403))
+
+          (and (some? role) (not= "student" role))
           (-> request
               (assoc :user user)
               (handler))
+
+          :else
           (-> (res/response {:message "Forbidden: this action requires a role above student."})
               (res/status 403))))
       (-> (res/response {:message "Unauthorized"})
@@ -70,11 +81,19 @@
   [handler]
   (fn [{:keys [ds] :as request}]
     (if-let [user (validate-request request)]
-      (let [role (:role (users/get-user ds (:id user)))]
-        (if (= "admin" role)
+      (let [db-user (users/get-user ds (:id user))
+            role (:role db-user)]
+        (cond
+          (:archived db-user)
+          (-> (res/response {:message "Forbidden: this user account has been archived."})
+              (res/status 403))
+
+          (= "admin" role)
           (-> request
               (assoc :user user)
               (handler))
+
+          :else
           (-> (res/response {:message "Forbidden: admin access required."})
               (res/status 403))))
       (-> (res/response {:message "Unauthorized"})

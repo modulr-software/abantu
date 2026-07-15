@@ -22,3 +22,31 @@
       (prn e)
       (-> (res/response {:message "Unable to create user"})
           (res/status 400)))))
+
+(defn archive-user
+  {:summary "Archive a user by id. Admin only."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success (api/response-schema))
+                  (api/response 400 (api/error)))}
+  [{:keys [ds path-params] :as _request}]
+  (try
+    (users/archive-user! ds (:id path-params))
+    (res/response {:message "Successfully archived user"})
+    (catch Exception e
+      (prn e)
+      (-> (res/response {:message "Unable to archive user"})
+          (res/status 400)))))
+
+(defn unarchive-user
+  {:summary "Unarchive a user by id. Admin only."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success (api/response-schema))
+                  (api/response 400 (api/error)))}
+  [{:keys [ds path-params] :as _request}]
+  (try
+    (users/unarchive-user! ds (:id path-params))
+    (res/response {:message "Successfully unarchived user"})
+    (catch Exception e
+      (prn e)
+      (-> (res/response {:message "Unable to unarchive user"})
+          (res/status 400)))))
