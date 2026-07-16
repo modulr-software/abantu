@@ -108,6 +108,17 @@
                     :where [:= :id id]})
     hash))
 
+(defn set-password! [ds {:keys [hash password]}]
+  (let [user (db/find-one ds {:tname :users
+                              :where [:= :password-reset-hash hash]
+                              :ret :1})]
+    (when user
+      (db/update! ds {:tname :users
+                      :values {:password (password/hash-password password)
+                               :password-reset-hash nil}
+                      :where [:= :id (:id user)]})
+      true)))
+
 (comment
   (def ds (db/ds :master))
 

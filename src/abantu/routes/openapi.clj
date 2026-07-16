@@ -346,7 +346,6 @@
 (def AddUserParams
   [:map
    [:email :string]
-   [:password :string]
    [:firstname :string]
    [:lastname :string]
    (sometimes :email-verified :string)
@@ -355,6 +354,11 @@
 (def EmailVerificationParams
   [:map
    [:email-hash :string]])
+
+(def SetPasswordParams
+  [:map
+   [:hash :string]
+   [:password :string]])
 
 (def StartSessionResponse
   [:map

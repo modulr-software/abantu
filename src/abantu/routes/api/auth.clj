@@ -77,3 +77,15 @@
                      :body (templates/creator-admission-request-acknowledgement (:firstname body))
                      :type :text/html})
   (res/response {:message "Creator request submitted successfully"}))
+
+(defn set-password
+  {:summary "Set a new password using a reset hash"
+   :parameters (api/params :body api/SetPasswordParams)
+   :responses (-> (api/success (api/response-schema))
+                  (api/not-found (api/response-schema)))}
+  [{:keys [ds body] :as _request}]
+  (prn "here")
+  (if (users/set-password! ds body)
+    (res/response {:message "Password set successfully"})
+    (-> (res/response {:message "Invalid or expired reset link"})
+        (res/status 404))))
