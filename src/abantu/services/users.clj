@@ -54,11 +54,12 @@
                    (partial process-role ds)))))
 
 (defn create-user! [ds {:keys [role password] :as user}]
-  (let [{:keys [id]} (->> (-> (dissoc user :role :password)
-                              (assoc :user-type-id (get-user-type-id ds role)
-                                     :password (password/hash-password password)))
-                          (assoc {:tname :users :ret :1} :values)
-                          (db/insert! ds))
+  (let [temp-password (or password (str (java.util.UUID/randomUUID)))
+        {:keys [id]} (->> (-> (dissoc user :role :password)
+                               (assoc :user-type-id (get-user-type-id ds role)
+                                      :password (password/hash-password temp-password)))
+                           (assoc {:tname :users :ret :1} :values)
+                           (db/insert! ds))
         user (get-user ds id)]
     (migrate/create-student-db! user)
     user))
@@ -117,7 +118,7 @@
                       :values {:password (password/hash-password password)
                                :password-reset-hash nil}
                       :where [:= :id (:id user)]})
-      true)))
+      (-> user process-bools (process-role ds)))))
 
 (comment
   (def ds (db/ds :master))

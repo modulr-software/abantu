@@ -81,11 +81,15 @@
 (defn set-password
   {:summary "Set a new password using a reset hash"
    :parameters (api/params :body api/SetPasswordParams)
-   :responses (-> (api/success (api/response-schema))
+   :responses (-> (api/success [:map [:message :string] [:redirect_url :string]])
                   (api/not-found (api/response-schema)))}
   [{:keys [ds body] :as _request}]
-  (prn "here")
-  (if (users/set-password! ds body)
-    (res/response {:message "Password set successfully"})
-    (-> (res/response {:message "Invalid or expired reset link"})
-        (res/status 404))))
+  (let [user (users/set-password! ds body)]
+    (if user
+      (let [redirect-url (if (= "student" (:role user))
+                           "https://abantu.modulrza.app"
+                           "/login")]
+        (res/response {:message "Password set successfully"
+                       :redirect_url redirect-url}))
+      (-> (res/response {:message "Invalid or expired reset link"})
+          (res/status 404)))))

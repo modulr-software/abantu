@@ -18,8 +18,15 @@
                   (api/response 400 (api/error)))}
   [{:keys [ds body] :as _request}]
   (try
-    (users/create-user! ds body)
-    (res/response {:message "Successfully created user"})
+    (let [user (users/create-user! ds body)
+          hash (users/set-password-reset-hash! ds (:id user))
+          set-password-url (str "https://abantu-portal.modulrza.app/register/set-password/" hash)]
+      (gmail/send-email {:to (:email user)
+                         :subject "Abantu - Set Your Password"
+                         :body (templates/user-created {:firstname (:firstname user)
+                                                        :set-password-url set-password-url})
+                         :type :text/html})
+      (res/response {:message "Successfully created user"}))
     (catch Exception e
       (prn e)
       (-> (res/response {:message "Unable to create user"})

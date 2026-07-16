@@ -254,3 +254,43 @@
                :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
           "This is an automated message. Please do not reply directly to this email."]]
         (footer)]]]]]))
+
+(defn user-created
+  "Returns the completed HTML for a new user set password email"
+  [{:keys [firstname set-password-url]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " firstname ",")
+          [:br] [:br]
+          "An account has been created for you on Abantu."
+          [:br] [:br]
+          "Please set your password using the link below to access your account:"
+          [:br] [:br]]]
+        (button {:text "Set Your Password" :redirect set-password-url})
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          [:br]
+          "Sincerely"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
