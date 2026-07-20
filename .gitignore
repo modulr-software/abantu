@@ -12,3 +12,7 @@ target/
 .db
 resources/admins.json
 resources/admins_encrypted.json
+
+# Bruno collection — local secrets
+/bruno/abantu-api/.env
+/bruno/abantu-api/environments/*.local.bru
