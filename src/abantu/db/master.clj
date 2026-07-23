@@ -49,7 +49,9 @@
    [:name :text]
    [:language :text]
    [:description :text]
-   [:status :text [:check [:in :status  ["in-progress" "review" "published"]]]]
+   [:publishable :int [:default 0]]
+   [:visible :int [:default 0]]
+   [:review-pending :int [:default 0]]
    [:creator-id :int]
    (tables/foreign-key :creator-id :users :id)))
 

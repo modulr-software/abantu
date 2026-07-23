@@ -284,7 +284,6 @@
       (mu/optional-keys)
       (mu/dissoc :creator-id)))
 
-(def CourseStatus :string)
 (def
   ^{:tech/debt "creator key should be required once user auth exists"}
   GetCourseResponse
@@ -293,7 +292,9 @@
    [:name :string]
    [:language :string]
    (sometimes :description :string)
-   [:status CourseStatus]
+   [:publishable :boolean]
+   [:visible :boolean]
+   (sometimes :review-pending :boolean)
    (sometimes :creator User)
    [:units GetUnitsResponse]])
 
@@ -311,15 +312,15 @@
    [:name :string]
    [:language :string]
    (sometimes :description :string)
+   [:publishable :boolean]
    [:units CreateUnitsParam]])
 
 (def UpdateCourseParam
   [:map
    (sometimes :name :string)
    (sometimes :language :string)
-   (sometimes :status CourseStatus)
    (sometimes :description :string)
-   (sometimes :creator-id :int)])
+   (sometimes :publishable :boolean)])
 
 (def RegisterStudentParams
   [:map

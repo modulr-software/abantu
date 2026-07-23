@@ -2,7 +2,8 @@
   (:require [abantu.middleware.auth.util :as util]
             [abantu.db.util :as db.util]
             [ring.util.response :as res]
-            [abantu.services.users :as users]))
+            [abantu.services.users :as users]
+            [abantu.services.courses :as courses]))
 
 (defn create-session [user]
   (let [payload {:id (:id user)
@@ -110,6 +111,64 @@
               (res/status 403))))
       (-> (res/response {:message "Unauthorized"})
           (res/status 401)))))
+
+(defn wrap-owner-or-admin
+  "Ring middleware that only lets through authenticated users who are admins or the
+   creator of the course identified by the :id path param. Assocs :user and :course
+   onto the request. Responds 401 when unauthenticated, 404 when the course does not
+   exist, and 403 when the user is neither an admin nor the course creator."
+  [handler]
+  (fn [{:keys [ds path-params] :as request}]
+    (if-let [user (validate-request request)]
+      (let [db-user (users/get-user ds (:id user))
+            role (:role db-user)
+            course (courses/get-course ds (:id path-params))]
+        (cond
+          (:archived db-user)
+          (-> (res/response {:message "Forbidden: this user account has been archived."})
+              (res/status 403))
+
+          (and (= "creator" role) (not (:approved db-user)))
+          (-> (res/response {:message "Forbidden: this user account has not been approved."})
+              (res/status 403))
+
+          (nil? course)
+          (-> (res/response {:message (str "The course with the id '" (:id path-params) "' does not exist.")})
+              (res/status 404))
+
+          (or (= "admin" role)
+              (= (:id user) (get-in course [:creator :id])))
+          (-> request
+              (assoc :user user :course course)
+              (handler))
+
+          :else
+          (-> (res/response {:message "Forbidden: you are not the creator of this course."})
+              (res/status 403))))
+      (-> (res/response {:message "Unauthorized"})
+          (res/status 401)))))
+
+(defn wrap-publishable
+  "Ring middleware that only lets through requests for a course (identified by the :id
+   path param) that is publishable. Assocs :course onto the request. Must be composed
+   after an auth middleware (e.g. wrap-admin or wrap-owner-or-admin). Responds 404 when
+   the course does not exist and 400 when the course is not publishable."
+  [handler]
+  (fn [{:keys [ds path-params] :as request}]
+    (let [course (courses/get-course ds (:id path-params))]
+      (cond
+        (nil? course)
+        (-> (res/response {:message (str "The course with the id '" (:id path-params) "' does not exist.")})
+            (res/status 404))
+
+        (not (:publishable course))
+        (-> (res/response {:message "Bad request: this course is not publishable."})
+            (res/status 400))
+
+        :else
+        (-> request
+            (assoc :course course)
+            (handler))))))
 
 (comment
 

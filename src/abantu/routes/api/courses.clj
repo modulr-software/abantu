@@ -38,25 +38,72 @@
    (courses/students-by-course ds (parse-long (str (:id path-params))))))
 
 (defn create-course
-  {:summary "Create a new course"
+  {:summary "Create a new course. The creator must choose whether the course is
+             publishable; it always starts invisible with no review pending."
    :parameters (api/params :body api/CreateCourseParam)
    :responses (api/success api/GetCourseResponse)}
   [{:keys [ds body user] :as _request}]
-  (let [course (merge body {:status "in-progress"
-                            :creator-id (:id user)})]
+  (let [course (-> body
+                   (update :publishable #(if % 1 0))
+                   (merge {:creator-id (:id user)
+                           :visible 0
+                           :review-pending 0}))]
     (res/response (courses/save-course! ds course))))
 
 (defn update-course
-  {:summary "Update course details for the given course by id"
+  {:summary "Update course details for the given course by id. Owner or admin only
+             (enforced by middleware). Flipping :publishable resets the visibility
+             lifecycle (visible=0, review-pending=0)."
    :parameters (api/params :path api/IdPathParam :body api/UpdateCourseParam)
    :responses (-> (api/success api/GetCourseResponse)
-                  (api/not-found))}
-  [{:keys [ds body path-params] :as _request}]
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds body path-params course] :as _request}]
   (let [{:keys [id]} path-params
-        exists? (courses/update-course! ds (assoc body :id id))
-        course (courses/get-course ds id)]
-    (if exists?
-      (res/response course)
+        flipped? (and (contains? body :publishable)
+                      (not= (true? (:publishable body)) (:publishable course)))
+        updates (cond-> (dissoc body :creator-id)
+                  (contains? body :publishable) (update :publishable #(if % 1 0))
+                  flipped? (merge {:visible 0 :review-pending 0}))]
+    (when (seq updates)
+      (courses/update-course! ds (assoc updates :id id)))
+    (res/response (courses/get-course ds id))))
+
+(defn request-publish
+  {:summary "Request that a publishable course be made visible to students. Sets
+             review-pending; an admin approves via /courses/:id/publish/approve.
+             Owner or admin only; the course must be publishable (both enforced
+             by middleware)."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success api/GetCourseResponse)
+                  (api/not-found)
+                  (api/bad-request)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds course] :as _request}]
+  (courses/request-publish! ds (:id course))
+  (res/response (courses/get-course ds (:id course))))
+
+(defn approve-publish
+  {:summary "Make a publishable course visible to students and clear review-pending.
+             Admin only; the course must be publishable (both enforced by middleware)."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success api/GetCourseResponse)
+                  (api/not-found)
+                  (api/bad-request))}
+  [{:keys [ds course] :as _request}]
+  (courses/approve-publish! ds (:id course))
+  (res/response (courses/get-course ds (:id course))))
+
+(defn hide-publish
+  {:summary "Make a course invisible to students and clear review-pending. Admin only."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success api/GetCourseResponse)
+                  (api/not-found))}
+  [{:keys [ds path-params] :as _request}]
+  (let [{:keys [id]} path-params]
+    (if-let [course (courses/get-course ds id)]
+      (do (courses/hide-publish! ds (:id course))
+          (res/response (courses/get-course ds id)))
       (-> (res/response {:message (str "The course with the id '" id "' does not exist.")})
           (res/status 404)))))
 

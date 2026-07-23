@@ -1,7 +1,8 @@
 (ns abantu.services.courses
   (:require [abantu.db.interface :as db]
             [abantu.services.units :as units]
-            [abantu.services.users :as users]))
+            [abantu.services.users :as users]
+            [abantu.util :as util]))
 
 (defn- append-units [ds {:keys [id] :as course}]
   (let [units (units/get-units ds id)]
@@ -15,10 +16,17 @@
     (-> (assoc course :creator nil)
         (dissoc :creator-id))))
 
+(defn- process-bools [course]
+  (util/parse-bool-keys course [:publishable :visible :review-pending]))
+
+(defn public? [course]
+  (true? (:publishable course)))
+
 (defn get-all [ds]
   (let [courses (db/find ds {:tname :courses
                              :ret :*})]
-    (mapv (comp (partial append-units ds)
+    (mapv (comp process-bools
+                (partial append-units ds)
                 (partial append-creator ds)) courses)))
 
 (defn get-course [ds id]
@@ -26,8 +34,10 @@
                             :where [:= :id id]
                             :ret :1})]
     (when (some? course)
-      (->> (append-units ds course)
-           (append-creator ds)))))
+      (->> course
+           (append-units ds)
+           (append-creator ds)
+           (process-bools)))))
 
 (defn save-course! [ds {:keys [units] :as course}]
   (let [{:keys [id] :as result} (db/insert! ds {:tname :courses
@@ -36,7 +46,8 @@
         units (when (seq units)
                 (->> (mapv #(assoc % :course-id id) units)
                      (units/save-units! ds)))
-        result' (append-creator ds result)]
+        result' (-> (append-creator ds result)
+                    (process-bools))]
     (assoc result' :units (or units []))))
 
 (defn save-courses! [ds courses]
@@ -50,6 +61,29 @@
                       :data (dissoc course :id)
                       :where [:= :id id]}))
     exists?))
+
+(defn request-publish!
+  "Marks a publishable, not-yet-visible course as awaiting admin review.
+   Idempotent: does nothing for private or already-visible courses."
+  [ds id]
+  (db/update! ds {:tname :courses
+                  :data {:review-pending 1}
+                  :where [:and
+                          [:= :id id]
+                          [:= :publishable 1]
+                          [:= :visible 0]]}))
+
+(defn approve-publish! [ds id]
+  (db/update! ds {:tname :courses
+                  :data {:visible 1
+                         :review-pending 0}
+                  :where [:= :id id]}))
+
+(defn hide-publish! [ds id]
+  (db/update! ds {:tname :courses
+                  :data {:visible 0
+                         :review-pending 0}
+                  :where [:= :id id]}))
 
 (defn delete-course! [ds id]
   (let [{:keys [units] :as course} (get-course ds id)]
@@ -77,7 +111,8 @@
   (let [courses (db/find ds {:tname :courses
                              :where [:= :creator-id creator-id]
                              :ret :*})]
-    (mapv (comp (partial append-units ds)
+    (mapv (comp process-bools
+                (partial append-units ds)
                 (partial append-creator ds)) courses)))
 
 
@@ -88,7 +123,8 @@
         courses (db/find ds {:tname :courses
                              :where [:in :id course-ids]
                              :ret :*})]
-    (mapv (comp (partial append-units ds)
+    (mapv (comp process-bools
+                (partial append-units ds)
                 (partial append-creator ds)) courses)))
 
 
@@ -156,7 +192,6 @@
     (prn "user-id" user-id)
     (save-course! ds {:name "the best course ever again"
                       :language "xhosa"
-                      :status "in-progress"
                       :units units
                       :creator-id user-id}))
 
@@ -174,7 +209,6 @@
                 :level 1}]]
     (save-course! ds {:name "some course 2"
                       :language "xhosa"
-                      :status "in-progress"
                       :units units
                       :creator-id user-id}))
 

@@ -111,10 +111,27 @@
                          (tag :courses))]
 
          ["/courses/:id" (-> (get courses/get-course)
-                             (post courses/update-course)
                              (delete courses/delete-course)
                              (mw authmw/wrap-auth)
                              (tag :courses))]
+
+         ["/courses/:id/update" (-> (post courses/update-course)
+                                    (mw authmw/wrap-owner-or-admin)
+                                    (tag :courses))]
+
+         ["/courses/:id/publish/request" (-> (post courses/request-publish)
+                                             (mw authmw/wrap-owner-or-admin)
+                                             (mw authmw/wrap-publishable)
+                                             (tag :courses))]
+
+         ["/courses/:id/publish/approve" (-> (post courses/approve-publish)
+                                             (mw authmw/wrap-admin)
+                                             (mw authmw/wrap-publishable)
+                                             (tag :courses :admin))]
+
+         ["/courses/:id/publish/hide" (-> (post courses/hide-publish)
+                                          (mw authmw/wrap-admin)
+                                          (tag :courses :admin))]
 
          ["/courses/:id/units" (-> (get units/get-units)
                                    (post units/create-units)
