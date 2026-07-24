@@ -10,8 +10,11 @@
    [:firstname :text]
    [:lastname :text]
    [:email-verified :integer [:default 0]]
+   [:archived :integer [:default 0]]
+   [:approved :integer [:default 1]]
    [:mobile :text]
    [:email-hash :string]
+   [:password-reset-hash :text]
    [:profile-image :text]
    [:user-type-id :int]
    (tables/foreign-key :user-type-id :user-types :id)))
@@ -46,7 +49,9 @@
    [:name :text]
    [:language :text]
    [:description :text]
-   [:status :text [:check [:in :status  ["in-progress" "review" "published"]]]]
+   [:publishable :int [:default 0]]
+   [:visible :int [:default 0]]
+   [:review-pending :int [:default 0]]
    [:creator-id :int]
    (tables/foreign-key :creator-id :users :id)))
 

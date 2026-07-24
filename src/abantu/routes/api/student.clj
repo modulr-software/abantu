@@ -22,15 +22,21 @@
      (courses/course-by-user ds (:id user) id))))
 
 (defn assign-course!
-  {:summary "Assign a given course to a given user by course-id"
+  {:summary "Subscribe the current user to a course. Only publishable, visible
+             courses may be self-subscribed to."
    :parameters (api/params :path api/IdPathParam)
-   :responses (api/success [:map [:message :string]])}
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/response 403 (api/error)))}
   [{:keys [ds user path-params] :as _request}]
   (let [course-id (:id path-params)
-        user-id (:id user)]
-    (if-let [_user-course (courses/assign-course-to-user! ds user-id course-id)]
-      (res/response {:message "Test response"})
-      (res/response {:message "nein! this course is already assigned to the user."}))))
+        user-id (:id user)
+        course (courses/get-course ds course-id)]
+    (if (and (courses/public? course) (:visible course))
+      (if-let [_user-course (courses/assign-course-to-user! ds user-id course-id)]
+        (res/response {:message "Test response"})
+        (res/response {:message "nein! this course is already assigned to the user."}))
+      (-> (res/response {:message "Forbidden: this course is not available for subscription."})
+          (res/status 403)))))
 
 (defn remove-course!
   {:summary "Remove a course from a user"
@@ -47,18 +53,17 @@
       (res/response {:message "This course is not yet assigned to the user!"}))))
 
 (defn subscribable-courses
-  {:summary "Get the courses that a user has not yet subscribed to!"
+  {:summary "Get the courses that a user has not yet subscribed to. Only publishable,
+             visible courses are returned."
    :responses (api/success api/GetCoursesResponse)}
   [{:keys [ds user] :as _request}]
   (let [user-id (:id user)
         course-ids (->> (courses/courses-by-user ds user-id)
                         (map :id)
                         (set))
-        all-courses (courses/get-all ds)
-        mod (remove #(contains? course-ids (:id %)) all-courses)]
-    (println "user-id" user-id)
-    (println "courses" all-courses)
-    (println "mod" mod)
+        public-courses (->> (courses/get-all ds)
+                            (filter #(and (courses/public? %) (:visible %))))
+        mod (remove #(contains? course-ids (:id %)) public-courses)]
     (res/response mod)))
 
 (defn start-session!

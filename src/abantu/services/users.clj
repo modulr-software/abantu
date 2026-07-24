@@ -5,7 +5,7 @@
             [abantu.migrate :as migrate]))
 
 (defn- process-bools [user]
-  (util/parse-bool-keys user [:email-verified]))
+  (util/parse-bool-keys user [:email-verified :archived :approved]))
 
 (defn get-user-role [ds user-type-id]
   (->> (db/find ds {:tname :user-types
@@ -54,11 +54,12 @@
                    (partial process-role ds)))))
 
 (defn create-user! [ds {:keys [role password] :as user}]
-  (let [{:keys [id]} (->> (-> (dissoc user :role :password)
-                              (assoc :user-type-id (get-user-type-id ds role)
-                                     :password (password/hash-password password)))
-                          (assoc {:tname :users :ret :1} :values)
-                          (db/insert! ds))
+  (let [temp-password (or password (str (java.util.UUID/randomUUID)))
+        {:keys [id]} (->> (-> (dissoc user :role :password)
+                               (assoc :user-type-id (get-user-type-id ds role)
+                                      :password (password/hash-password temp-password)))
+                           (assoc {:tname :users :ret :1} :values)
+                           (db/insert! ds))
         user (get-user ds id)]
     (migrate/create-student-db! user)
     user))
@@ -76,6 +77,48 @@
                       :values {:email-hash nil}
                       :where [:= :id id]})
       (dissoc user :email-hash))))
+
+(defn archive-user! [ds id]
+  (db/update! ds {:tname :users
+                  :values {:archived 1}
+                  :where [:= :id id]}))
+
+(defn unarchive-user! [ds id]
+  (db/update! ds {:tname :users
+                  :values {:archived 0}
+                  :where [:= :id id]}))
+
+(defn register-creator! [ds {:keys [email firstname lastname]}]
+  (let [temp-password (str (java.util.UUID/randomUUID))]
+    (create-user! ds {:email email
+                       :firstname firstname
+                       :lastname lastname
+                       :role "creator"
+                       :password temp-password
+                       :approved 0})))
+
+(defn approve-user! [ds id]
+  (db/update! ds {:tname :users
+                  :values {:approved 1}
+                  :where [:= :id id]}))
+
+(defn set-password-reset-hash! [ds id]
+  (let [hash (util/uuid)]
+    (db/update! ds {:tname :users
+                    :values {:password-reset-hash hash}
+                    :where [:= :id id]})
+    hash))
+
+(defn set-password! [ds {:keys [hash password]}]
+  (let [user (db/find-one ds {:tname :users
+                              :where [:= :password-reset-hash hash]
+                              :ret :1})]
+    (when user
+      (db/update! ds {:tname :users
+                      :values {:password (password/hash-password password)
+                               :password-reset-hash nil}
+                      :where [:= :id (:id user)]})
+      (-> user process-bools (process-role ds)))))
 
 (comment
   (def ds (db/ds :master))

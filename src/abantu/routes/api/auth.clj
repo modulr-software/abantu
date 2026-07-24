@@ -66,8 +66,8 @@
                                   [:lastname :string]
                                   [:message :string]])
    :responses (api/success (api/response-schema))}
-  [{:keys [body] :as _request}]
-  (println body)
+  [{:keys [ds body] :as _request}]
+  (users/register-creator! ds body)
   (gmail/send-email {:to (conf/read-value :email :username)
                      :subject "Abantu - Creator Admission Request"
                      :body (templates/creator-admission-request body)
@@ -75,4 +75,21 @@
   (gmail/send-email {:to (:email body)
                      :subject "Abantu - We received your request!"
                      :body (templates/creator-admission-request-acknowledgement (:firstname body))
-                     :type :text/html}))
+                     :type :text/html})
+  (res/response {:message "Creator request submitted successfully"}))
+
+(defn set-password
+  {:summary "Set a new password using a reset hash"
+   :parameters (api/params :body api/SetPasswordParams)
+   :responses (-> (api/success [:map [:message :string] [:redirect_url :string]])
+                  (api/not-found (api/response-schema)))}
+  [{:keys [ds body] :as _request}]
+  (let [user (users/set-password! ds body)]
+    (if user
+      (let [redirect-url (if (= "student" (:role user))
+                           "https://abantu.modulrza.app"
+                           "/login")]
+        (res/response {:message "Password set successfully"
+                       :redirect_url redirect-url}))
+      (-> (res/response {:message "Invalid or expired reset link"})
+          (res/status 404)))))

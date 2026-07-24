@@ -48,8 +48,11 @@
          ["/auth/email/verify" (-> (post auth/verify-email)
                                    (tag :auth))]
 
-         ["/auth/creator/request" (-> (post auth/creator-request)
-                                      (tag :auth))]
+          ["/auth/creator/request" (-> (post auth/creator-request)
+                                       (tag :auth))]
+
+          ["/auth/password/set" (-> (post auth/set-password)
+                                    (tag :auth))]
 
          ["/student/session/start/:id" (-> (post student/start-session!)
                                            (mw authmw/wrap-auth)
@@ -74,10 +77,26 @@
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
 
-         ;;users
-         ["/users" (-> (get users/get-all-users)
-                       (mw authmw/wrap-above-student)
-                       (tag :users))]
+          ;;users
+          ["/users" (-> (get users/get-all-users)
+                        (mw authmw/wrap-above-student)
+                        (tag :users))]
+
+          ["/users/add" (-> (post users/add-user)
+                            (mw authmw/wrap-admin)
+                            (tag :users :admin))]
+
+          ["/users/archive/:id" (-> (delete users/archive-user)
+                            (mw authmw/wrap-admin)
+                            (tag :users :admin))]
+
+          ["/users/unarchive/:id" (-> (post users/unarchive-user)
+                                      (mw authmw/wrap-admin)
+                                      (tag :users :admin))]
+
+          ["/users/approve/:id" (-> (post users/approve-user)
+                                    (mw authmw/wrap-admin)
+                                    (tag :users :admin))]
 
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
@@ -96,10 +115,27 @@
                          (tag :courses))]
 
          ["/courses/:id" (-> (get courses/get-course)
-                             (post courses/update-course)
                              (delete courses/delete-course)
                              (mw authmw/wrap-auth)
                              (tag :courses))]
+
+         ["/courses/:id/update" (-> (post courses/update-course)
+                                    (mw authmw/wrap-owner-or-admin)
+                                    (tag :courses))]
+
+         ["/courses/:id/publish/request" (-> (post courses/request-publish)
+                                             (mw authmw/wrap-owner-or-admin)
+                                             (mw authmw/wrap-publishable)
+                                             (tag :courses))]
+
+         ["/courses/:id/publish/approve" (-> (post courses/approve-publish)
+                                             (mw authmw/wrap-admin)
+                                             (mw authmw/wrap-publishable)
+                                             (tag :courses :admin))]
+
+         ["/courses/:id/publish/hide" (-> (post courses/hide-publish)
+                                          (mw authmw/wrap-admin)
+                                          (tag :courses :admin))]
 
          ["/courses/:id/units" (-> (get units/get-units)
                                    (post units/create-units)
