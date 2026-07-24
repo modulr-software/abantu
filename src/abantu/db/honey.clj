@@ -11,7 +11,7 @@
   "computes a prepared statement for an sql map and executes select one
   or select all. returns results as unqualified lower maps by default."
   [ds sqlmap & {:keys [ret exec-opts]}]
-  (prn "sqlmap" sqlmap)
+  #_(prn "sqlmap" sqlmap)
   (assert (and (some? ds) (some? sqlmap) (or (some? ret) (nil? ret))))
   (let [ps (sql/format sqlmap)
         exec-opts' (merge
@@ -46,6 +46,8 @@
   (->> {:ret :1}
        (merge opts)
        (find ds)))
+
+(defonce ^:private write-lock (Object.))
 
 (defn insert!
   "inserts a single record or a set of records into a table. records passed in 
@@ -115,15 +117,12 @@
    (find ds {:tname :vocab
              :where [:= :type "adjective"]
              :ret :*})
-   (mapv :xhosa)
-   )
+   (mapv :xhosa))
 
-  
   (insert! ds {:tname :vocab
                :values (-> (slurp "resources/dict.json")
                            (clojure.data.json/read-str {:key-fn keyword}))
                :ret :*})
-
 
   (->> {:tname :vocab
         :ret :*}
@@ -133,25 +132,22 @@
                            :where (:id %)
                            :values {:type "interjection"}
                            :ret :*})))
-  
+
   (find ds {:tname :sqlite-master
             :ret :*})
-  
+
   (find ds {:tname :units
             :ret :*})
-  
+
   (find ds {:tname :users
             :ret :*})
 
   (find ds {:tname :courses
             :ret :*})
-  
-  
+
   (jdbc/execute! (db.util/conn :master) ["select * from sqlite_master"])
   (jdbc/execute! ds ["select * from courses"])
   (jdbc/execute! ds ["select * from users"])
   (jdbc/execute! ds ["select * from units"])
 
-
-  ()
-  )
+  ())

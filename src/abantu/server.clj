@@ -10,8 +10,9 @@
 (defn initialise-server! [{:keys [ds]}]
   (http/run-server
    (routes/create-app {:ds ds})
-   {:port (conf/read-value :port)}))
-
+   {:port (conf/read-value :port)
+    ;:worker-pool (java.util.concurrent.Executors/newSingleThreadExecutor)
+    }))
 
 (defn component-on? [component]
   (if (some? (get @*components component))

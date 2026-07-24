@@ -9,6 +9,7 @@
             [abantu.routes.api.auth :as auth]
             [abantu.routes.api.student :as student]
             [abantu.routes.api.audio :as audio]
+            [abantu.routes.api.spamtest :as spamtest]
             [abantu.middleware.auth.core :as authmw]
             [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
 
@@ -21,7 +22,10 @@
        [(rutil/swagger-route)
         (rutil/openapi-route)
 
-        ["/api"
+                 ["/api"
+
+         ["/spamtest" (-> (get spamtest/get-spamtest)
+                          (tag :spamtest))]
 
          ["/media/audio" (-> (post audio/upload-audio)
                              (get audio/get-audio)
