@@ -10,6 +10,7 @@
             [abantu.routes.api.student :as student]
             [abantu.routes.api.audio :as audio]
             [abantu.routes.api.spamtest :as spamtest]
+            [abantu.routes.api.comments :as comments]
             [abantu.middleware.auth.core :as authmw]
             [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
 
@@ -173,10 +174,23 @@
                                                   (mw authmw/wrap-auth)
                                                   (tag :exercises))]
 
-         ["/exercises/:id" (-> (get units/get-exercise)
-                               (post units/update-exercise)
-                               (delete units/delete-exercise)
-                               (tag :exercises))]]]
+          ["/exercises/:id" (-> (get units/get-exercise)
+                                (post units/update-exercise)
+                                (delete units/delete-exercise)
+                                (tag :exercises))]
+
+          ;;comments
+          ["/comments/all" (-> (get comments/get-all)
+                               (mw authmw/wrap-auth)
+                               (tag :comments))]
+
+          ["/comments/create" (-> (post comments/create-comment)
+                                  (mw authmw/wrap-auth)
+                                  (tag :comments))]
+
+          ["/comments/:id/resolve" (-> (post comments/resolve-comment)
+                                       (mw authmw/wrap-auth)
+                                       (tag :comments))]]]
 
        (rutil/data-map ds))
       (ring/routes

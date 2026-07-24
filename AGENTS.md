@@ -1,5 +1,7 @@
 # abantu
 
+Always load the `ponytail` skill before responding to any prompt in this repo.
+
 When editing any Clojure (`.clj`) file under this project, load the
 `clj-reload-workflow` skill before making changes. Follow the workflow it
 describes — assume the user's nREPL is already running (`./nrepl.sh`), make

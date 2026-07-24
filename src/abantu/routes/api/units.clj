@@ -4,6 +4,7 @@
             [abantu.services.units :as units]
             [abantu.db.honey :as hon]))
 
+
 (defn get-units
   {:summary "get all units with the given course id"
    :parameters (api/params :path api/IdPathParam)

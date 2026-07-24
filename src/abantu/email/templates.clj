@@ -255,6 +255,47 @@
           "This is an automated message. Please do not reply directly to this email."]]
         (footer)]]]]]))
 
+(defn exercise-comment-notification
+  "Returns the completed HTML for a new exercise comment notification email"
+  [{:keys [creator-name course-name unit-id unit-name exercise-id comment-text]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " creator-name ",")
+          [:br] [:br]
+          (str "A new comment has been left on an exercise in your course \"" course-name "\".")
+          [:br] [:br]
+          (str "Unit: " unit-name)
+          [:br]
+          (str "Comment: \"" comment-text "\"")]]
+        (button {:text "View Exercise"
+                 :redirect (str (conf/read-cors-with-port) "/unit/" unit-id "/exercise/" exercise-id)})
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          "Regards,"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
+
 (defn user-created
   "Returns the completed HTML for a new user set password email"
   [{:keys [firstname set-password-url]}]

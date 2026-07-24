@@ -2,7 +2,8 @@
   (:require [abantu.db.interface :as db]
             [clojure.string :as str]
             [abantu.db.util :as db.util]
-            [abantu.db.honey :as hon]))
+            [abantu.db.honey :as hon]
+            [abantu.services.comments :as comments]))
 
 (defn- process-options [exercise]
   (update-in exercise
@@ -24,6 +25,9 @@
                   answers)]
     (assoc exercise :answers answers)))
 
+(defn- add-comments [ds {:keys [id] :as exercise}]
+  (assoc exercise :comments (comments/get-for-exercise ds id)))
+
 (defn get-exercises-for-unit
   "Get all exercises with answers for a given unit-id"
   [ds id]
@@ -31,7 +35,8 @@
                     :where [:= :unit-id id]
                     :order-by [[:position :asc]]
                     :ret :*})
-       (mapv (comp process-options
+       (mapv (comp (partial add-comments ds)
+                   process-options
                    (partial add-answers ds)))))
 
 (defn- add-exercises-to-unit [ds {:keys [id] :as unit}]
@@ -139,6 +144,7 @@
   (->> (db/find ds {:tname :exercises
                     :where [:= :id id]
                     :ret :1})
+       (add-comments ds)
        (add-answers ds)
        (process-options)))
 

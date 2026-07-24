@@ -81,24 +81,32 @@ losing REPL state.
    Starting server on port 3001...
    ```
 
+   **Skip the reload when it would be a no-op.** If a new file is being
+   added that has no link (no `:require` or other reference) to any
+   namespace that is already loaded, clj-reload will have nothing to
+   unload or reload — do not run the hook in that case. However, when a
+   new file is added AND it is linked into an actively-loaded namespace
+   (e.g. a `:require` of an existing namespace, or an existing namespace
+   adds a `:require` for the new one), always run the hook.
+
 4. **If reload output says `no .nrepl-port`**, the user's nREPL isn't up.
    Ask them to run `./nrepl.sh` — do not attempt to start one yourself.
 
 5. **If reload exits non-zero** (exit 1), that is the top priority — drop
    everything else. Read the appended stderr, which will contain the
-   compile error / stacktrace from Clojure. The immediate goal becomes:
-   get clj-reload to successfully load every namespace it unloaded. Fix
-   the offending code and edit again; the next reload picks up the fix.
-   clj-reload is idempotent and safe to call repeatedly after failures, so
-   keep iterating until `[clj-reload] (exit 0)` appears and the server
-   starts. Only once the reload is green again should you stop and
-   re-validate whether the original task goal is still satisfied. If the
-   fix you applied diverges from the intended design, adapt the
-   generated code so it both (a) fulfills the task requirements and
-   (b) keeps clj-reload loading cleanly — never sacrifice the reload
-   workflow to force a feature through. The local dev toolchain's ability
-   to reload and give feedback is the source of truth for "is this code
-   correct right now"; do not break it.
+   compile error / stacktrace from Clojure. **Revert the edit that caused
+   the failure immediately.** Do not attempt to fix forward by piling on
+   more edits — revert first, then assess why the error happened, then
+   redo the edit correctly. Repeat this revert → assess → redo cycle
+   until clj-reload exits 0 and the server starts again. Keep iterating
+   until `[clj-reload] (exit 0)` appears. Only once the reload is green
+   again should you stop and re-validate whether the original task goal
+   is still satisfied. If the fix you applied diverges from the intended
+   design, adapt the generated code so it both (a) fulfills the task
+   requirements and (b) keeps clj-reload loading cleanly — never
+   sacrifice the reload workflow to force a feature through. The local
+   dev toolchain's ability to reload and give feedback is the source of
+   truth for "is this code correct right now"; do not break it.
 
 7. **You can also trigger a reload manually** with:
    ```
@@ -107,6 +115,14 @@ losing REPL state.
    from the project root (`workdir=/home/merv/Developer/abantu`). Use this
    if you need to reload without making an edit (e.g. after the user
    reports a change made in Calva, or to verify server state).
+
+   **If the server is not running after a change, bring it back up.**
+   After any bash command that modifies Clojure files (e.g. `mv`, `cp`,
+   `git checkout`), the reload plugin does not fire — so the server may
+   be left stopped. Always follow up with `touch src/abantu/server.clj &&
+   bb scripts/reload.clj` to force a reload and restart the server.
+   Verify "Starting server on port ..." appears in the output. If it
+   doesn't, keep retrying until the server is confirmed up.
 
 8. **Do not hold onto old var references.** clj-reload replaces whole
    namespaces, so any var resolved at plugin/skill load time will be stale

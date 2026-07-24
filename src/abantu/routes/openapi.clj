@@ -246,6 +246,33 @@
 (def ExerciseParams
   [:vector ExerciseParam])
 
+(def CreateCommentParam
+  [:map
+   [:exercise-id :int]
+   [:text :string]])
+
+(def CreateCommentParams
+  [:vector CreateCommentParam])
+
+(def GetCommentResult
+  [:map
+   [:id :int]
+   [:exercise-id :int]
+   [:unit-id :int]
+   [:course-id :int]
+   [:text :string]
+   [:user User]
+   [:timestamp :string]
+   [:resolved :int]
+   (sometimes :resolved-by User)
+   (sometimes :resolved-at :string)])
+
+(def GetCommentResponse
+  GetCommentResult)
+
+(def GetCommentsResponse
+  [:vector GetCommentResult])
+
 (def GetExerciseResult
   [:map
    [:id :int]
@@ -255,9 +282,10 @@
    [:answer-type [:enum "freetext" "bubbles"]]
    (sometimes :audio :string)
    (sometimes :correct-message :string)
-   (sometimes :incorrect-message :string)
-   [:options [:vector :string]]
-   [:answers AnswerParams]])
+    (sometimes :incorrect-message :string)
+    [:options [:vector :string]]
+    [:answers AnswerParams]
+    [:comments [:vector GetCommentResult]]])
 
 (def GetExercisesResponse
   [:vector GetExerciseResult])
@@ -369,10 +397,10 @@
 
 (def EndSessionParams
   [:map
-   [:session-id :int]
-   [:answers [:vector
-              [:map
-               [:exercise-id :int]
-               [:answer [:or [:vector :string] :string]]
-               [:started-at :string]
-               [:ended-at :string]]]]])
+    [:session-id :int]
+    [:answers [:vector
+               [:map
+                [:exercise-id :int]
+                [:answer [:or [:vector :string] :string]]
+                [:started-at :string]
+                [:ended-at :string]]]]])

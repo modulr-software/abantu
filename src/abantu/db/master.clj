@@ -127,6 +127,25 @@
    (tables/foreign-key :unit-id :units :id)
    (tables/foreign-key :practice-session-id :practice-sessions :id)))
 
+(def comments
+  (tables/create-table-sql
+   :comments
+   (tables/table-id)
+   [:exercise-id :int :not nil]
+   [:unit-id :int :not nil]
+   [:course-id :int :not nil]
+   [:text :text :not nil]
+   [:user-id :int :not nil]
+   [:timestamp :text :not nil]
+   [:resolved :int [:default 0]]
+   [:resolved-by :int]
+   [:resolved-at :text]
+   (tables/foreign-key :exercise-id :exercises :id)
+   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :course-id :courses :id)
+   (tables/foreign-key :user-id :users :id)
+   (tables/foreign-key :resolved-by :users :id)))
+
 (comment
   (require '[honey.sql :as sql])
 
@@ -140,6 +159,7 @@
   (sql/format exercises)
   (sql/format answers)
   (sql/format practice-sessions)
-  (sql/format exercises-completed)
+   (sql/format exercises-completed)
+   (sql/format comments)
 
   ())
