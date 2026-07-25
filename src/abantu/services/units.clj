@@ -152,20 +152,23 @@
   (update-in answer [:text] #(str/join ";;" %)))
 
 (defn update-exercise! [ds {:keys [answers id] :as exercise}]
-  (db/delete! ds {:tname :answers
-                  :where [:= :exercise-id id]
-                  :ret :*})
-  (when (seq answers)
-    (db/insert! ds {:tname :answers
-                    :data (->> answers
-                               (mapv #(assoc % :exercise-id id))
-                               (mapv encode-answer))
-                    :ret :*}))
-  (db/update! ds {:tname :exercises
-                  :data (-> (dissoc exercise :answers)
-                            (encode-options))
-                  :where [:= :id id]
-                  :ret :1}))
+  (when (contains? exercise :answers)
+    (db/delete! ds {:tname :answers
+                    :where [:= :exercise-id id]
+                    :ret :*})
+    (when (seq answers)
+      (db/insert! ds {:tname :answers
+                      :data (->> answers
+                                 (mapv #(assoc % :exercise-id id))
+                                 (mapv encode-answer))
+                      :ret :*})))
+  (let [data (if (contains? exercise :options)
+               (encode-options (dissoc exercise :answers))
+               (dissoc exercise :answers :options))]
+    (db/update! ds {:tname :exercises
+                    :data data
+                    :where [:= :id id]
+                    :ret :1})))
 
 (defn delete-exercise [ds id]
   (let [{:keys [id answers] :as exercise} (get-exercise ds id)]

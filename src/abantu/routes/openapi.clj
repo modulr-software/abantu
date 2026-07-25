@@ -241,7 +241,8 @@
    [:options [:vector :string]]
    (sometimes :answers AnswerParams)
    (sometimes :correct-message :string)
-   (sometimes :incorrect-message :string)])
+   (sometimes :incorrect-message :string)
+   (sometimes :level :int)])
 
 (def ExerciseParams
   [:vector ExerciseParam])
@@ -282,10 +283,11 @@
    [:answer-type [:enum "freetext" "bubbles"]]
    (sometimes :audio :string)
    (sometimes :correct-message :string)
-    (sometimes :incorrect-message :string)
-    [:options [:vector :string]]
-    [:answers AnswerParams]
-    [:comments [:vector GetCommentResult]]])
+   (sometimes :incorrect-message :string)
+   [:options [:vector :string]]
+   [:answers AnswerParams]
+   [:comments [:vector GetCommentResult]]
+   [:level :int]])
 
 (def GetExercisesResponse
   [:vector GetExerciseResult])
@@ -300,7 +302,8 @@
    (sometimes :options [:vector :string])
    (sometimes :answers AnswerParams)
    (sometimes :correct-message :string)
-   (sometimes :incorrect-message :string)])
+   (sometimes :incorrect-message :string)
+   (sometimes :level :int)])
 
 (def MoveExercisesParam
   [:map
