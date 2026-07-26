@@ -274,6 +274,10 @@
 (def GetCommentsResponse
   [:vector GetCommentResult])
 
+(def CommentTypeParam
+  [:map
+   (sometimes :type [:enum "all" "resolved" "unresolved"])])
+
 (def GetExerciseResult
   [:map
    [:id :int]

@@ -179,6 +179,10 @@
                                 (delete units/delete-exercise)
                                 (tag :exercises))]
 
+          ["/exercises/:id/comments" (-> (get comments/get-for-exercise)
+                                         (mw authmw/wrap-auth)
+                                         (tag :comments))]
+
           ;;comments
           ["/comments/all" (-> (get comments/get-all)
                                (mw authmw/wrap-auth)

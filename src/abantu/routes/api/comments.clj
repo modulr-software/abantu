@@ -7,9 +7,19 @@
 
 (defn get-all
   {:summary "Get all comments"
+   :parameters (api/params :query api/CommentTypeParam)
    :responses (api/success api/GetCommentsResponse)}
-  [{:keys [ds] :as _request}]
-  (res/response (comments/get-all ds)))
+  [{:keys [ds query-params] :as _request}]
+  (res/response (comments/get-all ds (or (:type query-params) "unresolved"))))
+
+(defn get-for-exercise
+  {:summary "Get all comments for a specific exercise"
+   :parameters (api/params :path api/IdPathParam :query api/CommentTypeParam)
+   :responses (api/success api/GetCommentsResponse)}
+  [{:keys [ds path-params query-params] :as _request}]
+  (res/response (comments/get-for-exercise ds
+                                            (:id path-params)
+                                            (or (:type query-params) "unresolved"))))
 
 (defn create-comment
   {:summary "Create a new comment on an exercise"
