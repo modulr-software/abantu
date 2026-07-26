@@ -118,7 +118,7 @@
                       :values {:password (password/hash-password password)
                                :password-reset-hash nil}
                       :where [:= :id (:id user)]})
-      (-> user process-bools (process-role ds)))))
+      (process-role ds (process-bools user)))))
 
 (comment
   (def ds (db/ds :master))
