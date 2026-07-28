@@ -396,6 +396,10 @@
    [:hash :string]
    [:password :string]])
 
+(def StartSessionParams
+  [:map
+   [:unit-id :int]])
+
 (def StartSessionResponse
   [:map
    [:session-id :int]
@@ -409,5 +413,6 @@
                [:map
                 [:exercise-id :int]
                 [:answer [:or [:vector :string] :string]]
+                [:correct :boolean]
                 [:started-at :string]
                 [:ended-at :string]]]]])

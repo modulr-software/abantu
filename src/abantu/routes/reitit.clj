@@ -55,12 +55,12 @@
           ["/auth/password/set" (-> (post auth/set-password)
                                     (tag :auth))]
 
-         ["/student/session/start/:id" (-> (post student/start-session!)
-                                           (mw authmw/wrap-auth)
-                                           (tag :student))]
-         ["/student/session/end/:id" (-> (post student/end-session!)
-                                         (mw authmw/wrap-auth)
-                                         (tag :student))]
+         ["/student/session/start" (-> (post student/start-session!)
+                                       (mw authmw/wrap-auth)
+                                       (tag :student))]
+         ["/student/session/end" (-> (post student/end-session!)
+                                      (mw authmw/wrap-auth)
+                                      (tag :student))]
 
          ["/student/courses" (-> (get student/get-courses)
                                  (mw authmw/wrap-auth)

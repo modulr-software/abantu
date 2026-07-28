@@ -67,26 +67,31 @@
     (res/response mod)))
 
 (defn start-session!
-  {:summary "Start a practice session for a given id (yay)!"
-   :parameters (api/params :path api/IdPathParam)
+  {:summary "Start a practice session for a given unit id (yay)!"
+   :parameters (api/params :body api/StartSessionParams)
    :responses (api/success api/StartSessionResponse)}
-  [{:keys [ds path-params user] :as _request}]
+  [{:keys [ds body user] :as _request}]
   (with-open [student-ds (db.util/conn :student (:id user))]
-    (let [unit (units/get-unit ds (:id path-params))
+    (let [unit (units/get-unit ds (:unit-id body))
           session (sessions/start-session! student-ds unit)]
       (res/response (assoc (select-keys unit [:level :exercises])
                            :session-id (:id session))))))
 
 (defn end-session!
   {:summary "End a practice session by posting back analytics data!"
-   :parameters (api/params :path api/IdPathParam :body api/EndSessionParams)
-   :responses (api/success [:map [:message :string]])}
-  [{:keys [ds path-params body user] :as _req}]
+   :parameters (api/params :body api/EndSessionParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/response 404 (api/error)))}
+  [{:keys [body user] :as _req}]
   (with-open [student-ds (db.util/conn :student (:id user))]
-    (let [unit (units/get-unit ds (:id path-params))
-          {:keys [session-id answers]} body]
-      (sessions/end-session! student-ds session-id unit answers)
-      (res/response {:message "success!"}))))
+    (let [{:keys [session-id answers]} body
+          session (sessions/get-session student-ds session-id)]
+      (if-not session
+        (-> (res/response {:message "Session not found"})
+            (res/status 404))
+        (do
+          (sessions/end-session! student-ds session answers)
+          (res/response {:message "success!"}))))))
 
 (comment
 
