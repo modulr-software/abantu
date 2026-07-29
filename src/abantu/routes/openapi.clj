@@ -197,7 +197,8 @@
    [:description :string]
    [:type [:enum "lesson" "practice"]]
    [:position :int]
-   [:level :int]])
+   [:level :int]
+   (sometimes :progress :double)])
 
 (def GetUnitResponse
   GetUnitResult)
@@ -317,7 +318,7 @@
 (def UpdateUnitParam
   (-> GetUnitResult
       (mu/optional-keys)
-      (mu/dissoc :creator-id)))
+      (mu/dissoc :creator-id :progress)))
 
 (def
   ^{:tech/debt "creator key should be required once user auth exists"}
@@ -416,3 +417,11 @@
                 [:correct :boolean]
                 [:started-at :string]
                 [:ended-at :string]]]]])
+
+(def EndSessionResponse
+  [:map
+   [:new-progress :double]
+   [:has-previous-session :boolean]
+   [:mistakes-diff :int]
+   [:correct-diff :int]
+   [:time-diff :int]])

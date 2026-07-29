@@ -4,22 +4,31 @@
             [abantu.routes.openapi :as api]
             [abantu.services.units :as units]
             [abantu.services.sessions :as sessions]
+            [abantu.services.stats :as stats]
             [abantu.db.util :as db.util]))
+
+(defn- with-progress [user-id unit]
+  (assoc unit :progress (stats/unit-progress user-id (:id unit))))
 
 (defn get-courses
   {:summary "Get all courses a student has started for a given student id"
    :responses (-> (api/success api/GetCoursesResponse))}
   [{:keys [ds user] :as _request}]
-  (res/response (courses/courses-by-user ds (:id user))))
+  (let [user-id (:id user)]
+    (res/response
+     (mapv #(update % :units (fn [us] (mapv (partial with-progress user-id) us)))
+           (courses/courses-by-user ds user-id)))))
 
 (defn get-course
   {:summary "Get course progress info for a given course with units"
    :parameters (api/params :path api/IdPathParam)
    :responses (api/success api/GetCourseResponse)}
   [{:keys [ds user path-params] :as _request}]
-  (let [{:keys [id]} path-params]
+  (let [{:keys [id]} path-params
+        user-id (:id user)]
     (res/response
-     (courses/course-by-user ds (:id user) id))))
+     (some-> (courses/course-by-user ds user-id id)
+             (update :units (fn [us] (mapv (partial with-progress user-id) us)))))))
 
 (defn assign-course!
   {:summary "Subscribe the current user to a course. Only publishable, visible
@@ -80,7 +89,7 @@
 (defn end-session!
   {:summary "End a practice session by posting back analytics data!"
    :parameters (api/params :body api/EndSessionParams)
-   :responses (-> (api/success [:map [:message :string]])
+   :responses (-> (api/success api/EndSessionResponse)
                   (api/response 404 (api/error)))}
   [{:keys [body user] :as _req}]
   (with-open [student-ds (db.util/conn :student (:id user))]
@@ -91,7 +100,9 @@
             (res/status 404))
         (do
           (sessions/end-session! student-ds session answers)
-          (res/response {:message "success!"}))))))
+          (res/response
+           (merge {:new-progress (stats/unit-progress (:id user) (:unit-id session))}
+                  (stats/session-delta (:id user) session-id))))))))
 
 (comment
 

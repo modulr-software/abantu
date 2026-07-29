@@ -1,6 +1,6 @@
 ---
 name: clj-reload-workflow
-description: Use when editing Clojure (.clj) files in the abantu repo. Describes the interactive reload workflow wired up via clj-reload, the nREPL bridge, and the opencode plugin that runs (dev/reload) after every edit.
+description: Use when editing Clojure (.clj) files in the abantu repo. Describes the interactive reload workflow wired up via clj-reload, the nREPL bridge, and the pi extension that runs (dev/reload) after every edit.
 ---
 
 # clj-reload workflow in abantu
@@ -48,12 +48,12 @@ losing REPL state.
    message and exits 1 — do not try to start nREPL yourself; ask the user
    to run `./nrepl.sh`.
 
-5. **`.opencode/plugins/reload.ts`** — auto-discovered opencode plugin that
-   registers `tool.execute.after`. After every `edit` or `write` tool call,
-   it checks for `.nrepl-port`, spawns `bb scripts/reload.clj` with
-   `cwd = directory`, and appends `[clj-reload] (exit N)` + stdout/stderr
-   to the edit tool's output. Silently surfaces a "no .nrepl-port" message
-   if the user's nREPL isn't running.
+5. **`.pi/extensions/reload.ts`** — auto-discovered pi extension that
+   registers a `tool_result` handler. After every `edit` or `write` tool
+   call, it checks for `.nrepl-port`, spawns `bb scripts/reload.clj` with
+   `cwd = ctx.cwd`, and appends `[clj-reload] (exit N)` + stdout/stderr
+   to the tool result's content. Silently surfaces a "no .nrepl-port"
+   message if the user's nREPL isn't running.
 
 ## Workflow to follow when editing Clojure in abantu
 
@@ -70,7 +70,7 @@ losing REPL state.
    valid Clojure that compiles and reloads without error.
 
 3. **Make edits normally.** After each `edit` / `write` to any file in the
-   repo, the plugin runs `(dev/reload)` automatically. You'll see the
+   repo, the extension runs `(dev/reload)` automatically. You'll see the
    reload output appended to the edit tool result, e.g.:
    ```
    [clj-reload] (exit 0)
@@ -118,7 +118,7 @@ losing REPL state.
 
    **If the server is not running after a change, bring it back up.**
    After any bash command that modifies Clojure files (e.g. `mv`, `cp`,
-   `git checkout`), the reload plugin does not fire — so the server may
+   `git checkout`), the reload extension does not fire — so the server may
    be left stopped. Always follow up with `touch src/abantu/server.clj &&
    bb scripts/reload.clj` to force a reload and restart the server.
    Verify "Starting server on port ..." appears in the output. If it
@@ -153,6 +153,6 @@ losing REPL state.
 - `dev/dev.clj` — hooks + `reload` entry point
 - `deps.edn` — `:dev` alias with clj-reload dep
 - `scripts/reload.clj` — babashka nREPL client
-- `.opencode/plugins/reload.ts` — opencode plugin that triggers reload
-- `.nrepl-port` — written by `./nrepl.sh`, read by both the plugin and
-  the bb script
+- `.pi/extensions/reload.ts` — pi extension that triggers reload
+- `.nrepl-port` — written by `./nrepl.sh`, read by both the extension
+  and the bb script
