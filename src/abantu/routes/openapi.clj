@@ -332,6 +332,7 @@
    [:visible :boolean]
    (sometimes :review-pending :boolean)
    (sometimes :creator User)
+   (sometimes :overall-progress :double)
    [:units GetUnitsResponse]])
 
 (def GetCoursesResponse

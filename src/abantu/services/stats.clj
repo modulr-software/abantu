@@ -34,6 +34,15 @@
         0.0
         (double (/ (or correct 0) total))))))
 
+(defn course-progress
+  "Overall course progress in [0.0, 1.0]: the average of the :progress
+  values on `units` (which must already carry :progress). 0.0 when no units."
+  [units]
+  (let [progresses (map :progress units)]
+    (if (empty? progresses)
+      0.0
+      (double (/ (reduce + progresses) (count progresses))))))
+
 (defn- duration-seconds
   "Seconds between two ISO-8601 UTC timestamp strings as written by
   util/get-utc-timestamp-string."
