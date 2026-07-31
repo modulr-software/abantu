@@ -156,6 +156,18 @@
                                       (mw authmw/wrap-above-student)
                                       (tag :courses))]
 
+         ["/courses/:id/editors/list" (-> (get courses/list-editors)
+                                        (mw authmw/wrap-owner-or-admin)
+                                        (tag :courses))]
+
+         ["/courses/:id/editors/add" (-> (post courses/add-editor)
+                                        (mw authmw/wrap-owner-or-admin)
+                                        (tag :courses))]
+
+         ["/courses/:id/editors/remove" (-> (post courses/remove-editor)
+                                           (mw authmw/wrap-owner-or-admin)
+                                           (tag :courses))]
+
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
                            (delete units/delete-unit)

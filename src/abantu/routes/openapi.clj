@@ -173,6 +173,8 @@
 
 (def CourseUserPathParams [:map [:id :int] [:user-id :int]])
 
+(def EditorTargetParams [:map [:user-id :int]])
+
 (def DeleteVocabResponse
   [:map [:message :string]])
 

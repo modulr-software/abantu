@@ -175,6 +175,57 @@
                     :data {:position position}})
     (some? unit)))
 
+(defn add-editor!
+  "Grants a user edit rights on a course. Idempotent: no-op if already an editor."
+  [ds user-id course-id]
+  (let [exists? (db/exists? ds {:tname :course-editors
+                                :where [:and
+                                        [:= :user-id user-id]
+                                        [:= :course-id course-id]]})]
+    (when (not exists?)
+      (db/insert! ds {:tname :course-editors
+                      :data {:user-id user-id
+                             :course-id course-id}
+                      :ret :1}))))
+
+(defn remove-editor!
+  "Revokes a user's edit rights on a course."
+  [ds user-id course-id]
+  (db/delete! ds {:tname :course-editors
+                  :where [:and
+                          [:= :user-id user-id]
+                          [:= :course-id course-id]]
+                  :ret :1}))
+
+(defn editors-by-course
+  "Returns the public user records of every editor of the given course."
+  [ds course-id]
+  (let [user-ids (mapv :user-id (db/find ds {:tname :course-editors
+                                             :where [:= :course-id course-id]
+                                             :ret :*}))]
+    (mapv (partial users/user ds) user-ids)))
+
+(defn courses-by-editor
+  "Returns the courses a user is allowed to edit (via the course-editors table)."
+  [ds user-id]
+  (let [course-ids (mapv :course-id (db/find ds {:tname :course-editors
+                                                 :where [:= :user-id user-id]
+                                                 :ret :*}))
+        courses (db/find ds {:tname :courses
+                             :where [:in :id course-ids]
+                             :ret :*})]
+    (mapv (comp process-bools
+                (partial append-units ds)
+                (partial append-creator ds)) courses)))
+
+(defn editor?
+  "True if user-id has edit rights on course-id via the course-editors table."
+  [ds user-id course-id]
+  (some? (db/find-one ds {:tname :course-editors
+                          :where [:and
+                                  [:= :user-id user-id]
+                                  [:= :course-id course-id]]})))
+
 (comment
   (def ds (db/ds :master))
 

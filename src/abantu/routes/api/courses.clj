@@ -202,3 +202,70 @@
       (prn e)
       (-> (res/response {:message "Unable to change unit order"})
           (res/status 400)))))
+
+(defn list-editors
+  {:summary "Get all editors for a given course. Only the course creator or an admin may call this."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success [:vector api/User])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))]
+    (if (courses/get-course ds course-id)
+      (res/response (courses/editors-by-course ds course-id))
+      (-> (res/response {:message (str "The course with the id '" course-id "' does not exist.")})
+          (res/status 404)))))
+
+(defn add-editor
+  {:summary "Grant a creator edit rights on a course. Only the course creator or an admin may call this."
+   :parameters (api/params :path api/IdPathParam :body api/EditorTargetParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params body course] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))
+        target-id (:user-id body)
+        target (users/get-user ds target-id)]
+    (cond
+      (nil? target)
+      (-> (res/response {:message (str "The user with the id '" target-id "' does not exist.")})
+          (res/status 404))
+
+      (not= "creator" (:role target))
+      (-> (res/response {:message "Only creators can be added as editors."})
+          (res/status 403))
+
+      (= (:id target) (get-in course [:creator :id]))
+      (-> (res/response {:message "The course creator is already an editor of this course."})
+          (res/status 403))
+
+      :else
+      (do (courses/add-editor! ds target-id course-id)
+          (res/response {:message (str "Successfully added editor '" target-id "' to course '" course-id "'.")})))))
+
+(defn remove-editor
+  {:summary "Revoke a creator's edit rights on a course. Only the course creator or an admin may call this."
+   :parameters (api/params :path api/IdPathParam :body api/EditorTargetParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params body course] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))
+        target-id (:user-id body)
+        target (users/get-user ds target-id)]
+    (cond
+      (nil? target)
+      (-> (res/response {:message (str "The user with the id '" target-id "' does not exist.")})
+          (res/status 404))
+
+      (not= "creator" (:role target))
+      (-> (res/response {:message "Only creators can be editors of a course."})
+          (res/status 403))
+
+      (not (courses/editor? ds target-id course-id))
+      (-> (res/response {:message (str "User '" target-id "' is not an editor of this course.")})
+          (res/status 404))
+
+      :else
+      (do (courses/remove-editor! ds target-id course-id)
+          (res/response {:message (str "Successfully removed editor '" target-id "' from course '" course-id "'.")})))))
