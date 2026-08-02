@@ -191,6 +191,19 @@
    (sometimes :profile-image :string)
    [:role :string]])
 
+(def GetCommentResult
+  [:map
+   [:id :int]
+   [:exercise-id :int]
+   [:unit-id :int]
+   [:course-id :int]
+   [:text :string]
+   [:user User]
+   [:timestamp :string]
+   [:resolved :int]
+   (sometimes :resolved-by User)
+   (sometimes :resolved-at :string)])
+
 (def GetUnitResult
   [:map
    [:id :int]
@@ -200,7 +213,9 @@
    [:type [:enum "lesson" "practice"]]
    [:position :int]
    [:level :int]
-   (sometimes :progress :double)])
+   (sometimes :progress :double)
+   (sometimes :comments [:vector GetCommentResult])
+   (sometimes :comment-count :int)])
 
 (def GetUnitResponse
   GetUnitResult)
@@ -257,19 +272,6 @@
 
 (def CreateCommentParams
   [:vector CreateCommentParam])
-
-(def GetCommentResult
-  [:map
-   [:id :int]
-   [:exercise-id :int]
-   [:unit-id :int]
-   [:course-id :int]
-   [:text :string]
-   [:user User]
-   [:timestamp :string]
-   [:resolved :int]
-   (sometimes :resolved-by User)
-   (sometimes :resolved-at :string)])
 
 (def GetCommentResponse
   GetCommentResult)

@@ -45,13 +45,19 @@
       (assoc unit :exercises exercises)
       unit)))
 
+(defn- add-unit-comments [unit]
+  (let [comments (vec (mapcat :comments (:exercises unit)))]
+    (assoc unit :comments comments
+                :comment-count (count comments))))
+
 (defn get-unit
   "get a unit with all exercises for a given unit-id"
   [ds id]
   (let [unit (db/find ds {:tname :units
                           :where [:= :id id]
                           :ret :1})]
-    (add-exercises-to-unit ds unit)))
+    (-> (add-exercises-to-unit ds unit)
+        (add-unit-comments))))
 
 (defn get-units
   "Get all units with exercises for a given course-id"
@@ -60,8 +66,10 @@
                     :where [:= :course-id course-id]
                     :order-by [[:position :asc]]
                     :ret :*})
-       (mapv #(assoc % :exercises
-                     (get-exercises-for-unit ds (:id %))))))
+       (mapv (fn [unit]
+               (-> unit
+                   (assoc :exercises (get-exercises-for-unit ds (:id unit)))
+                   (add-unit-comments))))))
 
 (defn- add-exercises-to-unit [ds {:keys [id] :as unit}]
   (assoc unit :exercises (get-exercises-for-unit ds id)))
