@@ -2,6 +2,22 @@
 
 Always load the `ponytail` skill before responding to any prompt in this repo.
 
+Always load the `stay-in-context` skill before responding to any prompt in
+this repo. It is always on: take the single reading the current sentence
+and session support (never plural-interpret a word into every dictionary
+possibility), ask if genuinely ambiguous instead of enumerating paths, and
+use only the context the user specifies plus this session's conversation —
+anything outside that is not relevant. Never assume the user's emotional
+state from a correction.
+
+Always load the `corrections` skill before responding to any prompt in this
+repo. It is always on and governs two things: never assume the user's
+emotional state when corrected (a correction is a fact to act on, not a tone
+to read), and validate every conclusion about data/state/existence through
+the repo's real machinery (service functions + the honey/DB interface the
+services use) rather than improvised queries that bypass the established
+path.
+
 When editing any Clojure (`.clj`) file under this project, load the
 `clj-reload-workflow` skill before making changes. Follow the workflow it
 describes — assume the user's nREPL is already running (`./nrepl.sh`), make

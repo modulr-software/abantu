@@ -3,7 +3,10 @@
  :admins-path "resources/admins.json"
  :admins-encrypted-path "resources/admins_encrypted.json"
  :cors-origin #or [#env CORS_ORIGIN "http://localhost"]
- :env #or [#env ENV "dev"]
+ :env #or [#env ENV "prod"]
+ :base-url #or [#env BASE_URL "https://abantu-api.modulrza.app"]
+ :admin-portal-url #or [#env ADMIN_PORTAL_URL "https://abantu-portal.modulrza.app"]
+ :app-url #or [#env APP_URL "https://abantu.modulrza.app"]
  :database {:dir #or [#env DATABASE_DIR ".db/"]
             :type "sqlite"}
  :openai #env OPENAI_API_KEY

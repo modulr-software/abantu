@@ -4,7 +4,7 @@
             [abantu.services.auth :as auth]
             [abantu.migrate :as migrate]
             [abantu.services.users :as users]
-            [abantu.email.gmail :as gmail]
+            [abantu.async.interface :as async]
             [abantu.email.templates :as templates]
             [abantu.config :as conf]))
 
@@ -68,14 +68,16 @@
    :responses (api/success (api/response-schema))}
   [{:keys [ds body] :as _request}]
   (users/register-creator! ds body)
-  (gmail/send-email {:to (conf/read-value :email :username)
-                     :subject "Abantu - Creator Admission Request"
-                     :body (templates/creator-admission-request body)
-                     :type :text/html})
-  (gmail/send-email {:to (:email body)
-                     :subject "Abantu - We received your request!"
-                     :body (templates/creator-admission-request-acknowledgement (:firstname body))
-                     :type :text/html})
+  (async/handle-command :send-email
+                        {:to (conf/read-value :email :username)
+                         :subject "Abantu - Creator Admission Request"
+                         :body (templates/creator-admission-request body)
+                         :type :text/html})
+  (async/handle-command :send-email
+                        {:to (:email body)
+                         :subject "Abantu - We received your request!"
+                         :body (templates/creator-admission-request-acknowledgement (:firstname body))
+                         :type :text/html})
   (res/response {:message "Creator request submitted successfully"}))
 
 (defn set-password
@@ -87,8 +89,8 @@
   (let [user (users/set-password! ds body)]
     (if user
       (let [redirect-url (if (= "student" (:role user))
-                           "https://abantu.modulrza.app"
-                           "/login")]
+                           (conf/read-app-url)
+                           (str (conf/read-admin-portal-url) "/login"))]
         (res/response {:message "Password set successfully"
                        :redirect_url redirect-url}))
       (-> (res/response {:message "Invalid or expired reset link"})

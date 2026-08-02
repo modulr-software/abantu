@@ -157,7 +157,7 @@
                                       (tag :courses))]
 
          ["/courses/:id/editors/list" (-> (get courses/list-editors)
-                                        (mw authmw/wrap-owner-or-admin)
+                                        (mw authmw/wrap-owner-or-editor-or-admin)
                                         (tag :courses))]
 
          ["/courses/:id/editors/add" (-> (post courses/add-editor)

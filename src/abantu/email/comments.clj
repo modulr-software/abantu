@@ -1,30 +1,38 @@
 (ns abantu.email.comments
-  (:require [abantu.email.gmail :as gmail]
+  (:require [abantu.async.interface :as async]
             [abantu.email.templates :as templates]
             [abantu.services.units :as units]
             [abantu.services.courses :as courses]
             [abantu.services.users :as users]))
 
+(defn- notifyable? [creator-admin? recipient]
+  (and (some? recipient)
+       (or creator-admin?
+           (not= "admin" (:role recipient)))))
+
 (defn comment-on-exercise!
-  "Looks up the exercise, unit, course, and course creator from the db,
-  then sends an email to the course creator notifying them of the new comment."
+  "Notifies every editor of the course (plus its creator) about a new comment
+  on an exercise. Admin recipients are excluded unless the course was itself
+  created by an admin. Each recipient gets a personalized fire-and-forget
+  email via async/handle-command :send-email."
   [ds {:keys [exercise-id comment-text]}]
-  (let [exercise (units/get-exercise ds exercise-id)
-        {:keys [unit-id]} exercise
-        unit (units/get-unit ds unit-id)
-        {:keys [course-id]} unit
-        course (courses/get-course ds course-id)
-        creator (:creator course)
-        creator-id (:id creator)
-        creator-user (users/get-user ds creator-id)]
-    (gmail/send-email
-     {:to (:email creator-user)
-      :subject (str "New comment on exercise in \"" (:name course) "\"")
-      :type :text/html
-      :body (templates/exercise-comment-notification
-             {:creator-name (:firstname creator-user)
-              :course-name (:name course)
-              :unit-id unit-id
-              :unit-name (:name unit)
-              :exercise-id exercise-id
-              :comment-text comment-text})})))
+  (let [exercise       (units/get-exercise ds exercise-id)
+        unit           (units/get-unit ds (:unit-id exercise))
+        course         (courses/get-course ds (:course-id unit))
+        creator        (:creator course)
+        creator-admin? (= "admin" (:role creator))
+        recipients     (filter (partial notifyable? creator-admin?)
+                               (cons creator
+                                     (courses/editors-by-course ds (:id course))))]
+    (doseq [r recipients]
+      (async/handle-command :send-email
+                            {:to (:email r)
+                             :subject (str "New comment on exercise in \"" (:name course) "\"")
+                             :type :text/html
+                             :body (templates/exercise-comment-notification
+                                    {:recipient-name (:firstname r)
+                                     :course-name (:name course)
+                                     :unit-id (:id unit)
+                                     :unit-name (:name unit)
+                                     :exercise-id exercise-id
+                                     :comment-text comment-text})}))))

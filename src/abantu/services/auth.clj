@@ -4,7 +4,7 @@
             [abantu.services.users :as users]
             [abantu.config :as conf]
             [abantu.password :as password]
-            [abantu.email.gmail :as gmail]
+            [abantu.async.interface :as async]
             [abantu.util :as util]))
 
 (defn can-register-user? [ds {:keys [email password confirm-password] :as _user}]
@@ -23,11 +23,12 @@
 (defn register-noob! [ds user]
   (let [hash (util/uuid)
         user (users/create-user! ds (assoc user :email-hash hash))]
-    (gmail/send-email {:to (:email user)
-                       :subject "abantu email verification"
-                       :body (str "Please go to the below link to verify your email:\n\n"
-                                  (create-email-verification-url hash))
-                       :type :text/plain})
+    (async/handle-command :send-email
+                          {:to (:email user)
+                           :subject "abantu email verification"
+                           :body (str "Please go to the below link to verify your email:\n\n"
+                                      (create-email-verification-url hash))
+                           :type :text/plain})
     (merge {:user user}
            (mw/create-session user))))
 

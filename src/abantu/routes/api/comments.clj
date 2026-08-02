@@ -3,6 +3,7 @@
             [abantu.routes.openapi :as api]
             [abantu.services.comments :as comments]
             [abantu.services.units :as units]
+            [abantu.email.comments :as email-comments]
             [abantu.util :as util]))
 
 (defn get-all
@@ -24,7 +25,7 @@
 (defn create-comment
   {:summary "Create a new comment on an exercise"
    :parameters (api/params :body api/CreateCommentParam)
-   :responses (-> (api/success api/GetCommentResponse)
+   :responses (-> (api/response 201 api/GetCommentResponse)
                   (api/bad-request))}
   [{:keys [ds body user] :as _request}]
   (let [{:keys [exercise-id text]} body
@@ -39,7 +40,10 @@
                          :course-id course-id
                          :text text
                          :user-id (:id user)
-                         :timestamp (util/get-utc-timestamp-string)})]
+                         :timestamp (util/get-utc-timestamp-string)})
+            _ (email-comments/comment-on-exercise!
+               ds {:exercise-id exercise-id
+                   :comment-text text})]
         (-> (res/response comment)
             (res/status 201))))))
 
