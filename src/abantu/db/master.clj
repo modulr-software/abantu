@@ -64,6 +64,15 @@
    (tables/foreign-key :user-id :users :id)
    (tables/foreign-key :course-id :courses :id)))
 
+(def course-editors
+  (tables/create-table-sql
+   :course-editors
+   (tables/table-id)
+   [:user-id :int :not nil]
+   [:course-id :int :not nil]
+   (tables/foreign-key :user-id :users :id)
+   (tables/foreign-key :course-id :courses :id)))
+
 (def units
   (tables/create-table-sql
    :units
@@ -155,6 +164,7 @@
   (sql/format user-assigned-types)
   (sql/format courses)
   (sql/format user-courses)
+  (sql/format course-editors)
   (sql/format units)
   (sql/format exercises)
   (sql/format answers)

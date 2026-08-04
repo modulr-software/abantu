@@ -256,8 +256,10 @@
         (footer)]]]]]))
 
 (defn exercise-comment-notification
-  "Returns the completed HTML for a new exercise comment notification email"
-  [{:keys [creator-name course-name unit-id unit-name exercise-id comment-text]}]
+  "Returns the completed HTML for a new exercise comment notification email.
+  Sent to any editor of the course (including its creator), so the salutation
+  and wording are recipient-neutral."
+  [{:keys [recipient-name course-name unit-id unit-name exercise-id comment-text]}]
   (h/html5
    {:lang "en"}
    (head-metadata)
@@ -275,15 +277,171 @@
         [:tr
          [:td {:class "body"
                :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
-          (str "Hi " creator-name ",")
+          (str "Hi " recipient-name ",")
           [:br] [:br]
-          (str "A new comment has been left on an exercise in your course \"" course-name "\".")
+          (str "A new comment has been left on an exercise in the course \"" course-name "\".")
           [:br] [:br]
           (str "Unit: " unit-name)
           [:br]
           (str "Comment: \"" comment-text "\"")]]
         (button {:text "View Exercise"
                  :redirect (str (conf/read-cors-with-port) "/unit/" unit-id "/exercise/" exercise-id)})
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          "Regards,"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
+
+(defn editor-added-notification
+  "Returns the completed HTML for an editor-added notification email.
+  Sent to a creator who has just been granted edit rights on a course."
+  [{:keys [recipient-name course-name course-id]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " recipient-name ",")
+          [:br] [:br]
+          (str "You've been added as an editor of the course \"" course-name "\".")
+          [:br] [:br]
+          "You can now edit its units and exercises."]]
+        (button {:text "View Course"
+                 :redirect (str (conf/read-admin-portal-url) "/dashboard/courses/" course-id)})
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          "Regards,"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
+
+(defn student-access-added-notification
+  "Returns the completed HTML for a student-access-added notification email.
+  Sent to a user who has just been granted access to a course as a student."
+  [{:keys [recipient-name course-name course-id]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " recipient-name ",")
+          [:br] [:br]
+          (str "You've been given access to the course \"" course-name "\".")
+          [:br] [:br]
+          "You can now start learning its units and exercises."]]
+        (button {:text "View Course"
+                 :redirect (conf/read-app-url)})
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          "Regards,"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
+
+(defn editor-removed-notification
+  "Returns the completed HTML for an editor-removed notification email.
+  Sent to a creator whose edit rights on a course have just been revoked."
+  [{:keys [recipient-name course-name]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " recipient-name ",")
+          [:br] [:br]
+          (str "Your editor access to the course \"" course-name "\" has been revoked.")
+          [:br] [:br]
+          "You will no longer be able to edit its units and exercises."]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          "Regards,"
+          [:br]
+          "The Abantu Team"]]
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 11px; line-height: 1.6;"}
+          "This is an automated message. Please do not reply directly to this email."]]
+        (footer)]]]]]))
+
+(defn student-access-removed-notification
+  "Returns the completed HTML for a student-access-removed notification email.
+  Sent to a user whose access to a course has just been revoked."
+  [{:keys [recipient-name course-name]}]
+  (h/html5
+   {:lang "en"}
+   (head-metadata)
+   [:body {:style "font-family: 'Switzer', sans-serif"}
+    [:table {:width "100%" :border "0" :cellspacing "0" :cellpadding "0"}
+     [:tr
+      [:td {:align "center" :style "padding: 20px;"}
+       [:table {:class "content"
+                :width "600"
+                :border "0"
+                :cellspacing "0"
+                :cellpadding "0"
+                :style "border-collapse: collapse; border: 1px solid #cccccc;"}
+        (header)
+        [:tr
+         [:td {:class "body"
+               :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}
+          (str "Hi " recipient-name ",")
+          [:br] [:br]
+          (str "Your access to the course \"" course-name "\" has been revoked.")
+          [:br] [:br]
+          "You will no longer be able to access its units and exercises."]]
         [:tr
          [:td {:class "body"
                :style "padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;"}

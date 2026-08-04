@@ -1,8 +1,9 @@
 (ns abantu.routes.api.users
   (:require [abantu.routes.openapi :as api]
             [abantu.services.users :as users]
-            [abantu.email.gmail :as gmail]
+            [abantu.async.interface :as async]
             [abantu.email.templates :as templates]
+            [abantu.config :as conf]
             [ring.util.response :as res]))
 
 (defn get-all-users
@@ -20,12 +21,13 @@
   (try
     (let [user (users/create-user! ds body)
           hash (users/set-password-reset-hash! ds (:id user))
-          set-password-url (str "https://abantu-portal.modulrza.app/register/set-password/" hash)]
-      (gmail/send-email {:to (:email user)
-                         :subject "Abantu - Set Your Password"
-                         :body (templates/user-created {:firstname (:firstname user)
-                                                        :set-password-url set-password-url})
-                         :type :text/html})
+          set-password-url (str (conf/read-admin-portal-url) "/register/set-password/" hash)]
+      (async/handle-command :send-email
+                            {:to (:email user)
+                             :subject "Abantu - Set Your Password"
+                             :body (templates/user-created {:firstname (:firstname user)
+                                                            :set-password-url set-password-url})
+                             :type :text/html})
       (res/response {:message "Successfully created user"}))
     (catch Exception e
       (prn e)
@@ -70,13 +72,14 @@
     (let [id (:id path-params)
           user (users/get-user ds id)
           hash (users/set-password-reset-hash! ds id)
-          set-password-url (str "https://abantu-portal.modulrza.app/register/set-password/" hash)]
+          set-password-url (str (conf/read-admin-portal-url) "/register/set-password/" hash)]
       (users/approve-user! ds id)
-      (gmail/send-email {:to (:email user)
-                         :subject "Abantu - Your Creator Account Has Been Approved!"
-                         :body (templates/creator-approved {:firstname (:firstname user)
-                                                           :set-password-url set-password-url})
-                         :type :text/html})
+      (async/handle-command :send-email
+                            {:to (:email user)
+                             :subject "Abantu - Your Creator Account Has Been Approved!"
+                             :body (templates/creator-approved {:firstname (:firstname user)
+                                                               :set-password-url set-password-url})
+                             :type :text/html})
       (res/response {:message "Successfully approved user"}))
     (catch Exception e
       (prn e)

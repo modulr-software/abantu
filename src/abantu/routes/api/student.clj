@@ -10,13 +10,17 @@
 (defn- with-progress [user-id unit]
   (assoc unit :progress (stats/unit-progress user-id (:id unit))))
 
+(defn- with-course-progress [course]
+  (assoc course :overall-progress (stats/course-progress (:units course))))
+
 (defn get-courses
   {:summary "Get all courses a student has started for a given student id"
    :responses (-> (api/success api/GetCoursesResponse))}
   [{:keys [ds user] :as _request}]
   (let [user-id (:id user)]
     (res/response
-     (mapv #(update % :units (fn [us] (mapv (partial with-progress user-id) us)))
+     (mapv (comp with-course-progress
+                 #(update % :units (fn [us] (mapv (partial with-progress user-id) us))))
            (courses/courses-by-user ds user-id)))))
 
 (defn get-course
@@ -28,7 +32,8 @@
         user-id (:id user)]
     (res/response
      (some-> (courses/course-by-user ds user-id id)
-             (update :units (fn [us] (mapv (partial with-progress user-id) us)))))))
+             (update :units (fn [us] (mapv (partial with-progress user-id) us)))
+             with-course-progress))))
 
 (defn assign-course!
   {:summary "Subscribe the current user to a course. Only publishable, visible

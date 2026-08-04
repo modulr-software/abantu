@@ -148,6 +148,42 @@
       (-> (res/response {:message "Unauthorized"})
           (res/status 401)))))
 
+(defn wrap-owner-or-editor-or-admin
+  "Like wrap-owner-or-admin, but also lets through editors of the course
+  (creators with edit rights via the course-editors table). Assocs :user and
+  :course onto the request."
+  [handler]
+  (fn [{:keys [ds path-params] :as request}]
+    (if-let [user (validate-request request)]
+      (let [db-user (users/get-user ds (:id user))
+            role (:role db-user)
+            course (courses/get-course ds (:id path-params))]
+        (cond
+          (:archived db-user)
+          (-> (res/response {:message "Forbidden: this user account has been archived."})
+              (res/status 403))
+
+          (and (= "creator" role) (not (:approved db-user)))
+          (-> (res/response {:message "Forbidden: this user account has not been approved."})
+              (res/status 403))
+
+          (nil? course)
+          (-> (res/response {:message (str "The course with the id '" (:id path-params) "' does not exist.")})
+              (res/status 404))
+
+          (or (= "admin" role)
+              (= (:id user) (get-in course [:creator :id]))
+              (courses/editor? ds (:id user) (:id course)))
+          (-> request
+              (assoc :user user :course course)
+              (handler))
+
+          :else
+          (-> (res/response {:message "Forbidden: you are not the creator or an editor of this course."})
+              (res/status 403))))
+      (-> (res/response {:message "Unauthorized"})
+          (res/status 401)))))
+
 (defn wrap-publishable
   "Ring middleware that only lets through requests for a course (identified by the :id
    path param) that is publishable. Assocs :course onto the request. Must be composed

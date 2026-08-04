@@ -2,11 +2,14 @@
   (:require [abantu.routes.openapi :as api]
             [abantu.services.courses :as courses]
             [abantu.services.users :as users]
+            [abantu.async.interface :as async]
+            [abantu.email.templates :as templates]
             [ring.util.response :as res]))
 
 (defn get-all-courses
-  {:summary "Get all courses. Admins receive every course; users above student receive only
-             the courses they created; students are forbidden."
+  {:summary "Get all courses. Admins receive every course; users above student receive
+             the courses they created plus the courses they are an editor of; students
+             are forbidden."
    :responses (-> (api/success api/GetCoursesResponse)
                   (api/response 403 (api/error)))}
   [{:keys [ds user] :as _request}]
@@ -16,7 +19,10 @@
       (res/response (courses/get-all ds))
 
       (and (some? role) (not= "student" role))
-      (res/response (courses/courses-by-creator ds (:id user)))
+      (let [created (courses/courses-by-creator ds (:id user))
+            edited  (courses/courses-by-editor  ds (:id user))
+            ids     (set (map :id created))]
+        (res/response (into created (remove #(contains? ids (:id %)) edited))))
 
       :else
       (-> (res/response {:message "Forbidden: students are not permitted to view courses."})
@@ -150,7 +156,17 @@
 
       :else
       (if (courses/assign-course-to-user! ds assignee-id course-id)
-        (res/response {:message (str "Successfully assigned user '" assignee-id "' to course '" course-id "'.")})
+        (let [target (users/get-user ds assignee-id)]
+          (async/handle-command
+           :send-email
+           {:to (:email target)
+            :subject (str "You've been given access to \"" (:name course) "\"")
+            :type :text/html
+            :body (templates/student-access-added-notification
+                   {:recipient-name (:firstname target)
+                    :course-name (:name course)
+                    :course-id course-id})})
+          (res/response {:message (str "Successfully assigned user '" assignee-id "' to course '" course-id "'.")}))
         (res/response {:message (str "User '" assignee-id "' is already assigned to this course.")})))))
 
 (defn remove-user-from-course!
@@ -183,7 +199,16 @@
 
       :else
       (if (courses/remove-course-from-user! ds assignee-id course-id)
-        (res/response {:message (str "Successfully unsubscribed user '" assignee-id "' from course '" course-id "'.")})
+        (let [target (users/get-user ds assignee-id)]
+          (async/handle-command
+           :send-email
+           {:to (:email target)
+            :subject (str "Your access to \"" (:name course) "\" has been revoked")
+            :type :text/html
+            :body (templates/student-access-removed-notification
+                   {:recipient-name (:firstname target)
+                    :course-name (:name course)})})
+          (res/response {:message (str "Successfully unsubscribed user '" assignee-id "' from course '" course-id "'.")}))
         (-> (res/response {:message "Unable to unsubscribe the user from the course."})
             (res/status 500))))))
 
@@ -202,3 +227,88 @@
       (prn e)
       (-> (res/response {:message "Unable to change unit order"})
           (res/status 400)))))
+
+(defn list-editors
+  {:summary "Get all editors for a given course. Only the course creator or an admin may call this."
+   :parameters (api/params :path api/IdPathParam)
+   :responses (-> (api/success [:vector api/User])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))]
+    (if (courses/get-course ds course-id)
+      (res/response (courses/editors-by-course ds course-id))
+      (-> (res/response {:message (str "The course with the id '" course-id "' does not exist.")})
+          (res/status 404)))))
+
+(defn add-editor
+  {:summary "Grant a creator edit rights on a course. Only the course creator or an admin may call this."
+   :parameters (api/params :path api/IdPathParam :body api/EditorTargetParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params body course] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))
+        target-id (:user-id body)
+        target (users/get-user ds target-id)]
+    (cond
+      (nil? target)
+      (-> (res/response {:message (str "The user with the id '" target-id "' does not exist.")})
+          (res/status 404))
+
+      (not= "creator" (:role target))
+      (-> (res/response {:message "Only creators can be added as editors."})
+          (res/status 403))
+
+      (= (:id target) (get-in course [:creator :id]))
+      (-> (res/response {:message "The course creator is already an editor of this course."})
+          (res/status 403))
+
+      :else
+      (if (courses/add-editor! ds target-id course-id)
+        (do (async/handle-command
+             :send-email
+             {:to (:email target)
+              :subject (str "You've been added as an editor of \"" (:name course) "\"")
+              :type :text/html
+              :body (templates/editor-added-notification
+                     {:recipient-name (:firstname target)
+                      :course-name (:name course)
+                      :course-id course-id})})
+            (res/response {:message (str "Successfully added editor '" target-id "' to course '" course-id "'.")}))
+        (res/response {:message (str "User '" target-id "' is already an editor of this course.")})))))
+
+(defn remove-editor
+  {:summary "Revoke a creator's edit rights on a course. Only the course creator or an admin may call this."
+   :parameters (api/params :path api/IdPathParam :body api/EditorTargetParams)
+   :responses (-> (api/success [:map [:message :string]])
+                  (api/not-found)
+                  (api/response 403 (api/error)))}
+  [{:keys [ds path-params body course] :as _request}]
+  (let [course-id (parse-long (str (:id path-params)))
+        target-id (:user-id body)
+        target (users/get-user ds target-id)]
+    (cond
+      (nil? target)
+      (-> (res/response {:message (str "The user with the id '" target-id "' does not exist.")})
+          (res/status 404))
+
+      (not= "creator" (:role target))
+      (-> (res/response {:message "Only creators can be editors of a course."})
+          (res/status 403))
+
+      (not (courses/editor? ds target-id course-id))
+      (-> (res/response {:message (str "User '" target-id "' is not an editor of this course.")})
+          (res/status 404))
+
+      :else
+      (do (courses/remove-editor! ds target-id course-id)
+          (async/handle-command
+           :send-email
+           {:to (:email target)
+            :subject (str "Your editor access to \"" (:name course) "\" has been revoked")
+            :type :text/html
+            :body (templates/editor-removed-notification
+                   {:recipient-name (:firstname target)
+                    :course-name (:name course)})})
+          (res/response {:message (str "Successfully removed editor '" target-id "' from course '" course-id "'.")})))))
