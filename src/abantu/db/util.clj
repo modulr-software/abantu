@@ -4,7 +4,6 @@
             [next.jdbc.result-set :as rs]
             [clojure.java.io :as io]))
 
-
 (defn db-path [dbname]
   (let [db-dir (conf/read-value :database :dir)]
     (str
@@ -30,8 +29,7 @@
     conn))
 
 (defn- validate-db-type [db-type]
-  (or (= db-type :master) (= db-type :student) (= db-type :creator)))
-
+  (or (= db-type :master) (= db-type :student) (= db-type :creator) (= db-type :test)))
 
 (defn conn
   ([]
@@ -72,11 +70,34 @@
   ([dbtype id]
    (run! remove-db-file! (all-db-paths dbtype id))))
 
+(defn create-test-db!
+  "Creates a fresh test_<id> db and migrates up by copying every table
+  definition from the master db (schema only, no data). Returns the path
+  of the new db."
+  [id]
+  (assert (validate-db-type :test))
+  (remove-db-files! :test id)
+  (with-open [c (-conn (db-name :test id))]
+    (jdbc/execute! c
+                   [(str "ATTACH DATABASE '"
+                         (db-path (db-name :master)) "' AS __master")])
+    (let [ddls (jdbc/execute! c
+                              ["SELECT sql FROM __master.sqlite_master
+                                WHERE type = 'table'
+                                AND name NOT LIKE 'sqlite_%'
+                                AND sql IS NOT NULL"])]
+
+      (doseq [row ddls]
+        (jdbc/execute! c [(val (first row))])))
+    (db-path (db-name :test id))))
+
 (comment
   (all-db-paths)
   (all-db-paths :student 1)
 
   (remove-db-files! :student 2)
   (remove-db-files!)
-  :end
-  )
+
+  (create-test-db! 1)
+  (remove-db-files! :test 1)
+  :end)
