@@ -1,18 +1,15 @@
 (ns abantu.services.write-queue
   (:require
    [honey.sql.helpers :as hsql]
-   [camel-snake-kebab.core :as csk]
    [abantu.db.util :as db.util]
-   [abantu.db.honey :as hon]
-   [camel-snake-kebab.extras :as cske]
-   [clojure.set :as set]))
+   [abantu.db.honey :as hon]))
 
 ; QUEUE STUFFS
 
-(def q (atom clojure.lang.PersistentQueue/EMPTY))
+(def *q (atom clojure.lang.PersistentQueue/EMPTY))
 
-(defn enq! [q item]
-  (swap! q conj item)
+(defn enq! [*q item]
+  (swap! *q conj item)
   nil)
 
 (defn deq! [q]
@@ -23,11 +20,13 @@
     @extracted-item))
 
 ; FRED STUFF
+(defprotocol Fred
+  (mutate! [this opts]
+    "Push a new task to the task list to be executed")
+  (query [this opts]
+    "Execute a task immediately"))
 
 (def *worker (atom false))
-
-(defn process-op [{:keys [_type ds query]}]
-  (hon/execute! ds query {:ret :*}))
 
 (defn- unwrap-response [{:keys [result err] :as _response}]
   (when err
@@ -42,89 +41,78 @@
   {:result nil
    :err value})
 
-(defn worker-thunk []
+(defn worker-thunk [execute-fn]
   (reset! *worker true)
-  (while (seq @q)
-    (when-let [{:keys [p] :as op} (deq! q)]
+  (while (seq @*q)
+    (when-let [{:keys [p] :as op} (deq! *q)]
       (->> (try
-             (ok (process-op op))
+             (ok (execute-fn op))
              (catch Exception e
                (err e)))
            (deliver p))))
   (reset! *worker false))
 
-(defn start-worker! []
-  (future (worker-thunk)))
+(defn start-worker! [execute-fn]
+  (future (worker-thunk execute-fn)))
 
 (defn worker-alive? []
   @*worker)
 
-(defn- ensure-worker! []
+(defn- ensure-worker! [execute-fn]
   (when-not (worker-alive?)
-    (start-worker!)))
+    (start-worker! execute-fn)))
 
 ; QUERY & MUTATION STUFF 
 
-(defn mutate!
+(defn- -mutate!
   "accepts honey-compatible sql mutations as 
   {:type :insert|update|delete 
   :ds ds
   :query sql}
   returns a promise that delivers the write result (or the Exception on failure)."
-  [sql-mutation]
+  [execute-fn sql-mutation]
   (let [p (promise)
         op (assoc sql-mutation :p p)]
-    (enq! q op)
-    (ensure-worker!)
+    (enq! *q op)
+    (ensure-worker! execute-fn)
     (unwrap-response @p)))
 
-(defn query!
+(defn- -query
   "accepts a honey-compatible sql query as 
   {:type :select 
   :ds ds 
   :query sql}
   returns a promise that delivers the query result (or the Exception on failure)"
-  [sql-query]
+  [execute-fn sql-query]
   (let [p (promise)]
     (->> (try
-           (ok (process-op sql-query))
+           (ok (execute-fn sql-query))
            (catch Exception e
              (err e)))
          (deliver p)
          (future))
     @p))
 
-(defn- insert! [ds {:keys [tname data values]}]
-  (let [values' (or data values)
-        multi? (vector? values')
-        vals (if multi? values' [values'])]
-    (mutate!
-     {:type :insert
-      :ds ds
-      :query (-> (hsql/insert-into (csk/->snake_case_keyword tname))
-                 (hsql/values vals)
-                 (hsql/returning :*))})))
+(defn create-fred
+  "Create a new instance of Fred with the given executor function"
+  [{:keys [execute-fn]}]
+  (reify Fred
+    (mutate! [_ opts]
+      (-mutate! execute-fn opts))
+    (query [_ opts]
+      (-query execute-fn opts))))
 
-(defn- find [ds {:keys [tname where order-by limit]}]
-  (query!
-   {:type :select
-    :ds ds
-    :query (-> (hsql/select :*)
-               (hsql/from (csk/->snake_case_keyword tname))
-               (merge (if (some? order-by) {:order-by order-by} {}))
-               (merge (if (some? limit) (hsql/limit limit) {}))
-               (hsql/where
-                (or (cske/transform-keys
-                     csk/->snake_case_keyword where)
-                    [])))}))
+(defn process-op [{:keys [_type ds query]}]
+  (hon/execute! ds query {:ret :*}))
 
 (comment
+  (require '[clojure.set :as set])
 
-  (enq! q :first)
-  (enq! q :second)
-  (enq! q :third)
-  (deq! q)
-  (peek @q)
+  (enq! *q :first)
+  (enq! *q :second)
+  (enq! *q :third)
+  (deq! *q)
+  (peek @*q)
 
   (try
     (insert! (db.util/conn) {:tname :exercises-completed
@@ -148,7 +136,7 @@
    (let [ds (db.util/conn)]
      (doall
       (pmap #(insert! ds {:tname :exercises-completed
-                          :data {:useraoensuthaoeu 1
+                          :data {:user-id 1
                                  :unit-id 1
                                  :exercise-id %
                                  :timestamp 0
@@ -157,8 +145,8 @@
 
   (defn c []
     (let [p (promise)]
-      (future (do (Thread/sleep 2000)
-                  (deliver p false)))
+      (future (Thread/sleep 2000)
+              (deliver p false))
       p))
 
   (defn b []
@@ -182,14 +170,29 @@
       (Thread/sleep 2000)
       (deliver yomama (ex-info "o nei" {}))))
 
-  ;; create a fresh test_<id> db (schema cloned from master), then drive
+  (let [ds (db.util/conn)
+        fred (create-fred {:execute-fn (fn [{:keys [_type ds query]}]
+                                         (hon/execute! ds query {:ret :*}))})]
+    (mutate!
+     fred
+     {:type :insert
+      :ds ds
+      :query (-> (hsql/insert-into :exercises_completed)
+                 (hsql/values [{:user-id 1
+                                :unit-id 1
+                                :exercise-id 1
+                                :timestamp 0
+                                :practice-session-id 1}])
+                 (hsql/returning :*))}))
+
+;; create a fresh test_<id> db (schema cloned from master), then drive
   ;; 5 inserts through mutate! with hsql-built sql-mutations and assert
   ;; the rows land in enqueue order (autoincrement :id asc => exercise-id 0..4).
   (let [id 1
         _   (db.util/create-test-db! id)
         ds  (db.util/conn :test id)]
     (try
-      (reset! q clojure.lang.PersistentQueue/EMPTY)
+      (reset! *q clojure.lang.PersistentQueue/EMPTY)
       (reset! *worker false)
       (doseq [i (range 5)]
         (mutate!
@@ -213,15 +216,15 @@
       (finally
         (db.util/remove-db-files! :test id))))
 
-  ;; fire 1000 inserts concurrently via pmap. enqueue order is now
-  ;; nondeterministic (futures race to enq!), so we assert count and the
-  ;; full set of exercise-ids rather than order — the queue's job here is
-  ;; to land every write safely under contention, not to preserve order.
+ ;; fire 1000 inserts concurrently via pmap. enqueue order is now
+ ;; nondeterministic (futures race to enq!), so we assert count and the
+ ;; full set of exercise-ids rather than order — the queue's job here is
+ ;; to land every write safely under contention, not to preserve order.
   (let [id 2
         _   (db.util/create-test-db! id)
         ds  (db.util/conn :test id)]
     (try
-      (reset! q clojure.lang.PersistentQueue/EMPTY)
+      (reset! *q clojure.lang.PersistentQueue/EMPTY)
       (reset! *worker false)
       (time
        (doall

@@ -47,8 +47,6 @@
        (merge opts)
        (find ds)))
 
-(defonce ^:private write-lock (Object.))
-
 (defn insert!
   "inserts a single record or a set of records into a table. records passed in 
   map form where the keys can be kebab-case keywords. all keys are converted 
