@@ -2,7 +2,8 @@
   (:require
    [honey.sql.helpers :as hsql]
    [abantu.db.util :as db.util]
-   [abantu.db.honey :as hon]))
+   [abantu.db.honey :as hon]
+   [clj-oauth2.client :as oauth2]))
 
 ; QUEUE STUFFS
 
@@ -77,6 +78,7 @@
     (ensure-worker! execute-fn)
     (unwrap-response @p)))
 
+
 (defn- -query
   "accepts a honey-compatible sql query as 
   {:type :select 
@@ -105,149 +107,6 @@
 (defn process-op [{:keys [_type ds query]}]
   (hon/execute! ds query {:ret :*}))
 
+
 (comment
-  (require '[clojure.set :as set])
-
-  (enq! *q :first)
-  (enq! *q :second)
-  (enq! *q :third)
-  (deq! *q)
-  (peek @*q)
-
-  (try
-    (insert! (db.util/conn) {:tname :exercises-completed
-                             :data {:user-id 1
-                                    :unit-id 1
-                                    :exercise-id 1
-                                    :timestamp 0
-                                    :practice-session-id 1}})
-    (catch Exception e
-      (println "o nei we got an error: " (.getMessage e))))
-
-  (find (db.util/conn) {:tname :exercises-completed
-                        :ret :*})
-
-  (count
-   (hon/find (db.util/conn) {:tname :exercises-completed
-                             :ret :*}))
-
-  ;; fire 5 inserts in parallel to exercise the queue
-  (time
-   (let [ds (db.util/conn)]
-     (doall
-      (pmap #(insert! ds {:tname :exercises-completed
-                          :data {:user-id 1
-                                 :unit-id 1
-                                 :exercise-id %
-                                 :timestamp 0
-                                 :practice-session-id 1}})
-            (range 5)))))
-
-  (defn c []
-    (let [p (promise)]
-      (future (Thread/sleep 2000)
-              (deliver p false))
-      p))
-
-  (defn b []
-    (let [bp (promise)
-          p (c)]
-      (if @p
-        (deliver bp @p)
-        (throw (ex-info "o nei we got false" {})))
-      bp))
-
-  (defn a []
-    (let [p (b)]
-      (println "success: " @p)))
-
-  (a)
-
-  (let [yomama (promise)
-        yeet (assoc {} :p yomama)]
-    (future @yomama)
-    (future
-      (Thread/sleep 2000)
-      (deliver yomama (ex-info "o nei" {}))))
-
-  (let [ds (db.util/conn)
-        fred (create-fred {:execute-fn (fn [{:keys [_type ds query]}]
-                                         (hon/execute! ds query {:ret :*}))})]
-    (mutate!
-     fred
-     {:type :insert
-      :ds ds
-      :query (-> (hsql/insert-into :exercises_completed)
-                 (hsql/values [{:user-id 1
-                                :unit-id 1
-                                :exercise-id 1
-                                :timestamp 0
-                                :practice-session-id 1}])
-                 (hsql/returning :*))}))
-
-;; create a fresh test_<id> db (schema cloned from master), then drive
-  ;; 5 inserts through mutate! with hsql-built sql-mutations and assert
-  ;; the rows land in enqueue order (autoincrement :id asc => exercise-id 0..4).
-  (let [id 1
-        _   (db.util/create-test-db! id)
-        ds  (db.util/conn :test id)]
-    (try
-      (reset! *q clojure.lang.PersistentQueue/EMPTY)
-      (reset! *worker false)
-      (doseq [i (range 5)]
-        (mutate!
-         {:type :insert
-          :ds ds
-          :query (-> (hsql/insert-into :exercises_completed)
-                     (hsql/values [{:user-id 1
-                                    :unit-id 1
-                                    :exercise-id i
-                                    :timestamp 0
-                                    :practice-session-id 1}])
-                     (hsql/returning :*))}))
-      (let [got (->> (hon/find ds {:tname :exercises-completed
-                                   :order-by [:id]
-                                   :ret :*})
-                     (mapv :exercise-id))]
-        (prn "ordered exercise-ids:" got)
-        (assert (= (vec (range 5)) got)
-                (str "expected 0..4 in order, got " got))
-        :ok)
-      (finally
-        (db.util/remove-db-files! :test id))))
-
- ;; fire 1000 inserts concurrently via pmap. enqueue order is now
- ;; nondeterministic (futures race to enq!), so we assert count and the
- ;; full set of exercise-ids rather than order — the queue's job here is
- ;; to land every write safely under contention, not to preserve order.
-  (let [id 2
-        _   (db.util/create-test-db! id)
-        ds  (db.util/conn :test id)]
-    (try
-      (reset! *q clojure.lang.PersistentQueue/EMPTY)
-      (reset! *worker false)
-      (time
-       (doall
-        (pmap #(mutate!
-                {:type :insert
-                 :ds ds
-                 :query (-> (hsql/insert-into :exercises_completed)
-                            (hsql/values [{:user-id 1
-                                           :unit-id 1
-                                           :exercise-id %
-                                           :timestamp 0
-                                           :practice-session-id 1}])
-                            (hsql/returning :*))})
-              (range 1000))))
-      (let [rows (hon/find ds {:tname :exercises-completed
-                               :ret :*})
-            ids  (set (map :exercise-id rows))]
-        (prn "rows:" (count rows))
-        (assert (= 1000 (count rows))
-                (str "expected 1000 rows, got " (count rows)))
-        (assert (= (set (range 1000)) ids)
-                (str "expected exercise-ids 0..999, missing " (sort (set/difference (set (range 1000)) ids))))
-        :ok)
-      (finally
-        (db.util/remove-db-files! :test id))))
   ())
