@@ -12,7 +12,21 @@
             [abantu.routes.api.spamtest :as spamtest]
             [abantu.routes.api.comments :as comments]
             [abantu.middleware.auth.core :as authmw]
-            [abantu.routes.util :refer [get post delete tag mw] :as rutil]))
+            [abantu.routes.util :refer [get post delete tag mw] :as rutil]
+            [abantu.yolo.interface :as yolo]
+            [abantu.async.interface :as commands]
+            [ring.util.response :as res]
+            [abantu.async.interface :as async]))
+
+(defn create-context
+  "This function produces anything you want and attaches it to the request.
+   You can upgrade the request however you feel is necessary for the handle-command resolver."
+  [{:keys [user] :as req} {:keys [ds] :as _opts}]
+  (cond-> req 
+    true (assoc :ds (or ds (db/ds :master)))
+    (some? user) (assoc :student-ds (db/ds (db/db-name :student (:id user))))))
+    
+
 
 (defn create-app
   ([] (create-app {:ds (db/ds :master)}))
@@ -22,8 +36,13 @@
       (ring/router
        [(rutil/swagger-route)
         (rutil/openapi-route)
+        ["/api/v2/command/:command" (-> (post (yolo/create-handler {:handler async/handle-command
+                                                                    :middleware (fn [handler] handler)})))]
 
-                 ["/api"
+        ["/api"
+         ["/v2/command/:command" (-> (post (yolo/create-handler {:handler async/handle-command
+                                                                 :middleware (fn [handler]
+                                                                               (fn))})))]
 
          ["/spamtest" (-> (get spamtest/get-spamtest)
                           (tag :spamtest))]
@@ -49,18 +68,18 @@
          ["/auth/email/verify" (-> (post auth/verify-email)
                                    (tag :auth))]
 
-          ["/auth/creator/request" (-> (post auth/creator-request)
-                                       (tag :auth))]
+         ["/auth/creator/request" (-> (post auth/creator-request)
+                                      (tag :auth))]
 
-          ["/auth/password/set" (-> (post auth/set-password)
-                                    (tag :auth))]
+         ["/auth/password/set" (-> (post auth/set-password)
+                                   (tag :auth))]
 
          ["/student/session/start" (-> (post student/start-session!)
                                        (mw authmw/wrap-auth)
                                        (tag :student))]
          ["/student/session/end" (-> (post student/end-session!)
-                                      (mw authmw/wrap-auth)
-                                      (tag :student))]
+                                     (mw authmw/wrap-auth)
+                                     (tag :student))]
 
          ["/student/courses" (-> (get student/get-courses)
                                  (mw authmw/wrap-auth)
@@ -78,26 +97,26 @@
                                      (mw authmw/wrap-auth)
                                      (tag :student))]
 
-          ;;users
-          ["/users" (-> (get users/get-all-users)
-                        (mw authmw/wrap-above-student)
-                        (tag :users))]
+         ;;users
+         ["/users" (-> (get users/get-all-users)
+                       (mw authmw/wrap-above-student)
+                       (tag :users))]
 
-          ["/users/add" (-> (post users/add-user)
-                            (mw authmw/wrap-admin)
-                            (tag :users :admin))]
+         ["/users/add" (-> (post users/add-user)
+                           (mw authmw/wrap-admin)
+                           (tag :users :admin))]
 
-          ["/users/archive/:id" (-> (delete users/archive-user)
-                            (mw authmw/wrap-admin)
-                            (tag :users :admin))]
+         ["/users/archive/:id" (-> (delete users/archive-user)
+                                   (mw authmw/wrap-admin)
+                                   (tag :users :admin))]
 
-          ["/users/unarchive/:id" (-> (post users/unarchive-user)
-                                      (mw authmw/wrap-admin)
-                                      (tag :users :admin))]
+         ["/users/unarchive/:id" (-> (post users/unarchive-user)
+                                     (mw authmw/wrap-admin)
+                                     (tag :users :admin))]
 
-          ["/users/approve/:id" (-> (post users/approve-user)
-                                    (mw authmw/wrap-admin)
-                                    (tag :users :admin))]
+         ["/users/approve/:id" (-> (post users/approve-user)
+                                   (mw authmw/wrap-admin)
+                                   (tag :users :admin))]
 
          ;; vocab
          ["/vocab" (-> (get vocab/get-all)
@@ -157,16 +176,16 @@
                                       (tag :courses))]
 
          ["/courses/:id/editors/list" (-> (get courses/list-editors)
-                                        (mw authmw/wrap-owner-or-editor-or-admin)
-                                        (tag :courses))]
+                                          (mw authmw/wrap-owner-or-editor-or-admin)
+                                          (tag :courses))]
 
          ["/courses/:id/editors/add" (-> (post courses/add-editor)
-                                        (mw authmw/wrap-owner-or-admin)
-                                        (tag :courses))]
+                                         (mw authmw/wrap-owner-or-admin)
+                                         (tag :courses))]
 
          ["/courses/:id/editors/remove" (-> (post courses/remove-editor)
-                                           (mw authmw/wrap-owner-or-admin)
-                                           (tag :courses))]
+                                            (mw authmw/wrap-owner-or-admin)
+                                            (tag :courses))]
 
          ;;units
          ["/units/:id" (-> (get units/get-by-id)
@@ -186,27 +205,27 @@
                                                   (mw authmw/wrap-auth)
                                                   (tag :exercises))]
 
-          ["/exercises/:id" (-> (get units/get-exercise)
-                                (post units/update-exercise)
-                                (delete units/delete-exercise)
-                                (tag :exercises))]
+         ["/exercises/:id" (-> (get units/get-exercise)
+                               (post units/update-exercise)
+                               (delete units/delete-exercise)
+                               (tag :exercises))]
 
-          ["/exercises/:id/comments" (-> (get comments/get-for-exercise)
-                                         (mw authmw/wrap-auth)
-                                         (tag :comments))]
+         ["/exercises/:id/comments" (-> (get comments/get-for-exercise)
+                                        (mw authmw/wrap-auth)
+                                        (tag :comments))]
 
-          ;;comments
-          ["/comments/all" (-> (get comments/get-all)
-                               (mw authmw/wrap-auth)
-                               (tag :comments))]
+         ;;comments
+         ["/comments/all" (-> (get comments/get-all)
+                              (mw authmw/wrap-auth)
+                              (tag :comments))]
 
-          ["/comments/create" (-> (post comments/create-comment)
-                                  (mw authmw/wrap-auth)
-                                  (tag :comments))]
+         ["/comments/create" (-> (post comments/create-comment)
+                                 (mw authmw/wrap-auth)
+                                 (tag :comments))]
 
-          ["/comments/:id/resolve" (-> (post comments/resolve-comment)
-                                       (mw authmw/wrap-auth)
-                                       (tag :comments))]]]
+         ["/comments/:id/resolve" (-> (post comments/resolve-comment)
+                                      (mw authmw/wrap-auth)
+                                      (tag :comments))]]]
 
        (rutil/data-map ds))
       (ring/routes

@@ -42,6 +42,8 @@ levels among the unit's exercises**.
     the denominator is the full unit.)
   - **N ≥ 2**: completed. **No correctness gate** — the 50% rule does not
     apply to multi-level units.
+  - **Any N**: a session with **no answer rows** never qualifies — an empty
+    session is not a meaningful completion.
 - **C** — the count of qualifying completed sessions for the unit,
   **all-time** (the current one-month window is dropped — confirmed). C is
   effectively capped at N: once the user has completed N qualifying
@@ -62,6 +64,9 @@ progress = min(C, N) / N        ; capped at 100%
 ```
 
 Each qualifying completed session advances progress by `1 / N`.
+
+A unit with **no exercises** (`N = 0`) has progress **0** — no division
+(and `:difficulty-levels` is `0`, §5).
 
 ### 3.1 Unit with exactly 1 difficulty level (N = 1)
 
@@ -132,6 +137,7 @@ include:
 
 - `:difficulty-levels` — the value `N` (distinct exercise `:level` count) for
   that unit, so the client can show "this unit has N difficulty levels."
+  `0` when the unit has no exercises.
 
 `course-progress` (average of unit `:progress` values) is unchanged in
 mechanism; its inputs now come from the new `unit-progress`.
