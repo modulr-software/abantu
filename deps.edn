@@ -24,6 +24,7 @@
         com.layerware/hugsql-core {:mvn/version "0.5.3"}
         com.layerware/hugsql-adapter-next-jdbc {:mvn/version "0.5.3"}
         metosin/malli {:mvn/version "0.18.0"}
+        io.julienvincent/malt {:mvn/version "1.1.2"}
         com.gfredericks/test.chuck {:mvn/version "0.2.14"}
         com.kepler16/mallard {:mvn/version "3.2.1"}
         com.kepler16/mallard-sqlite-store {:mvn/version "3.2.1"}
