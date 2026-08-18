@@ -169,7 +169,7 @@
   (sql/format exercises)
   (sql/format answers)
   (sql/format practice-sessions)
-   (sql/format exercises-completed)
-   (sql/format comments)
+  (sql/format exercises-completed)
+  (sql/format comments)
 
   ())

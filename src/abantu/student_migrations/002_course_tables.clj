@@ -16,13 +16,24 @@
 
         units (hon/find ds-master {:tname :units
                                    :where [:in :course-id (or (seq course-ids) [0])]})
+        unit-ids (mapv :id units)
 
         exercises (hon/find ds-master {:tname :exercises
                                        :where [:in :course-id (or (seq course-ids) [0])]})
         exercise-ids (mapv :id exercises)
 
         answers (hon/find ds-master {:tname :answers
-                                     :where [:in :exercise-id (or (seq exercise-ids) [0])]})]
+                                     :where [:in :exercise-id (or (seq exercise-ids) [0])]})
+
+        practice-sessions (hon/find ds-master {:tname :practice-sessions
+                                               :where [:in :unit-id (or (seq unit-ids) [0])]})
+        practice-sessions-ids (mapv :id practice-sessions)
+
+        exercises-completed (hon/find ds-master {:tname :exercises-completed
+                                                 :where [:in :practice-session-id (or (seq practice-sessions-ids) [0])]})
+
+        comments (hon/find ds-master {:tname :comments
+                                      :where [:in :course-id (or (seq course-ids) [0])]})]
 
     (tables/create-tables!
      ds-student
@@ -30,7 +41,10 @@
      [:courses
       :units
       :exercises
-      :answers])
+      :answers
+      :practice-sessions
+      :exercises-completed
+      :comments])
 
     (run!
      (hon/insert! ds-student {:tname :courses
@@ -51,7 +65,22 @@
     (run!
      (hon/insert! ds-student {:tname :answers
                               :data answers})
-     answers)))
+     answers)
+
+    (run!
+     (hon/insert! ds-student {:tname :practice-sessions
+                              :data practice-sessions})
+     practice-sessions)
+
+    (run!
+     (hon/insert! ds-student {:tname :exercises-completed
+                              :data exercises-completed})
+     exercises-completed)
+
+    (run!
+     (hon/insert! ds-student {:tname :comments
+                              :data comments})
+     comments)))
 
 (defn run-down! [context]
   (let [ds-student (:ds-student context)]
@@ -60,7 +89,10 @@
      [:courses
       :units
       :exercises
-      :answers])))
+      :answers
+      :practice-sessions
+      :exercises-completed
+      :comments])))
 
 (comment
   ())
