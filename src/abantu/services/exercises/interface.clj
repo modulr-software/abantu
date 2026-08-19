@@ -1,7 +1,11 @@
 (ns abantu.services.exercises.interface
   (:require [io.julienvincent.malt :as malt]
             [malli.util :as mu]
-            [abantu.db.util :as db.util]))
+            [abantu.db.util :as db.util]
+            [abantu.services.exercises.core :as exercises]))
+
+(defn- maybe [?schema]
+  [:or ?schema :nil])
 
 (def ?Option :string)
 (def ?Answer :string)
@@ -74,49 +78,55 @@
 
 (malt/defprotocol ExerciseQuery
   (lookup [input ?Lookup]
-    ?Exercise)
-  (find [input ?Find]
-    [:vector ?Exercise]))
+    [:vector ?Exercise])
+  (find [input ?Find] [:vector ?Exercise])
+  (all [] [:vector ?Exercise]))
+
+(defn use-query
+  ([] (use-query (db.util/conn)))
+  ([ds]
+   (malt/reify ExerciseQuery
+     (lookup [_ input]
+       (exercises/-lookup ds input))
+     (find [_ input]
+       )
+     (all [_]
+       (exercises/-all ds))
+     )))
 
 (malt/defprotocol ExerciseMutation
   (set-unit [input ?SetUnit]
-    :boolean)
+    (maybe ?Exercise))
   (set-instruction [input ?SetInstruction]
-    :boolean)
+    (maybe ?Exercise))
   (set-question-content [input ?SetQuestionContent]
-    :boolean)
+    (maybe ?Exercise))
   (set-answer-type [input ?SetAnswerType]
-    :boolean)
+    (maybe ?Exercise))
   (set-level [input ?SetLevel]
-    :boolean)
+    (maybe ?Exercise))
   (set-correct-message [input ?SetCorrectMessage]
-    :boolean)
+    (maybe ?Exercise))
   (set-incorrect-message [input ?SetIncorrectMessage]
-    :boolean)
+    (maybe ?Exercise))
   (set-order [input ?SetOrder]
-    :boolean)
+    (maybe ?Exercise))
   (set-options [input ?SetOptions]
-    :boolean)
+    (maybe ?Exercise))
   (add-option [input ?AddOption]
-    :boolean)
+    (maybe ?Exercise))
   (remove-option [input ?RemoveOption]
-    :boolean)
+    (maybe ?Exercise))
   (set-answers [input ?SetAnswers]
-    :boolean)
+    (maybe ?Exercise))
   (add-answer [input ?AddAnswer]
-    :boolean)
+    (maybe ?Exercise))
   (remove-answer [input ?RemoveAnswer]
-    :boolean))
+    (maybe ?Exercise)))
 
-(defn create-query-service
-  ([] (create-query-service (db.util/conn)))
-  ([ds]
-   (malt/reify ExerciseQuery
-     (lookup [_ input])
-     (find [_ input]))))
 
-(defn create-mutation-service
-  ([] (create-mutation-service (db.util/conn)))
+(defn use-mutation
+  ([] (use-mutation (db.util/conn)))
   ([ds]
    (malt/reify ExerciseMutation
      (set-unit [_ input])
