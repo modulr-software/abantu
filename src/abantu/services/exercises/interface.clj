@@ -1,7 +1,7 @@
 (ns abantu.services.exercises.interface
   (:require [io.julienvincent.malt :as malt]
             [malli.util :as mu]
-            [abantu.db.interface :as db]))
+            [abantu.db.util :as db.util]))
 
 (def ?Option :string)
 (def ?Answer :string)
@@ -72,11 +72,13 @@
 (def ?SetAnswers
   (mu/select-keys ?Exercise [:id :answers]))
 
-(malt/defprotocol Exercises
+(malt/defprotocol ExerciseQuery
   (lookup [input ?Lookup]
     ?Exercise)
   (find [input ?Find]
-    [:vector ?Exercise])
+    [:vector ?Exercise]))
+
+(malt/defprotocol ExerciseMutation
   (set-unit [input ?SetUnit]
     :boolean)
   (set-instruction [input ?SetInstruction]
@@ -89,7 +91,7 @@
     :boolean)
   (set-correct-message [input ?SetCorrectMessage]
     :boolean)
-  (set-incorrect-message [input ?SetCorrectMessage]
+  (set-incorrect-message [input ?SetIncorrectMessage]
     :boolean)
   (set-order [input ?SetOrder]
     :boolean)
@@ -106,13 +108,28 @@
   (remove-answer [input ?RemoveAnswer]
     :boolean))
 
-(defn- -lookup [{:keys [id unit-id]}]
-  (let [ds (db/ds :master)]
-    (db/find-one ds {:tname :exercises
-                     :where [:= :id id]})))
+(defn create-query-service
+  ([] (create-query-service (db.util/conn)))
+  ([ds]
+   (malt/reify ExerciseQuery
+     (lookup [_ input])
+     (find [_ input]))))
 
-(defn create-service []
-  (let [ds (db/ds :master)]
-    (malt/reify Exercises
-      (lookup [_ input]
-        (-lookup input)))))
+(defn create-mutation-service
+  ([] (create-mutation-service (db.util/conn)))
+  ([ds]
+   (malt/reify ExerciseMutation
+     (set-unit [_ input])
+     (set-instruction [_ input])
+     (set-question-content [_ input])
+     (set-answer-type [_ input])
+     (set-level [_ input])
+     (set-correct-message [_ input])
+     (set-incorrect-message [_ input])
+     (set-order [_ input])
+     (set-options [_ input])
+     (add-option [_ input])
+     (remove-option [_ input])
+     (set-answers [_ input])
+     (add-answer [_ input])
+     (remove-answer [_ input]))))

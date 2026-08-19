@@ -40,5 +40,5 @@
         metosin/reitit {:mvn/version "0.9.1"}
         metosin/reitit-middleware {:mvn/version "0.9.1"}
         metosin/reitit-swagger {:mvn/version "0.9.1"}
-         metosin/reitit-swagger-ui {:mvn/version "0.9.1"}
-         io.github.tonsky/clj-reload {:mvn/version "1.0.0"}}}
+        metosin/reitit-swagger-ui {:mvn/version "0.9.1"}
+        io.github.tonsky/clj-reload {:mvn/version "1.0.0"}}}
