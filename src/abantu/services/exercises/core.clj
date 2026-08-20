@@ -2,8 +2,7 @@
   (:require [abantu.db.interface :as db]
             [abantu.services.comments :as comments]
             [honey.sql.helpers :as h]
-            [clojure.string :as str]
-            [abantu.services.exercises.core :as exercises]))
+            [clojure.string :as str]))
 
 (defn remove-first [v target]
   (let [[before [_ & after]] (split-with #(not= % target) v)]
@@ -16,15 +15,17 @@
                   (vec))))
 
 (defn- save-answers-for-exercise! [ds exercise-id answer-type answers]
-  (->> (mapv (comp #(merge {:exercise-id exercise-id} %)
-                   #(if (= answer-type "bubbles")
-                      (assoc % :text (str/join ";;" (:text %)))
-                      %))
-             answers)
+  (db/delete! ds {:tname :answers
+                  :where [:= :exercise-id exercise-id]})
+  (->> answers
+       (mapv #(if (= answer-type "bubbles")
+                (assoc {} :text (str/join ";;" %))
+                %))
+       (mapv #(assoc % :exercise-id exercise-id))
        (assoc {:tname :answers :ret :*} :data)
        (db/insert! ds)))
 
-(defn- add-answers [ds {:keys [id answer-type] :as exercise}]
+(defn- attach-answers [ds {:keys [id answer-type] :as exercise}]
   (let [answers (db/find ds {:tname :answers
                              :where [:= :exercise-id id]
                              :ret :*})
@@ -33,7 +34,7 @@
                   answers)]
     (assoc exercise :answers answers)))
 
-(defn- add-comments [ds {:keys [id] :as exercise}]
+(defn- attach-comments [ds {:keys [id] :as exercise}]
   (assoc exercise :comments (comments/get-for-exercise ds id)))
 
 (defn -lookup  [ds {:keys [id unit-id course-id]}]
@@ -42,16 +43,16 @@
                      (some? id) (h/where [:= :id id])
                      (some? unit-id) (h/where [:= :unit-id unit-id])
                      (some? course-id) (h/where [:= :course-id course-id])))
-       (add-comments ds)
+       (attach-comments ds)
        (process-options)
-       (add-answers ds)))
+       (attach-answers ds)))
 
 (defn -all [ds]
   (->> (db/find ds {:tname :exercises
                     :ret :*})
-       (mapv (comp (partial add-comments ds)
+       (mapv (comp (partial attach-comments ds)
                    process-options
-                   (partial add-answers ds)))))
+                   (partial attach-answers ds)))))
 
 (defn -find [ds {:keys [id unit-id course-id]}]
   (->> (db/find ds (cond-> {:tname :exercises
@@ -59,9 +60,9 @@
                      (some? id) (h/where [:= :id id])
                      (some? unit-id) (h/where [:= :unit-id unit-id])
                      (some? course-id) (h/where [:= :course-id course-id])))
-       (mapv (comp (partial add-comments ds)
+       (mapv (comp (partial attach-comments ds)
                    process-options
-                   (partial add-answers ds)))))
+                   (partial attach-answers ds)))))
 
 (defn- exists? [ds id]
   (when-let [exercise (-lookup ds {:id id})]
@@ -104,12 +105,13 @@
 
 (defmethod apply-update :set-answers [exercise {:keys [payload]}]
   (->> (:answers payload)
+       (mapv #(assoc {} :text %))
        (mapv #(assoc % :exercise-id (:id exercise)))
        (assoc exercise :answers)))
 
 (defmethod apply-update :add-answer [exercise {:keys [payload]}]
   (->> (:id exercise)
-       (assoc (:answer payload) :exercise-id)
+       (assoc {:text (:answer payload)} :exercise-id)
        (conj (:answers exercise))
        (assoc exercise :answers)))
 
@@ -202,9 +204,9 @@
 (defn -add-answer [ds {:keys [id answer] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/insert! ds {:tname :answers
-                    :values (->> (:text answer)
+                    :values (->> answer
                                  (str/join ";;")
-                                 (assoc answer :exercise-id id :text))})
+                                 (assoc {} :exercise-id id :text))})
     (apply-update exercise {:type :add-answer
                             :payload update})))
 
@@ -275,10 +277,10 @@
   (-remove-option ds {:id 1
                       :option "weet"})
   (-set-answers ds {:id 1
-                    :answers [{:text ["ek" "is"]}]})
+                    :answers [["is" "ek"]]})
   (-add-answer ds {:id 1
-                   :answer {:text ["hy" "is"]}})
-  (-remove-answer ds {:id 1 
-                      :answer-id 3})
+                   :answer ["hy" "is"]})
+  (-remove-answer ds {:id 1
+                      :answer-id 11})
 
   :end)

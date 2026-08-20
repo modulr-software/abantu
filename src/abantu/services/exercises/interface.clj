@@ -2,6 +2,7 @@
   (:require [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
+            [abantu.services.comments.interface :as comments]
             [abantu.services.exercises.core :as exercises]))
 
 (defn- maybe [?schema]
@@ -10,8 +11,7 @@
 (def ?Option :string)
 (def ?Answer [:map
               [:exercise-id :int]
-              [:text :string]
-              [:audio {:optional true} [:or :string :nil]]])
+              [:text :string]])
 
 (def ?Exercise
   [:map
@@ -25,7 +25,8 @@
    [:instruction :string]
    [:question-content :string]
    [:correct-message :string]
-   [:answers [:vector ?Answer]]])
+   [:answers [:vector ?Answer]]
+   (maybe [:comments [:vector comments/?Comment]])])
 
 (def ?Lookup
   (mu/select-keys ?Exercise [:id :unit-id :course-id]))
@@ -70,7 +71,7 @@
 
 (def ?AddAnswer
   (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer (mu/dissoc ?Answer :exercise-id))))
+      (mu/assoc :answer [:vector :string])))
 
 (def ?RemoveAnswer
   (-> (mu/select-keys ?Exercise [:id])
@@ -78,7 +79,7 @@
 
 (def ?SetAnswers
   (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answers [:vector (mu/dissoc ?Answer :exercise-id)])))
+      (mu/assoc :answers [:vector [:vector :string]])))
 
 (malt/defprotocol ExerciseQuery
   (lookup [input ?Lookup] ?Exercise)
