@@ -8,7 +8,10 @@
   [:or ?schema :nil])
 
 (def ?Option :string)
-(def ?Answer :string)
+(def ?Answer [:map
+              [:exercise-id :int]
+              [:text :string]
+              [:audio {:optional true} [:or :string :nil]]])
 
 (def ?Exercise
   [:map
@@ -16,7 +19,7 @@
    [:unit-id :int]
    [:course-id :int]
    [:level :int]
-   [:order :int]
+   [:position :int]
    [:options [:vector ?Option]]
    [:answer-type :string]
    [:instruction :string]
@@ -51,8 +54,8 @@
 (def ?SetIncorrectMessage
   (mu/select-keys ?Exercise [:id :incorrect-message]))
 
-(def ?SetOrder
-  (mu/select-keys ?Exercise [:id :order]))
+(def ?SetPosition
+  (mu/select-keys ?Exercise [:id :position]))
 
 (def ?SetOptions
   (mu/select-keys ?Exercise [:id :options]))
@@ -67,18 +70,18 @@
 
 (def ?AddAnswer
   (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer ?Answer)))
+      (mu/assoc :answer (mu/dissoc ?Answer :exercise-id))))
 
 (def ?RemoveAnswer
   (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer ?Answer)))
+      (mu/assoc :answer-id :int)))
 
 (def ?SetAnswers
-  (mu/select-keys ?Exercise [:id :answers]))
+  (-> (mu/select-keys ?Exercise [:id])
+      (mu/assoc :answers [:vector (mu/dissoc ?Answer :exercise-id)])))
 
 (malt/defprotocol ExerciseQuery
-  (lookup [input ?Lookup]
-    [:vector ?Exercise])
+  (lookup [input ?Lookup] ?Exercise)
   (find [input ?Find] [:vector ?Exercise])
   (all [] [:vector ?Exercise]))
 
@@ -89,10 +92,9 @@
      (lookup [_ input]
        (exercises/-lookup ds input))
      (find [_ input]
-       )
+       (exercises/-find ds input))
      (all [_]
-       (exercises/-all ds))
-     )))
+       (exercises/-all ds)))))
 
 (malt/defprotocol ExerciseMutation
   (set-unit [input ?SetUnit]
@@ -109,7 +111,7 @@
     (maybe ?Exercise))
   (set-incorrect-message [input ?SetIncorrectMessage]
     (maybe ?Exercise))
-  (set-order [input ?SetOrder]
+  (set-position [input ?SetPosition]
     (maybe ?Exercise))
   (set-options [input ?SetOptions]
     (maybe ?Exercise))
@@ -124,22 +126,35 @@
   (remove-answer [input ?RemoveAnswer]
     (maybe ?Exercise)))
 
-
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))
   ([ds]
    (malt/reify ExerciseMutation
-     (set-unit [_ input])
-     (set-instruction [_ input])
-     (set-question-content [_ input])
-     (set-answer-type [_ input])
-     (set-level [_ input])
-     (set-correct-message [_ input])
-     (set-incorrect-message [_ input])
-     (set-order [_ input])
-     (set-options [_ input])
-     (add-option [_ input])
-     (remove-option [_ input])
-     (set-answers [_ input])
-     (add-answer [_ input])
-     (remove-answer [_ input]))))
+     (set-unit [_ input]
+       (exercises/-set-unit ds input))
+     (set-instruction [_ input]
+       (exercises/-set-instruction ds input))
+     (set-question-content [_ input]
+       (exercises/-set-question-content ds input))
+     (set-answer-type [_ input]
+       (exercises/-set-answer-type ds input))
+     (set-level [_ input]
+       (exercises/-set-level ds input))
+     (set-correct-message [_ input]
+       (exercises/-set-correct-message ds input))
+     (set-incorrect-message [_ input]
+       (exercises/-set-incorrect-message ds input))
+     (set-position [_ input]
+       (exercises/-set-position ds input))
+     (set-options [_ input]
+       (exercises/-set-options ds input))
+     (add-option [_ input]
+       (exercises/-add-option ds input))
+     (remove-option [_ input]
+       (exercises/-remove-option ds input))
+     (set-answers [_ input]
+       (exercises/-set-answers ds input))
+     (add-answer [_ input]
+       (exercises/-add-answer ds input))
+     (remove-answer [_ input]
+       (exercises/-remove-answer ds input)))))
