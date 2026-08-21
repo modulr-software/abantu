@@ -1,135 +1,93 @@
 (ns abantu.services.units.interface
   (:require [io.julienvincent.malt :as malt]
             [malli.util :as mu]
-            [abantu.db.util :as db.util]))
+            [abantu.db.util :as db.util]
+            [abantu.services.units.core :as units]))
 
-(def ?Option :string)
-(def ?Answer :string)
+(defn- maybe [?schema]
+  [:or ?schema :nil])
 
-(def ?Exercise
+(def ?Unit
   [:map
    [:id :int]
-   [:unit-id :int]
    [:course-id :int]
+   [:name :string]
+   [:description :string]
    [:level :int]
-   [:order :int]
-   [:options [:vector ?Option]]
-   [:answer-type :string]
-   [:instruction :string]
-   [:question-content :string]
-   [:correct-message :string]
-   [:answers [:vector ?Answer]]])
+   [:type :string]
+   [:position :int]])
 
 (def ?Lookup
-  (mu/select-keys ?Exercise [:id :unit-id :course-id]))
+  (mu/select-keys ?Unit [:id]))
 
 (def ?Find
-  ?Lookup)
+  (mu/select-keys ?Unit [:id :course-id]))
 
-(def ?SetUnit
-  (mu/select-keys ?Exercise [:id :unit-id]))
+(def ?SetCourseId
+  (mu/select-keys ?Unit [:id :course-id]))
 
-(def ?SetInstruction
-  (mu/select-keys ?Exercise [:id :instruction]))
+(def ?SetName
+  (mu/select-keys ?Unit [:id :name]))
 
-(def ?SetQuestionContent
-  (mu/select-keys ?Exercise [:id :qestion-content]))
-
-(def ?SetAnswerType
-  (mu/select-keys ?Exercise [:id :answer-type]))
+(def ?SetDescription
+  (mu/select-keys ?Unit [:id :description]))
 
 (def ?SetLevel
-  (mu/select-keys ?Exercise [:id :level]))
+  (mu/select-keys ?Unit [:id :level]))
 
-(def ?SetCorrectMessage
-  (mu/select-keys ?Exercise [:id :correct-message]))
+(def ?SetType
+  (mu/select-keys ?Unit [:id :type]))
 
-(def ?SetIncorrectMessage
-  (mu/select-keys ?Exercise [:id :incorrect-message]))
-
-(def ?SetOrder
-  (mu/select-keys ?Exercise [:id :order]))
-
-(def ?SetOptions
-  (mu/select-keys ?Exercise [:id :options]))
-
-(def ?RemoveOption
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :option ?Option)))
-
-(def ?AddOption
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :option ?Option)))
-
-(def ?AddAnswer
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer ?Answer)))
-
-(def ?RemoveAnswer
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer ?Answer)))
-
-(def ?SetAnswers
-  (mu/select-keys ?Exercise [:id :answers]))
+(def ?SetPosition
+  (mu/select-keys ?Unit [:id :position]))
 
 (malt/defprotocol UnitQuery
-  (lookup [input ?Lookup]
-    ?Exercise)
-  (find [input ?Find]
-    [:vector ?Exercise]))
-
-(malt/defprotocol UnitMutation
-  (set-unit [input ?SetUnit]
-    :boolean)
-  (set-instruction [input ?SetInstruction]
-    :boolean)
-  (set-question-content [input ?SetQuestionContent]
-    :boolean)
-  (set-answer-type [input ?SetAnswerType]
-    :boolean)
-  (set-level [input ?SetLevel]
-    :boolean)
-  (set-correct-message [input ?SetCorrectMessage]
-    :boolean)
-  (set-incorrect-message [input ?SetIncorrectMessage]
-    :boolean)
-  (set-order [input ?SetOrder]
-    :boolean)
-  (set-options [input ?SetOptions]
-    :boolean)
-  (add-option [input ?AddOption]
-    :boolean)
-  (remove-option [input ?RemoveOption]
-    :boolean)
-  (set-answers [input ?SetAnswers]
-    :boolean)
-  (add-answer [input ?AddAnswer]
-    :boolean)
-  (remove-answer [input ?RemoveAnswer]
-    :boolean))
+  (lookup [input ?Lookup] ?Unit)
+  (find [input ?Find] [:vector ?Unit])
+  (all [] [:vector ?Unit]))
 
 (defn use-query
   ([] (use-query (db.util/conn)))
   ([ds]
    (malt/reify UnitQuery
-     (lookup [_ input])
-     (find [_ input]))))
+     (lookup [_ input]
+       (units/-lookup ds input))
+     (find [_ input]
+       (units/-find ds input))
+     (all [_]
+       (units/-all ds)))))
+
+(malt/defprotocol UnitMutation
+  (create [input (mu/dissoc ?Unit :id)]
+    (maybe ?Unit))
+  (set-name [input ?SetName]
+    (maybe ?Unit))
+  (set-description [input ?SetDescription]
+    (maybe ?Unit))
+  (set-level [input ?SetLevel]
+    (maybe ?Unit))
+  (set-type [input ?SetType]
+    (maybe ?Unit))
+  (set-course-id [input ?SetCourseId]
+    (maybe ?Unit))
+  (set-position [input ?SetPosition]
+    (maybe ?Unit)))
 
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))
   ([ds]
    (malt/reify UnitMutation
-     (set-unit [_ input])
-     (set-instruction [_ input])
-     (set-question-content [_ input])
-     (set-answer-type [_ input])
-     (set-level [_ input])
-     (set-correct-message [_ input])
-     (set-incorrect-message [_ input])
-     (set-order [_ input])
-     (set-options [_ input])
-     (add-option [_ input])
-     (remove-option [_ input])
-     (set-answers [_ input])
-     (add-answer [_ input])
-     (remove-answer [_ input]))))
+     (create [_ input]
+       (units/-create ds input))
+     (set-name [_ input]
+       (units/-set-name ds input))
+     (set-description [_ input]
+       (units/-set-description ds input))
+     (set-level [_ input]
+       (units/-set-level ds input))
+     (set-type [_ input]
+       (units/-set-type ds input))
+     (set-course-id [_ input]
+       (units/-set-course-id ds input))
+     (set-position [_ input]
+       (units/-set-position ds input)))))
