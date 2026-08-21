@@ -1,14 +1,15 @@
 (ns abantu.services.courses.core
   (:require [abantu.db.interface :as db]
-            [abantu.services.units.core :as units]
+            [abantu.services.units.intefaces :as unit]
             [abantu.services.courses.update :as update]
             [honey.sql.helpers :as h]
             [abantu.services.users :as users]
             [abantu.util :as util]))
 
 (defn- attach-units [ds course]
-  (->> (units/-find ds {:unit-id (:id course)})
-       (assoc course :exercises)))
+  (->> (unit/find (unit/use-query ds)
+                  {:unit-id (:id course)})
+       (assoc course :exercise)))
 
 (defn- attach-creator [ds {:keys [creator-id] :as course}]
   (if creator-id
@@ -18,6 +19,7 @@
     (-> (assoc course :creator nil)
         (dissoc :creator-id))))
 
+;; TODO: move this to a shared file
 (defn- process-bools [course]
   (util/parse-bool-keys course [:publishable :visible :review-pending]))
 
@@ -46,6 +48,7 @@
               (partial attach-units ds)
               (partial attach-creator ds)))))
 
+;; TODO:: replace all usages of this with -lookup directly
 (defn- exists? [ds id]
   (when-let [course (-lookup ds {:id id})]
     course))
@@ -54,12 +57,12 @@
   (let [{:keys [id]} (db/insert! ds {:tname :courses
                                      :values update
                                      :ret :1})]
-    (run! #(units/-create ds %) units)
+    (run! #(unit/create (unit/use-mutation ds) %) units)
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 
 (defn -set-name [ds {:keys [id name] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:name name}})
     (update/apply course {:type :set-name

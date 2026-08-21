@@ -4,6 +4,8 @@
             [abantu.services.units.update :as update]
             [honey.sql.helpers :as h]))
 
+;;TODO: update all usages of the exercise impl functions to use the interface instead
+
 (defn- attach-exercises [ds unit]
   (->> (exercises/-find ds {:unit-id (:id unit)})
        (assoc unit :exercises)))
@@ -32,12 +34,14 @@
 
 (defn -create [ds {:keys [exercises] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :units
-                                     :values update
+                                     :values (dissoc update :exercises) 
                                      :ret :1})
         exercises' (mapv #(assoc % :unit-id id) exercises)]
     (run! #(exercises/-create ds %) exercises')
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
+
+;; TODO: add remove impl here
 
 (defn -set-name [ds {:keys [id name] :as update}]
   (when-let [unit (exists? ds id)]

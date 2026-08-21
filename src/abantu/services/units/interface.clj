@@ -85,6 +85,7 @@
    (malt/reify UnitMutation
      (create [_ input]
        (units/-create ds input))
+     ;;TODO: add remove here
      (set-name [_ input]
        (units/-set-name ds input))
      (set-description [_ input]

@@ -29,3 +29,7 @@
 (defn exists? [ds opts]
   (hon/exists? ds opts))
 
+
+(defn record? [ds tname id]
+  (hon/record? ds tname id))
+

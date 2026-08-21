@@ -78,6 +78,9 @@
        (find-one ds)
        (some?)))
 
+(defn record? [ds tname id]
+  (db/exists? ds {:tname tname :where [:= :id id]}))
+
 (defn update!
   "updates a record or set of records that match a predicate where clause. the where
   clause uses the same data dsl as honey sql. All values to apply are supplied in a 
