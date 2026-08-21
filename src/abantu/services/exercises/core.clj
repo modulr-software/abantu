@@ -75,7 +75,8 @@
                       (mapv #(assoc {} :exercise-id id :text %)))]
     (db/insert! ds {:tname :answers
                     :values answers'})
-    (update/apply (-lookup ds {:id id}))))
+    (update/apply (-lookup ds {:id id}) {:type :create
+                                         :payload update})))
 
 (defn -set-unit [ds {:keys [id unit-id] :as update}]
   (when-let [exercise (exists? ds id)]
@@ -178,9 +179,10 @@
 
 (comment
   (def ds (db/ds :master))
-  (-lookup (db/ds :master) {:id 1})
-  (-find (db/ds :master) {:id 1})
-  (-all (db/ds :master))
+
+  (-lookup ds {:id 1})
+  (-find ds {:id 1})
+  (-all ds)
 
   (db/insert! ds {:tname :courses
                   :values {:name "afrikaans course"
@@ -200,18 +202,15 @@
                            :type "lesson"
                            :course-id 1}})
 
-  (db/insert! ds {:tname :exercises
-                  :values {:unit-id 1
-                           :course-id 1
-                           :instruction "translate the following"
-                           :question-content "I"
-                           :answer-type "bubbles"
-                           :options "ek;;jy;;hy;;sy"
-                           :correct-message "correct!"
-                           :incorrect-message "o nei"}})
-  (db/insert! ds {:tname :answers
-                  :values {:exercise-id 1
-                           :text "ek"}})
+  (-create ds {:unit-id 1
+               :course-id 1
+               :instruction "translate the following"
+               :question-content "He is"
+               :answer-type "bubbles"
+               :options ["hy" "sy" "is"]
+               :correct-message "correct!"
+               :incorrect-message "o nei"
+               :answers [["hy" "is"]]})
 
   (-set-unit ds {:id 1
                  :unit-id 2})
