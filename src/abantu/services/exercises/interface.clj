@@ -98,6 +98,8 @@
        (exercises/-all ds)))))
 
 (malt/defprotocol ExerciseMutation
+  (create [input (mu/dissoc ?Exercise :id)]
+    (maybe ?Exercise))
   (set-unit [input ?SetUnit]
     (maybe ?Exercise))
   (set-instruction [input ?SetInstruction]
@@ -131,6 +133,8 @@
   ([] (use-mutation (db.util/conn)))
   ([ds]
    (malt/reify ExerciseMutation
+     (create [_ input]
+       (exercises/create ds input))
      (set-unit [_ input]
        (exercises/-set-unit ds input))
      (set-instruction [_ input]

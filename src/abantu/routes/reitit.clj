@@ -42,7 +42,7 @@
         ["/api"
          ["/v2/command/:command" (-> (post (yolo/create-handler {:handler async/handle-command
                                                                  :middleware (fn [handler]
-                                                                               (fn))})))]
+                                                                               (fn [req] (handler req)))})))]
 
          ["/spamtest" (-> (get spamtest/get-spamtest)
                           (tag :spamtest))]

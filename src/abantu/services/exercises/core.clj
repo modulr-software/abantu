@@ -1,12 +1,10 @@
 (ns abantu.services.exercises.core
   (:require [abantu.db.interface :as db]
             [abantu.services.comments :as comments]
+            [abantu.services.exercises.update :as update]
             [honey.sql.helpers :as h]
             [clojure.string :as str]))
 
-(defn remove-first [v target]
-  (let [[before [_ & after]] (split-with #(not= % target) v)]
-    (vec (concat before after))))
 
 (defn- process-options [exercise]
   (update-in exercise
@@ -68,137 +66,97 @@
   (when-let [exercise (-lookup ds {:id id})]
     exercise))
 
-(defmulti apply-update (fn [_ action] (:type action)))
+(defn -create [ds {:keys [answers] :as update}]
+  (let [{:keys [id]} (db/insert! ds {:tname :exercises
+                                     :values (dissoc update :answers)
+                                     :ret :1})]
+    (db/insert! ds {:tname :answers
+                    :values answers})
+    (update/apply (-lookup ds {:id id})))
+  )
 
-(defmethod apply-update :set-unit [exercise {:keys [payload]}]
-  (assoc exercise :unit-id (:unit-id payload)))
-
-(defmethod apply-update :set-instruction [exercise {:keys [payload]}]
-  (assoc exercise :instruction (:instruction payload)))
-
-(defmethod apply-update :set-question-content [exercise {:keys [payload]}]
-  (assoc exercise :question-content (:question-content payload)))
-
-(defmethod apply-update :set-answer-type [exercise {:keys [payload]}]
-  (assoc exercise :answer-type (:answer-type payload)))
-
-(defmethod apply-update :set-level [exercise {:keys [payload]}]
-  (assoc exercise :level (:level payload)))
-
-(defmethod apply-update :set-correct-message [exercise {:keys [payload]}]
-  (assoc exercise :correct-message (:correct-message payload)))
-
-(defmethod apply-update :set-incorrect-message [exercise {:keys [payload]}]
-  (assoc exercise :incorrect-message (:incorrect-message payload)))
-
-(defmethod apply-update :set-position [exercise {:keys [payload]}]
-  (assoc exercise :position (:position payload)))
-
-(defmethod apply-update :set-options [exercise {:keys [payload]}]
-  (assoc exercise :options (:options payload)))
-
-(defmethod apply-update :add-option [exercise {:keys [payload]}]
-  (assoc exercise :options (conj (:options exercise) (:option payload))))
-
-(defmethod apply-update :remove-option [exercise {:keys [payload]}]
-  (assoc exercise :options (remove-first (:options exercise) (:option payload))))
-
-(defmethod apply-update :set-answers [exercise {:keys [payload]}]
-  (->> (:answers payload)
-       (mapv #(assoc {} :text %))
-       (mapv #(assoc % :exercise-id (:id exercise)))
-       (assoc exercise :answers)))
-
-(defmethod apply-update :add-answer [exercise {:keys [payload]}]
-  (->> (:id exercise)
-       (assoc {:text (:answer payload)} :exercise-id)
-       (conj (:answers exercise))
-       (assoc exercise :answers)))
-
-(defmethod apply-update :remove-answer [{:keys [answers] :as exercise} {:keys [payload]}]
-  (assoc exercise :answers (vec (remove #(= (:id %) (:answer-id payload)) answers))))
 
 (defn -set-unit [ds {:keys [id unit-id] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:unit-id unit-id}})
-    (apply-update exercise {:type :set-unit
+    (update/apply exercise {:type :set-unit
                             :payload update})))
 
 (defn -set-instruction [ds {:keys [id instruction] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:instruction instruction}})
-    (apply-update exercise {:type :set-instruction
+    (update/apply exercise {:type :set-instruction
                             :payload update})))
 
 (defn -set-question-content [ds {:keys [id question-content] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:question-content question-content}})
-    (apply-update exercise {:type :set-question-content
+    (update/apply exercise {:type :set-question-content
                             :payload update})))
 
 (defn -set-answer-type [ds {:keys [id answer-type] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:answer-type answer-type}})
-    (apply-update exercise {:type :set-answer-type
+    (update/apply exercise {:type :set-answer-type
                             :payload update})))
 
 (defn -set-level [ds {:keys [id level] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:level level}})
-    (apply-update exercise {:type :set-level
+    (update/apply exercise {:type :set-level
                             :payload update})))
 
 (defn -set-correct-message [ds {:keys [id correct-message] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:correct-message correct-message}})
-    (apply-update exercise {:type :set-correct-message
+    (update/apply exercise {:type :set-correct-message
                             :payload update})))
 
 (defn -set-incorrect-message [ds {:keys [id incorrect-message] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:incorrect-message incorrect-message}})
-    (apply-update exercise {:type :set-incorrect-message
+    (update/apply exercise {:type :set-incorrect-message
                             :payload update})))
 
 (defn -set-position [ds {:keys [id position] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:position position}})
-    (apply-update exercise {:type :set-position
+    (update/apply exercise {:type :set-position
                             :payload update})))
 
 (defn -set-options [ds {:keys [id options] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" options)}})
-    (apply-update exercise {:type :set-options
+    (update/apply exercise {:type :set-options
                             :payload update})))
 
 (defn -add-option [ds {:keys [id option] :as update}]
   (when-let [{:keys [options] :as exercise} (exists? ds id)]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" (conj options option))}})
-    (apply-update exercise {:type :add-option
+    (update/apply exercise {:type :add-option
                             :payload update})))
 
 (defn -remove-option [ds {:keys [id option] :as update}]
   (when-let [{:keys [options] :as exercise} (exists? ds id)]
     (db/update! ds {:tname :exercises
-                    :values {:options (str/join ";;" (remove-first options option))}})
-    (apply-update exercise {:type :remove-option
+                    :values {:options (str/join ";;" (update/remove-first options option))}})
+    (update/apply exercise {:type :remove-option
                             :payload update})))
 
 (defn -set-answers [ds {:keys [id answers] :as update}]
   (when-let [{:keys [answer-type] :as exercise} (exists? ds id)]
     (save-answers-for-exercise! ds id answer-type answers)
-    (apply-update exercise {:type :set-answers
+    (update/apply exercise {:type :set-answers
                             :payload update})))
 
 (defn -add-answer [ds {:keys [id answer] :as update}]
@@ -207,14 +165,14 @@
                     :values (->> answer
                                  (str/join ";;")
                                  (assoc {} :exercise-id id :text))})
-    (apply-update exercise {:type :add-answer
+    (update/apply exercise {:type :add-answer
                             :payload update})))
 
 (defn -remove-answer [ds {:keys [id answer-id] :as update}]
   (when-let [exercise (exists? ds id)]
     (db/delete! ds {:tname :answers
                     :where [:= :id answer-id]})
-    (apply-update exercise {:type :remove-answer
+    (update/apply exercise {:type :remove-answer
                             :payload update})))
 
 (comment
