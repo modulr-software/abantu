@@ -2,6 +2,7 @@
   (:require [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
+            [abantu.services.exercises.interface :as exercises]
             [abantu.services.units.core :as units]))
 
 (defn- maybe [?schema]
@@ -15,13 +16,18 @@
    [:description :string]
    [:level :int]
    [:type :string]
-   [:position :int]])
+   [:position :int]
+   [:exercises [:vector exercises/?Exercise]]])
 
 (def ?Lookup
   (mu/select-keys ?Unit [:id]))
 
 (def ?Find
   (mu/select-keys ?Unit [:id :course-id]))
+
+(def ?Create
+  (-> (mu/dissoc ?Unit :id)
+      (mu/assoc :exercises [:vector (mu/dissoc exercises/?Create :unit-id)])))
 
 (def ?SetCourseId
   (mu/select-keys ?Unit [:id :course-id]))
@@ -58,7 +64,7 @@
        (units/-all ds)))))
 
 (malt/defprotocol UnitMutation
-  (create [input (mu/dissoc ?Unit :id)]
+  (create [input ?Create]
     (maybe ?Unit))
   (set-name [input ?SetName]
     (maybe ?Unit))

@@ -35,6 +35,10 @@
 (def ?Find
   ?Lookup)
 
+(def ?Create
+  (-> (mu/dissoc ?Exercise :id)
+      (mu/dissoc :comments)))
+
 (def ?SetUnit
   (mu/select-keys ?Exercise [:id :unit-id]))
 
@@ -99,8 +103,7 @@
        (exercises/-all ds)))))
 
 (malt/defprotocol ExerciseMutation
-  (create [input (-> (mu/dissoc ?Exercise :id)
-                     (mu/dissoc :comments))]
+  (create [input ?Create]
     (maybe ?Exercise))
   (set-unit [input ?SetUnit]
     (maybe ?Exercise))

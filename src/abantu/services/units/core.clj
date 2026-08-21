@@ -1,31 +1,41 @@
 (ns abantu.services.units.core
   (:require [abantu.db.interface :as db]
+            [abantu.services.exercises.core :as exercises]
             [abantu.services.units.update :as update]
             [honey.sql.helpers :as h]))
 
+(defn- attach-exercises [ds unit]
+  (->> (exercises/-find ds {:unit-id (:id unit)})
+       (assoc unit :exercises)))
+
 (defn -lookup  [ds {:keys [id]}]
-  (db/find ds (cond-> {:tname :units
-                       :ret :1}
-                (some? id) (h/where [:= :id id]))))
+  (->> (db/find ds (cond-> {:tname :units
+                            :ret :1}
+                     (some? id) (h/where [:= :id id])))
+       (attach-exercises ds)))
 
 (defn -all [ds]
-  (db/find ds {:tname :units
-               :ret :*}))
+  (->> (db/find ds {:tname :units
+                    :ret :*})
+       (mapv #(attach-exercises ds %))))
 
 (defn -find [ds {:keys [id course-id]}]
-  (db/find ds (cond-> {:tname :units
-                       :ret :*}
-                (some? id) (h/where [:= :id id])
-                (some? course-id) (h/where [:= :course-id course-id]))))
+  (->> (db/find ds (cond-> {:tname :units
+                            :ret :*}
+                     (some? id) (h/where [:= :id id])
+                     (some? course-id) (h/where [:= :course-id course-id])))
+       (mapv #(attach-exercises ds %))))
 
 (defn- exists? [ds id]
   (when-let [unit (-lookup ds {:id id})]
     unit))
 
-(defn -create [ds update]
+(defn -create [ds {:keys [exercises] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :units
                                      :values update
-                                     :ret :1})]
+                                     :ret :1})
+        exercises' (mapv #(assoc % :unit-id id) exercises)]
+    (run! #(exercises/-create ds %) exercises')
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 
