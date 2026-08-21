@@ -48,11 +48,6 @@
               (partial attach-units ds)
               (partial attach-creator ds)))))
 
-;; TODO:: replace all usages of this with -lookup directly
-(defn- exists? [ds id]
-  (when-let [course (-lookup ds {:id id})]
-    course))
-
 (defn -create [ds {:keys [units] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :courses
                                      :values update
@@ -69,42 +64,42 @@
                           :payload update})))
 
 (defn -set-language [ds {:keys [id language] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:language language}})
     (update/apply course {:type :set-language
                           :payload update})))
 
 (defn -set-description [ds {:keys [id description] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:description description}})
     (update/apply course {:type :set-description
                           :payload update})))
 
 (defn -set-publishable [ds {:keys [id publishable] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:publishable publishable}})
     (update/apply course {:type :set-publishable
                           :payload update})))
 
 (defn -set-visible [ds {:keys [id visible] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:visible visible}})
     (update/apply course {:type :set-visible
                           :payload update})))
 
 (defn -set-review-pending [ds {:keys [id review-pending] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:review-pending review-pending}})
     (update/apply course {:type :set-review-pending
                           :payload update})))
 
 (defn -set-creator-id [ds {:keys [id creator-id] :as update}]
-  (when-let [course (exists? ds id)]
+  (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
                     :values {:creator-id creator-id}})
     (update/apply course {:type :set-creator-id

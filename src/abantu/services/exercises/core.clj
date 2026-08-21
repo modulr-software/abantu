@@ -61,10 +61,6 @@
                    process-options
                    (partial attach-answers ds)))))
 
-(defn- exists? [ds id]
-  (when-let [exercise (-lookup ds {:id id})]
-    exercise))
-
 (defn -create
   [ds {:keys [options answers] :as update}]
   (let [update' (assoc update :options (str/join ";;" options))
@@ -79,90 +75,90 @@
                                          :payload update})))
 
 (defn -set-unit [ds {:keys [id unit-id] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:unit-id unit-id}})
     (update/apply exercise {:type :set-unit
                             :payload update})))
 
 (defn -set-instruction [ds {:keys [id instruction] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:instruction instruction}})
     (update/apply exercise {:type :set-instruction
                             :payload update})))
 
 (defn -set-question-content [ds {:keys [id question-content] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:question-content question-content}})
     (update/apply exercise {:type :set-question-content
                             :payload update})))
 
 (defn -set-answer-type [ds {:keys [id answer-type] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:answer-type answer-type}})
     (update/apply exercise {:type :set-answer-type
                             :payload update})))
 
 (defn -set-level [ds {:keys [id level] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:level level}})
     (update/apply exercise {:type :set-level
                             :payload update})))
 
 (defn -set-correct-message [ds {:keys [id correct-message] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:correct-message correct-message}})
     (update/apply exercise {:type :set-correct-message
                             :payload update})))
 
 (defn -set-incorrect-message [ds {:keys [id incorrect-message] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:incorrect-message incorrect-message}})
     (update/apply exercise {:type :set-incorrect-message
                             :payload update})))
 
 (defn -set-position [ds {:keys [id position] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:position position}})
     (update/apply exercise {:type :set-position
                             :payload update})))
 
 (defn -set-options [ds {:keys [id options] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" options)}})
     (update/apply exercise {:type :set-options
                             :payload update})))
 
 (defn -add-option [ds {:keys [id option] :as update}]
-  (when-let [{:keys [options] :as exercise} (exists? ds id)]
+  (when-let [{:keys [options] :as exercise} (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" (conj options option))}})
     (update/apply exercise {:type :add-option
                             :payload update})))
 
 (defn -remove-option [ds {:keys [id option] :as update}]
-  (when-let [{:keys [options] :as exercise} (exists? ds id)]
+  (when-let [{:keys [options] :as exercise} (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" (update/remove-first options option))}})
     (update/apply exercise {:type :remove-option
                             :payload update})))
 
 (defn -set-answers [ds {:keys [id answers] :as update}]
-  (when-let [{:keys [answer-type] :as exercise} (exists? ds id)]
+  (when-let [{:keys [answer-type] :as exercise} (-lookup ds {:id id})]
     (save-answers-for-exercise! ds id answer-type answers)
     (update/apply exercise {:type :set-answers
                             :payload update})))
 
 (defn -add-answer [ds {:keys [id answer] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/insert! ds {:tname :answers
                     :values (->> answer
                                  (str/join ";;")
@@ -171,7 +167,7 @@
                             :payload update})))
 
 (defn -remove-answer [ds {:keys [id answer-id] :as update}]
-  (when-let [exercise (exists? ds id)]
+  (when-let [exercise (-lookup ds {:id id})]
     (db/delete! ds {:tname :answers
                     :where [:= :id answer-id]})
     (update/apply exercise {:type :remove-answer
