@@ -46,7 +46,8 @@
    [:description :text]
    [:publishable :int [:default 0]]
    [:visible :int [:default 0]]
-   [:review-pending :int [:default 0]]))
+   [:review-pending :int [:default 0]]
+   [:published-course-id :int]))
 
 (def units
   (tables/create-table-sql
@@ -126,6 +127,52 @@
    (tables/foreign-key :exercise-id :exercises :id)
    (tables/foreign-key :unit-id :units :id)
    (tables/foreign-key :course-id :courses :id)))
+
+(def versions
+  (tables/create-table-sql
+   :versions
+   (tables/table-id)
+   [:label :text]
+   [:course-id :int :not nil]
+   [:version :int [:default 0]]
+   [:applied :int [:default 0]]
+   [:timestamp :text :not nil]))
+
+(def course-changes
+  (tables/create-table-sql
+   :course-changes
+   (tables/table-id)
+   [:course-id :int :not nil]
+   [:change-type :text :not nil]
+   [:change-data :text :not nil]
+   [:timestamp :text :not nil]
+   (tables/foreign-key :course-id :courses :id)))
+
+(def unit-changes
+  (tables/create-table-sql
+   :unit-changes
+   (tables/table-id)
+   [:course-id :int :not nil]
+   [:unit-id :int :not nil]
+   [:change-type :text :not nil]
+   [:change-data :text :not nil]
+   [:timestamp :text :not nil]
+   (tables/foreign-key :course-id :courses :id)
+   (tables/foreign-key :unit-id :units :id)))
+
+(def exercise-changes
+  (tables/create-table-sql
+   :exercise-changes
+   (tables/table-id)
+   [:exercise-id :int :not nil]
+   [:course-id :int :not nil]
+   [:unit-id :int :not nil]
+   [:change-type :text :not nil]
+   [:change-data :text :not nil]
+   [:timestamp :text :not nil]
+   (tables/foreign-key :exercise-id :exercises :id)
+   (tables/foreign-key :course-id :courses :id)
+   (tables/foreign-key :unit-id :units :id)))
 
 (comment
   (sql/format events)

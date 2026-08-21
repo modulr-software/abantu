@@ -44,7 +44,11 @@
       :answers
       :practice-sessions
       :exercises-completed
-      :comments])
+      :comments
+      :versions
+      :course-changes
+      :unit-changes
+      :exercise-changes])
 
     (run!
      (hon/insert! ds-student {:tname :courses
