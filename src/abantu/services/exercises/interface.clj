@@ -25,6 +25,7 @@
    [:instruction :string]
    [:question-content :string]
    [:correct-message :string]
+   [:incorrect-message :string]
    [:answers [:vector ?Answer]]
    (maybe [:comments [:vector comments/?Comment]])])
 
@@ -98,7 +99,8 @@
        (exercises/-all ds)))))
 
 (malt/defprotocol ExerciseMutation
-  (create [input (mu/dissoc ?Exercise :id)]
+  (create [input (-> (mu/dissoc ?Exercise :id)
+                     (mu/dissoc :comments))]
     (maybe ?Exercise))
   (set-unit [input ?SetUnit]
     (maybe ?Exercise))

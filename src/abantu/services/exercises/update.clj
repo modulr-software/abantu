@@ -1,6 +1,5 @@
 (ns abantu.services.exercises.update)
 
-
 (defn remove-first [v target]
   (let [[before [_ & after]] (split-with #(not= % target) v)]
     (vec (concat before after))))

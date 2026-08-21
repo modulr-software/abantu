@@ -5,7 +5,6 @@
             [honey.sql.helpers :as h]
             [clojure.string :as str]))
 
-
 (defn- process-options [exercise]
   (update-in exercise
              [:options]
@@ -66,15 +65,17 @@
   (when-let [exercise (-lookup ds {:id id})]
     exercise))
 
-(defn -create [ds {:keys [answers] :as update}]
-  (let [{:keys [id]} (db/insert! ds {:tname :exercises
-                                     :values (dissoc update :answers)
-                                     :ret :1})]
+(defn -create
+  [ds {:keys [options answers] :as update}]
+  (let [update' (assoc update :options (str/join ";;" options))
+        {:keys [id]} (db/insert! ds {:tname :exercises
+                                     :values (dissoc update' :answers)
+                                     :ret :1})
+        answers' (->> (mapv #(str/join ";;" %) answers)
+                      (mapv #(assoc {} :exercise-id id :text %)))]
     (db/insert! ds {:tname :answers
-                    :values answers})
-    (update/apply (-lookup ds {:id id})))
-  )
-
+                    :values answers'})
+    (update/apply (-lookup ds {:id id}))))
 
 (defn -set-unit [ds {:keys [id unit-id] :as update}]
   (when-let [exercise (exists? ds id)]
