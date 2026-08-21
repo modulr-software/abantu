@@ -1,31 +1,60 @@
 (ns abantu.services.courses.core
   (:require [abantu.db.interface :as db]
+            [abantu.services.units.core :as units]
             [abantu.services.courses.update :as update]
-            [honey.sql.helpers :as h]))
+            [honey.sql.helpers :as h]
+            [abantu.services.users :as users]
+            [abantu.util :as util]))
+
+(defn- attach-units [ds course]
+  (->> (units/-find ds {:unit-id (:id course)})
+       (assoc course :exercises)))
+
+(defn- attach-creator [ds {:keys [creator-id] :as course}]
+  (if creator-id
+    (let [creator (users/get-user ds creator-id)]
+      (-> (assoc course :creator (or creator nil))
+          (dissoc :creator-id)))
+    (-> (assoc course :creator nil)
+        (dissoc :creator-id))))
+
+(defn- process-bools [course]
+  (util/parse-bool-keys course [:publishable :visible :review-pending]))
 
 (defn -lookup [ds {:keys [id]}]
-  (db/find ds (cond-> {:tname :courses
-                       :ret :1}
-                (some? id) (h/where [:= :id id]))))
+  (->> (db/find ds (cond-> {:tname :courses
+                            :ret :1}
+                     (some? id) (h/where [:= :id id])))
+       (process-bools)
+       (attach-units ds)
+       (attach-creator ds)))
 
 (defn -all [ds]
-  (db/find ds {:tname :courses
-               :ret :*}))
+  (->> (db/find ds {:tname :courses
+                    :ret :*})
+       (mapv (comp process-bools
+                   (partial attach-units ds)
+                   (partial attach-creator ds)))))
 
 (defn -find [ds {:keys [id creator-id]}]
-  (db/find ds (cond-> {:tname :courses
-                       :ret :*}
-                (some? id) (h/where [:= :id id])
-                (some? creator-id) (h/where [:= :creator-id creator-id]))))
+  (->> (db/find ds (cond-> {:tname :courses
+                            :ret :*}
+                     (some? id) (h/where [:= :id id])
+                     (some? creator-id) (h/where [:= :creator-id creator-id])))
+       (mapv
+        (comp process-bools
+              (partial attach-units ds)
+              (partial attach-creator ds)))))
 
 (defn- exists? [ds id]
   (when-let [course (-lookup ds {:id id})]
     course))
 
-(defn -create [ds update]
+(defn -create [ds {:keys [units] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :courses
                                      :values update
                                      :ret :1})]
+    (run! #(units/-create ds %) units)
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 

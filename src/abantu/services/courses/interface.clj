@@ -2,10 +2,22 @@
   (:require [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
+            [abantu.services.units.interface :as units]
             [abantu.services.courses.core :as courses]))
 
 (defn- maybe [?schema]
   [:or ?schema :nil])
+
+(def ?User
+  [:map
+   [:email :string]
+   [:firstname :string]
+   [:lastname :string]
+   [:email-verified :boolean]
+   [:archived :boolean]
+   [:approved :boolean]
+   [:mobile :string]
+   [:profile-image :string]])
 
 (def ?Course
   [:map
@@ -13,16 +25,23 @@
    [:name :string]
    [:language :string]
    [:description :string]
-   [:publishable :int]
-   [:visible :int]
-   [:review-pending :int]
-   [:creator-id :int]])
+   [:publishable :boolean]
+   [:visible :boolean]
+   [:review-pending :boolean]
+   [:creator ?User]
+   [:units [:vector units/?Unit]]])
 
 (def ?Lookup
   (mu/select-keys ?Course [:id]))
 
 (def ?Find
   (mu/select-keys ?Course [:id :creator-id]))
+
+(def ?Create
+  (-> (mu/dissoc ?Course :id)
+      (mu/dissoc :creator)
+      (mu/assoc :creator-id :int)
+      (mu/assoc :units [:vector (mu/dissoc units/?Unit :course-id)])))
 
 (def ?SetName
   (mu/select-keys ?Course [:id :name]))
@@ -62,7 +81,7 @@
        (courses/-all ds)))))
 
 (malt/defprotocol CourseMutation
-  (create [input (mu/dissoc ?Course :id)]
+  (create [input ?Create]
     (maybe ?Course))
   (set-name [input ?SetName]
     (maybe ?Course))
