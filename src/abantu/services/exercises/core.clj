@@ -8,8 +8,10 @@
 (defn- process-options [exercise]
   (update-in exercise
              [:options]
-             #(-> (clojure.string/split % #";;")
-                  (vec))))
+             #(or (when (seq %)
+                    (-> (clojure.string/split (or % "") #";;")
+                        (vec)))
+                  [])))
 
 (defn- save-answers-for-exercise! [ds exercise-id answer-type answers]
   (db/delete! ds {:tname :answers
@@ -22,14 +24,16 @@
        (assoc {:tname :answers :ret :*} :data)
        (db/insert! ds)))
 
-(defn- attach-answers [ds {:keys [id answer-type] :as exercise}]
-  (let [answers (db/find ds {:tname :answers
-                             :where [:= :exercise-id id]
-                             :ret :*})
-        answers (if (= answer-type "bubbles")
-                  (mapv #(assoc % :text (str/split (:text %) #";;")) answers)
-                  answers)]
-    (assoc exercise :answers answers)))
+(defn- process-answer [{:keys [text] :as answer}]
+  (if (clojure.string/includes? text ";;")
+    (clojure.string/split text #";;")
+    [text]))
+
+(defn- attach-answers [ds {:keys [id] :as exercise}]
+  (assoc exercise :answers (->> (db/find ds {:tname :answers
+                                             :where [:= :exercise-id id]
+                                             :ret :*})
+                                (mapv process-answer))))
 
 (defn- attach-comments [ds {:keys [id] :as exercise}]
   (assoc exercise :comments (comments/get-for-exercise ds id)))
@@ -176,7 +180,7 @@
 (comment
   (def ds (db/ds :master))
 
-  (-lookup ds {:id 1})
+  (-lookup ds {:id 1091})
   (-find ds {:id 1})
   (-all ds)
 

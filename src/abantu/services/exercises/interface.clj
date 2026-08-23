@@ -5,13 +5,12 @@
             [abantu.services.comments.interface :as comments]
             [abantu.services.exercises.core :as exercises]))
 
+
 (defn- maybe [?schema]
   [:or ?schema :nil])
 
 (def ?Option :string)
-(def ?Answer [:map
-              [:exercise-id :int]
-              [:text :string]])
+(def ?Answer [:vector :string])
 
 (def ?Exercise
   [:map
@@ -27,10 +26,14 @@
    [:correct-message :string]
    [:incorrect-message :string]
    [:answers [:vector ?Answer]]
-   (maybe [:comments [:vector comments/?Comment]])])
+   [:comments (maybe [:vector comments/?Comment])]])
 
 (def ?Lookup
-  (mu/select-keys ?Exercise [:id :unit-id :course-id]))
+  [:or
+   [:map [:id :int]]
+   [:map [:unit-id :int] [:course-id {:optional true} :int]]
+   [:map [:course-id :int]]])
+
 
 (def ?Find
   ?Lookup)
@@ -168,3 +171,25 @@
        (exercises/-add-answer ds input))
      (remove-answer [_ input]
        (exercises/-remove-answer ds input)))))
+
+
+(comment
+  (require '[abantu.db.interface :as db])
+  (def ds (db/ds :master))
+
+  (def data (exercises/-all ds))
+  data
+
+  (malli.error/humanize (malli.core/explain [:vector ?Exercise] data))
+  
+  
+
+  (let [eq (use-query ds)
+        id 1091
+        lookup' (lookup eq {:id id})
+        find' (find eq {:id id})
+        all' (all eq)]
+    find'
+    #_(all eq))
+
+  :end)

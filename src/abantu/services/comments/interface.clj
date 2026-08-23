@@ -5,8 +5,8 @@
                [:unit-id :int]
                [:course-id :int]
                [:text :string]
-               [:user-id :int]
+               [:user-id [:or :int :nil]]
                [:timestamp :string]
                [:resolved :int]
-               [:resolved-by :int]
-               [:resolved-at :string]])
+               [:resolved-by [:or :int :nil]]
+               [:resolved-at [:or :string :nil]]])

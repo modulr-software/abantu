@@ -79,7 +79,7 @@
        (some?)))
 
 (defn record? [ds tname id]
-  (db/exists? ds {:tname tname :where [:= :id id]}))
+  (exists? ds {:tname tname :where [:= :id id]}))
 
 (defn update!
   "updates a record or set of records that match a predicate where clause. the where
