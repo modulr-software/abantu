@@ -177,19 +177,22 @@
   (require '[abantu.db.interface :as db])
   (def ds (db/ds :master))
 
-  (def data (exercises/-all ds))
-  data
+  (let [data (exercises/-all ds)]
+    (malli.error/humanize (malli.core/explain [:vector ?Exercise] data)))
 
-  (malli.error/humanize (malli.core/explain [:vector ?Exercise] data))
-  
-  
+  (->>
+   (exercises/-all ds)
+   (mapcat #(if (seq (:comments %))
+               (:comments %)))
+   (filterv identity)
+   (filterv #(seq (:user %))))
 
   (let [eq (use-query ds)
         id 1091
         lookup' (lookup eq {:id id})
         find' (find eq {:id id})
         all' (all eq)]
-    find'
+    all'
     #_(all eq))
 
   :end)

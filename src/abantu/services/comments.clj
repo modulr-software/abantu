@@ -37,6 +37,7 @@
                         where (assoc :where where)))
           (mapv (partial append-users ds))))))
 
+
 (defn get-for-exercise
   ([ds exercise-id] (get-for-exercise ds exercise-id "all"))
   ([ds exercise-id type]
