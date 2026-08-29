@@ -1,6 +1,6 @@
 ---
 name: clj-reload-workflow
-description: Use when editing Clojure (.clj) files in the abantu repo. Describes the interactive reload workflow wired up via clj-reload, the nREPL bridge, and the pi extension that runs (dev/reload) after every edit.
+description: Use when editing Clojure (.clj) files in the abantu repo. Describes the interactive reload workflow wired up via clj-reload, the nREPL bridge, and the opencode plugin that runs (dev/reload) after every edit.
 ---
 
 # clj-reload workflow in abantu
@@ -48,12 +48,12 @@ losing REPL state.
    message and exits 1 — do not try to start nREPL yourself; ask the user
    to run `./nrepl.sh`.
 
-5. **`.pi/extensions/reload.ts`** — auto-discovered pi extension that
-   registers a `tool_result` handler. After every `edit` or `write` tool
+5. **`.opencode/plugins/reload.ts`** — auto-discovered opencode plugin that
+   registers a `tool.execute.after` hook. After every `edit` or `write` tool
    call, it checks for `.nrepl-port`, spawns `bb scripts/reload.clj` with
-   `cwd = ctx.cwd`, and appends `[clj-reload] (exit N)` + stdout/stderr
-   to the tool result's content. Silently surfaces a "no .nrepl-port"
-   message if the user's nREPL isn't running.
+   `cwd = worktree`, and appends `[clj-reload] (exit N)` + stdout/stderr
+   to the tool result's content. Silently does nothing if the user's
+   nREPL isn't running.
 
 ## Workflow to follow when editing Clojure in abantu
 
@@ -153,6 +153,6 @@ losing REPL state.
 - `dev/dev.clj` — hooks + `reload` entry point
 - `deps.edn` — `:dev` alias with clj-reload dep
 - `scripts/reload.clj` — babashka nREPL client
-- `.pi/extensions/reload.ts` — pi extension that triggers reload
+- `.opencode/plugins/reload.ts` — opencode plugin that triggers reload
 - `.nrepl-port` — written by `./nrepl.sh`, read by both the extension
   and the bb script

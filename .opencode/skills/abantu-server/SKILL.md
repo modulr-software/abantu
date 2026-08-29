@@ -20,8 +20,8 @@ with bencode nREPL ops — exactly what Calva does when you "Load File" on
 `dev/dev.clj` and then evaluate `(server/start-server)` in its rich comment
 block. No editor required.
 
-All plumbing is wrapped in `scripts/abantu-server.sh` (tmux + orchestration)
-and `scripts/abantu-server-client.clj` (the bencode nREPL client, modeled on
+All plumbing is wrapped in `.opencode/skills/abantu-server/scripts/abantu-server.sh` (tmux + orchestration)
+and `.opencode/skills/abantu-server/scripts/abantu-server-client.clj` (the bencode nREPL client, modeled on
 the repo's `scripts/reload.clj`). Call the shell script; never drive tmux or
 the nREPL socket by hand.
 
@@ -35,13 +35,13 @@ the nREPL socket by hand.
 ## Usage
 
 ```bash
-./scripts/abantu-server.sh start       # boot nrepl in tmux, load dev.clj, start server
-./scripts/abantu-server.sh stop        # kill the tmux session (nrepl + server down)
-./scripts/abantu-server.sh restart     # stop + fresh start
-./scripts/abantu-server.sh status      # tmux session + (server/running?) via nrepl
-./scripts/abantu-server.sh logs        # tail last 50 lines of the nrepl pane
-./scripts/abantu-server.sh logs -n 200 # tail last 200 lines
-./scripts/abantu-server.sh reload      # (do (require 'dev) (dev/reload)) — hot reload
+./.opencode/skills/abantu-server/scripts/abantu-server.sh start       # boot nrepl in tmux, load dev.clj, start server
+./.opencode/skills/abantu-server/scripts/abantu-server.sh stop        # kill the tmux session (nrepl + server down)
+./.opencode/skills/abantu-server/scripts/abantu-server.sh restart     # stop + fresh start
+./.opencode/skills/abantu-server/scripts/abantu-server.sh status      # tmux session + (server/running?) via nrepl
+./.opencode/skills/abantu-server/scripts/abantu-server.sh logs        # tail last 50 lines of the nrepl pane
+./.opencode/skills/abantu-server/scripts/abantu-server.sh logs -n 200 # tail last 200 lines
+./.opencode/skills/abantu-server/scripts/abantu-server.sh reload      # (do (require 'dev) (dev/reload)) — hot reload
 ```
 
 The tmux session name defaults to `abantu-nrepl`; override with
@@ -51,7 +51,7 @@ The tmux session name defaults to `abantu-nrepl`; override with
 
 1. Determine the action from the user's request (start / stop / restart /
    status / logs / reload).
-2. Run `./scripts/abantu-server.sh <action>` from the repo root
+2. Run `./.opencode/skills/abantu-server/scripts/abantu-server.sh <action>` from the repo root
    (`/home/merv/Developer/abantu`). Show the full output.
 3. For `start`: the script starts nrepl in tmux, waits for `.nrepl-port`,
    sends an nREPL `load-file` op with the contents of `dev/dev.clj`
@@ -76,7 +76,7 @@ The tmux session name defaults to `abantu-nrepl`; override with
 6. For `stop`: kills the tmux session, which tears down the nrepl JVM and
    the http-kit server together. There is no graceful-only-server stop
    here; if you need to stop just the http server but keep nrepl, run
-   `bb scripts/abantu-server-client.clj stop-server` instead.
+   `bb .opencode/skills/abantu-server/scripts/abantu-server-client.clj stop-server` instead.
 7. Report back the session name, the port (from `.nrepl-port`), and how to
    attach (`tmux attach -t abantu-nrepl`) or view logs. Do not attach
    yourself — the agent cannot hold an interactive tmux session; the user

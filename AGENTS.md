@@ -24,11 +24,6 @@ describes — assume the user's nREPL is already running (`./nrepl.sh`), make
 edits normally, and rely on the reload plugin to re-evaluate namespaces after
 each edit. Do not start a separate nREPL.
 
-When the user says "commit and push" (or a close variant like "commit &
-push", "push my changes", "ship it"), load the `commit-and-push` skill
-and follow its instructions exactly. Do not start the workflow until the
-phrase is used — this skill is trigger-only, never proactive.
-
 When the user says "scope", "lets scope", or "scope x" (where x is what to
 scope), load the `scoping` skill and follow its workflow. Trigger-only — do
 not start until one of those phrases is used.
