@@ -5,12 +5,15 @@
             [abantu.services.comments.interface :as comments]
             [abantu.services.exercises.core :as exercises]))
 
-
 (defn- maybe [?schema]
   [:or ?schema :nil])
 
 (def ?Option :string)
-(def ?Answer [:vector :string])
+(def ?Answer
+  [:map
+   [:id :int]
+   [:text [:vector :string]]
+   [:exercise-id :int]])
 
 (def ?Exercise
   [:map
@@ -18,13 +21,13 @@
    [:unit-id :int]
    [:course-id :int]
    [:level :int]
-   [:position :int]
+   [:position {:optional true} [:maybe :int]]
    [:options [:vector ?Option]]
-   [:answer-type :string]
+   [:answer-type [:enum "freetext" "bubbles"]]
    [:instruction :string]
    [:question-content :string]
-   [:correct-message :string]
-   [:incorrect-message :string]
+   [:correct-message {:optional true} [:maybe :string]]
+   [:incorrect-message {:optional true} [:maybe :string]]
    [:answers [:vector ?Answer]]
    [:comments (maybe [:vector comments/?Comment])]])
 
@@ -34,13 +37,15 @@
    [:map [:unit-id :int] [:course-id {:optional true} :int]]
    [:map [:course-id :int]]])
 
-
 (def ?Find
   ?Lookup)
 
 (def ?Create
   (-> (mu/dissoc ?Exercise :id)
-      (mu/dissoc :comments)))
+      (mu/dissoc :comments)
+      (mu/update-entry-properties :level assoc :optional true)
+      (mu/update-entry-properties :options assoc :optional true)
+      (mu/assoc :answers [:vector [:vector :string]])))
 
 (def ?SetUnit
   (mu/select-keys ?Exercise [:id :unit-id]))
@@ -49,7 +54,7 @@
   (mu/select-keys ?Exercise [:id :instruction]))
 
 (def ?SetQuestionContent
-  (mu/select-keys ?Exercise [:id :qestion-content]))
+  (mu/select-keys ?Exercise [:id :question-content]))
 
 (def ?SetAnswerType
   (mu/select-keys ?Exercise [:id :answer-type]))
@@ -90,7 +95,7 @@
       (mu/assoc :answers [:vector [:vector :string]])))
 
 (malt/defprotocol ExerciseQuery
-  (lookup [input ?Lookup] ?Exercise)
+  (lookup [input ?Lookup] (maybe ?Exercise))
   (find [input ?Find] [:vector ?Exercise])
   (all [] [:vector ?Exercise]))
 
@@ -142,7 +147,7 @@
   ([ds]
    (malt/reify ExerciseMutation
      (create [_ input]
-       (exercises/create ds input))
+       (exercises/-create ds input))
      (set-unit [_ input]
        (exercises/-set-unit ds input))
      (set-instruction [_ input]
@@ -172,7 +177,6 @@
      (remove-answer [_ input]
        (exercises/-remove-answer ds input)))))
 
-
 (comment
   (require '[abantu.db.interface :as db])
   (def ds (db/ds :master))
@@ -183,7 +187,7 @@
   (->>
    (exercises/-all ds)
    (mapcat #(if (seq (:comments %))
-               (:comments %)))
+              (:comments %)))
    (filterv identity)
    (filterv #(seq (:user %))))
 
@@ -194,5 +198,46 @@
         all' (all eq)]
     all'
     #_(all eq))
+
+  (def em (use-mutation))
+
+  (create em {:unit-id 1
+              :course-id 1
+              :instruction "translate the following"
+              :question-content "who are you"
+              :answer-type "bubbles"
+              :options ["wat" "wie" "hoe" "is" "jy"]
+              :correct-message "correct!"
+              :incorrect-message "o nei"
+              :answers [["wie" "is" "jy"]]})
+
+  (set-unit em {:id 1
+                :unit-id 2})
+  (set-instruction em {:id 1
+                       :instruction "Translate the following:"})
+  (set-question-content em {:id 1
+                            :question-content "Who are you?"})
+  (set-answer-type em {:id 1
+                       :answer-type "bubbles"})
+  (set-level em {:id 1
+                 :level 2})
+  (set-correct-message em {:id 1
+                           :correct-message "that's so crazy guys"})
+  (set-incorrect-message em {:id 1
+                             :incorrect-message "bro that was so lame"})
+  (set-position em {:id 1
+                    :position 2})
+  (set-options em {:id 1
+                   :options ["wie" "jy" "hoe" "is" "ek"]})
+  (add-option em {:id 1
+                  :option "weet"})
+  (remove-option em {:id 1
+                     :option "weet"})
+  (set-answers em {:id 1
+                   :answers [["wie" "is" "jy"]]})
+  (add-answer em {:id 1
+                  :answer ["hoe" "is" "jy"]})
+  (remove-answer em {:id 1
+                     :answer-id 30})
 
   :end)

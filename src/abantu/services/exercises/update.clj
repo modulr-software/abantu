@@ -8,7 +8,8 @@
 (defmulti apply (fn [_ action] (:type action)))
 
 (defmethod apply :create [exercise {:keys [payload]}]
-  (merge exercise payload))
+  ;; keep :answers from the lookup — they carry db-assigned ids
+  (merge exercise (dissoc payload :answers)))
 
 (defmethod apply :set-unit [exercise {:keys [payload]}]
   (assoc exercise :unit-id (:unit-id payload)))
@@ -44,16 +45,12 @@
   (assoc exercise :options (remove-first (:options exercise) (:option payload))))
 
 (defmethod apply :set-answers [exercise {:keys [payload]}]
-  (->> (:answers payload)
-       (mapv #(assoc {} :text %))
-       (mapv #(assoc % :exercise-id (:id exercise)))
-       (assoc exercise :answers)))
+  ;; payload :answers are already processed rows with ids (see -set-answers)
+  (assoc exercise :answers (:answers payload)))
 
 (defmethod apply :add-answer [exercise {:keys [payload]}]
-  (->> (:id exercise)
-       (assoc {:text (:answer payload)} :exercise-id)
-       (conj (:answers exercise))
-       (assoc exercise :answers)))
+  ;; payload :answer is already a processed row with id (see -add-answer)
+  (assoc exercise :answers (conj (:answers exercise) (:answer payload))))
 
 (defmethod apply :remove-answer [{:keys [answers] :as exercise} {:keys [payload]}]
   (assoc exercise :answers (vec (remove #(= (:id %) (:answer-id payload)) answers))))
