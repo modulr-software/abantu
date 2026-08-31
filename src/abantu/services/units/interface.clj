@@ -13,20 +13,26 @@
    [:id :int]
    [:course-id :int]
    [:name :string]
-   [:description :string]
-   [:level :int]
-   [:type :string]
-   [:position :int]
+   [:description (maybe :string)]
+   [:level (maybe :int)]
+   [:type [:enum "lesson" "practice"]]
+   [:position (maybe :int)]
    [:exercises [:vector exercises/?Exercise]]])
 
 (def ?Lookup
   (mu/select-keys ?Unit [:id]))
 
 (def ?Find
-  (mu/select-keys ?Unit [:id :course-id]))
+  [:map
+   [:id {:optional true} :int]
+   [:course-id :int]])
 
 (def ?Create
   (-> (mu/dissoc ?Unit :id)
+      (mu/dissoc :creator)
+      (mu/update-entry-properties :description assoc :optional true)
+      (mu/update-entry-properties :level assoc :optional true)
+      (mu/update-entry-properties :position assoc :optional true)
       (mu/assoc :exercises [:vector (mu/dissoc exercises/?Create :unit-id)])))
 
 (def ?SetCourseId
@@ -98,3 +104,28 @@
        (units/-set-course-id ds input))
      (set-position [_ input]
        (units/-set-position ds input)))))
+
+(comment
+
+  (def um (use-mutation))
+
+  (create um {:name "pronouns 2"
+              :course-id 1
+              :description "useful stuff"
+              :type "lesson"
+              :exercises []})
+
+  (set-name um {:id 1
+                :name "pronouns 3"})
+  (set-description um {:id 1
+                       :description "even more useful stuff"})
+  (set-level um {:id 1
+                 :level 2})
+  (set-type um {:id 1
+                :type "practice"})
+  (set-course-id um {:id 1
+                     :course-id 1})
+  (set-position um {:id 1
+                    :position 2})
+
+  :end)
