@@ -1,6 +1,6 @@
 (ns abantu.services.courses.core
   (:require [abantu.db.interface :as db]
-            [abantu.services.units.intefaces :as unit]
+            [abantu.services.units.interface :as unit]
             [abantu.services.courses.update :as update]
             [honey.sql.helpers :as h]
             [abantu.services.users :as users]
@@ -8,8 +8,8 @@
 
 (defn- attach-units [ds course]
   (->> (unit/find (unit/use-query ds)
-                  {:unit-id (:id course)})
-       (assoc course :exercise)))
+                  {:course-id (:id course)})
+       (assoc course :units)))
 
 (defn- attach-creator [ds {:keys [creator-id] :as course}]
   (if creator-id
@@ -50,7 +50,7 @@
 
 (defn -create [ds {:keys [units] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :courses
-                                     :values update
+                                     :values (dissoc update :units)
                                      :ret :1})]
     (run! #(unit/create (unit/use-mutation ds) %) units)
     (update/apply (-lookup ds {:id id}) {:type :create

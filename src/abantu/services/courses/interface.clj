@@ -10,38 +10,44 @@
 
 (def ?User
   [:map
-   [:email :string]
-   [:firstname :string]
-   [:lastname :string]
+   [:email (maybe :string)]
+   [:firstname (maybe :string)]
+   [:lastname (maybe :string)]
    [:email-verified :boolean]
    [:archived :boolean]
    [:approved :boolean]
-   [:mobile :string]
-   [:profile-image :string]])
+   [:mobile (maybe :string)]
+   [:profile-image (maybe :string)]])
 
 (def ?Course
   [:map
    [:id :int]
    [:name :string]
    [:language :string]
-   [:description :string]
+   [:description (maybe :string)]
    [:publishable :boolean]
    [:visible :boolean]
    [:review-pending :boolean]
-   [:creator ?User]
+   [:creator (maybe ?User)]
    [:units [:vector units/?Unit]]])
 
 (def ?Lookup
   (mu/select-keys ?Course [:id]))
 
 (def ?Find
-  (mu/select-keys ?Course [:id :creator-id]))
+  [:map
+   [:id {:optional true} :int]
+   [:creator-id :int]])
 
 (def ?Create
   (-> (mu/dissoc ?Course :id)
       (mu/dissoc :creator)
       (mu/assoc :creator-id :int)
-      (mu/assoc :units [:vector (mu/dissoc units/?Unit :course-id)])))
+      (mu/update-entry-properties :description assoc :optional true)
+      (mu/update-entry-properties :publishable assoc :optional true)
+      (mu/update-entry-properties :visible assoc :optional true)
+      (mu/update-entry-properties :review-pending assoc :optional true)
+      (mu/assoc :units [:vector (mu/dissoc units/?Create :course-id)])))
 
 (def ?SetName
   (mu/select-keys ?Course [:id :name]))
@@ -62,7 +68,9 @@
   (mu/select-keys ?Course [:id :review-pending]))
 
 (def ?SetCreatorId
-  (mu/select-keys ?Course [:id :creator-id]))
+  [:map
+   [:id :int]
+   [:creator-id :int]])
 
 (malt/defprotocol CourseQuery
   (lookup [input ?Lookup] ?Course)
@@ -118,3 +126,30 @@
        (courses/-set-review-pending ds input))
      (set-creator-id [_ input]
        (courses/-set-creator-id ds input)))))
+
+(comment
+
+  (def cm (use-mutation))
+
+  (create cm {:name "zulu basics"
+              :language "zulu"
+              :description "learn zulu"
+              :creator-id 1
+              :units []})
+
+  (set-name cm {:id 1
+                :name "afrikaans course 2"})
+  (set-language cm {:id 1
+                    :language "english"})
+  (set-description cm {:id 1
+                       :description "learn about pronouns and more"})
+  (set-publishable cm {:id 1
+                       :publishable true})
+  (set-visible cm {:id 1
+                   :visible true})
+  (set-review-pending cm {:id 1
+                          :review-pending true})
+  (set-creator-id cm {:id 1
+                      :creator-id 2})
+
+  :end)
