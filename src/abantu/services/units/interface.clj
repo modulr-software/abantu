@@ -1,22 +1,20 @@
 (ns abantu.services.units.interface
-  (:require [io.julienvincent.malt :as malt]
+  (:require [abantu.util :as util]
+            [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
             [abantu.services.exercises.interface :as exercises]
             [abantu.services.units.core :as units]))
-
-(defn- maybe [?schema]
-  [:or ?schema :nil])
 
 (def ?Unit
   [:map
    [:id :int]
    [:course-id :int]
    [:name :string]
-   [:description (maybe :string)]
-   [:level (maybe :int)]
+   [:description (util/maybe :string)]
+   [:level (util/maybe :int)]
    [:type [:enum "lesson" "practice"]]
-   [:position (maybe :int)]
+   [:position (util/maybe :int)]
    [:exercises [:vector exercises/?Exercise]]])
 
 (def ?Lookup
@@ -71,19 +69,19 @@
 
 (malt/defprotocol UnitMutation
   (create [input ?Create]
-    (maybe ?Unit))
+    (util/maybe ?Unit))
   (set-name [input ?SetName]
-    (maybe ?Unit))
+    (util/maybe ?Unit))
   (set-description [input ?SetDescription]
-    (maybe ?Unit))
+    (util/maybe ?Unit))
   (set-level [input ?SetLevel]
-    (maybe ?Unit))
+    (util/maybe ?Unit))
   (set-type [input ?SetType]
-    (maybe ?Unit))
+    (util/maybe ?Unit))
   (set-course-id [input ?SetCourseId]
-    (maybe ?Unit))
+    (util/maybe ?Unit))
   (set-position [input ?SetPosition]
-    (maybe ?Unit)))
+    (util/maybe ?Unit)))
 
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))

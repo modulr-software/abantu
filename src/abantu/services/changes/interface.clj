@@ -1,47 +1,61 @@
 (ns abantu.services.changes.interface
-  (:require [io.julienvincent.malt :as malt]
+  (:require [abantu.util :as util]
+            [io.julienvincent.malt :as malt]
             [malli.util :as mu]))
 
 (def ?Version
   [:map
    [:id :int]
-   [:timestamp :text]
-   [:label :text]
+   [:timestamp :string]
+   [:label :string]
    [:user-id :int]
    [:course-id :int]])
 
 (def ?CourseChanges
   [:map
    [:course-id :int]
-   [:change-type :text]
-   [:change-data :text]
-   [:timestamp :text]])
+   [:change-type :string]
+   [:change-data :string]
+   [:timestamp :string]])
 
 (def ?UnitChanges
   [:map
    [:course-id :int]
    [:unit-id :int]
-   [:change-type :text]
-   [:change-data :text]
-   [:timestamp :text]])
+   [:change-type :string]
+   [:change-data :string]
+   [:timestamp :string]])
 
 (def ?ExerciseChanges
   [:map
    [:exercise-id :int]
    [:course-id :int]
    [:unit-id :int]
-   [:change-type :text]
-   [:change-data :text]
-   [:timestamp :text]])
+   [:change-type :string]
+   [:change-data :string]
+   [:timestamp :string]])
 
 (def ?Lookup
-  (mu/ []))
+  [:or
+   [:map [:id :int]]
+   [:map [:timestamp :string]]])
+
+(def ?Find
+  ?Lookup)
 
 (malt/defprotocol VersionControlQuery
-  (lookup [input ])
-  (find [input])
-  (all [])
-  (exercises []))
+  (lookup [input [:map [:id :int]]]
+    (util/maybe ?Version))
+  (find [input ?Find]
+    [:vector ?Version])
+  (all []
+    [:vector ?Version])
+  (exercises []
+    [:vector ?ExerciseChanges])
+  (units []
+    [:vector ?UnitChanges])
+  (courses []
+    [:vector ?CourseChanges]))
 
 (malt/defprotocol VersionControlMutation)
 

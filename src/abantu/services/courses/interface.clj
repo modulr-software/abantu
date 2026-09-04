@@ -1,34 +1,32 @@
 (ns abantu.services.courses.interface
-  (:require [io.julienvincent.malt :as malt]
+  (:require [abantu.util :as util]
+            [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
             [abantu.services.units.interface :as units]
             [abantu.services.courses.core :as courses]))
 
-(defn- maybe [?schema]
-  [:or ?schema :nil])
-
 (def ?User
   [:map
-   [:email (maybe :string)]
-   [:firstname (maybe :string)]
-   [:lastname (maybe :string)]
+   [:email (util/maybe :string)]
+   [:firstname (util/maybe :string)]
+   [:lastname (util/maybe :string)]
    [:email-verified :boolean]
    [:archived :boolean]
    [:approved :boolean]
-   [:mobile (maybe :string)]
-   [:profile-image (maybe :string)]])
+   [:mobile (util/maybe :string)]
+   [:profile-image (util/maybe :string)]])
 
 (def ?Course
   [:map
    [:id :int]
    [:name :string]
    [:language :string]
-   [:description (maybe :string)]
+   [:description (util/maybe :string)]
    [:publishable :boolean]
    [:visible :boolean]
    [:review-pending :boolean]
-   [:creator (maybe ?User)]
+   [:creator (util/maybe ?User)]
    [:units [:vector units/?Unit]]])
 
 (def ?Lookup
@@ -90,21 +88,21 @@
 
 (malt/defprotocol CourseMutation
   (create [input ?Create]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-name [input ?SetName]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-language [input ?SetLanguage]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-description [input ?SetDescription]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-publishable [input ?SetPublishable]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-visible [input ?SetVisible]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-review-pending [input ?SetReviewPending]
-    (maybe ?Course))
+    (util/maybe ?Course))
   (set-creator-id [input ?SetCreatorId]
-    (maybe ?Course)))
+    (util/maybe ?Course)))
 
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))

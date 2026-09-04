@@ -1,12 +1,10 @@
 (ns abantu.services.exercises.interface
-  (:require [io.julienvincent.malt :as malt]
+  (:require [abantu.util :as util]
+            [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
             [abantu.services.comments.interface :as comments]
             [abantu.services.exercises.core :as exercises]))
-
-(defn- maybe [?schema]
-  [:or ?schema :nil])
 
 (def ?Option :string)
 (def ?Answer
@@ -29,7 +27,7 @@
    [:correct-message {:optional true} [:maybe :string]]
    [:incorrect-message {:optional true} [:maybe :string]]
    [:answers [:vector ?Answer]]
-   [:comments (maybe [:vector comments/?Comment])]])
+   [:comments (util/maybe [:vector comments/?Comment])]])
 
 (def ?Lookup
   [:or
@@ -95,7 +93,7 @@
       (mu/assoc :answers [:vector [:vector :string]])))
 
 (malt/defprotocol ExerciseQuery
-  (lookup [input ?Lookup] (maybe ?Exercise))
+  (lookup [input ?Lookup] (util/maybe ?Exercise))
   (find [input ?Find] [:vector ?Exercise])
   (all [] [:vector ?Exercise]))
 
@@ -112,35 +110,35 @@
 
 (malt/defprotocol ExerciseMutation
   (create [input ?Create]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-unit [input ?SetUnit]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-instruction [input ?SetInstruction]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-question-content [input ?SetQuestionContent]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-answer-type [input ?SetAnswerType]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-level [input ?SetLevel]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-correct-message [input ?SetCorrectMessage]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-incorrect-message [input ?SetIncorrectMessage]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-position [input ?SetPosition]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-options [input ?SetOptions]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (add-option [input ?AddOption]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (remove-option [input ?RemoveOption]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (set-answers [input ?SetAnswers]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (add-answer [input ?AddAnswer]
-    (maybe ?Exercise))
+    (util/maybe ?Exercise))
   (remove-answer [input ?RemoveAnswer]
-    (maybe ?Exercise)))
+    (util/maybe ?Exercise)))
 
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))

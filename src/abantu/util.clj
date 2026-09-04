@@ -61,6 +61,9 @@
         hash-bytes (.digest digest bytes)]
     (format "%064x" (BigInteger. 1 hash-bytes))))
 
+(defn maybe [?schema]
+  [:or ?schema :nil])
+
 (defn parse-type-from-schema [schema]
   (cond
     (keyword? schema)
