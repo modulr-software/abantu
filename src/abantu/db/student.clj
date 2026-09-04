@@ -146,7 +146,9 @@
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
-   (tables/foreign-key :course-id :courses :id)))
+   [:version-id :int :not nil]
+   (tables/foreign-key :course-id :courses :id)
+   (tables/foreign-key :version-id :versions :id)))
 
 (def unit-changes
   (tables/create-table-sql
@@ -157,8 +159,10 @@
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
+   [:version-id :int :not nil]
    (tables/foreign-key :course-id :courses :id)
-   (tables/foreign-key :unit-id :units :id)))
+   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :version-id :versions :id)))
 
 (def exercise-changes
   (tables/create-table-sql
@@ -170,9 +174,11 @@
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
+   [:version-id :int :not nil]
    (tables/foreign-key :exercise-id :exercises :id)
    (tables/foreign-key :course-id :courses :id)
-   (tables/foreign-key :unit-id :units :id)))
+   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :version-id :versions :id)))
 
 (comment
   (sql/format events)
