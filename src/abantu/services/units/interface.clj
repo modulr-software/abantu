@@ -70,6 +70,8 @@
 (malt/defprotocol UnitMutation
   (create [input ?Create]
     (util/maybe ?Unit))
+  (delete [input ?Lookup]
+    :nil)
   (set-name [input ?SetName]
     (util/maybe ?Unit))
   (set-description [input ?SetDescription]
@@ -89,7 +91,8 @@
    (malt/reify UnitMutation
      (create [_ input]
        (units/-create ds input))
-     ;;TODO: add remove here
+     (delete [_ input]
+       (units/-delete ds input))
      (set-name [_ input]
        (units/-set-name ds input))
      (set-description [_ input]

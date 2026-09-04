@@ -83,6 +83,19 @@
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 
+(defn -delete
+  [ds {:keys [id] :as update}]
+  (db/delete! ds {:tname :comments
+                  :where [:= :exercise-id id]})
+  (db/delete! ds {:tname :answers
+                  :where [:= :id id]})
+  (db/delete! ds {:tname :exercises-completed
+                  :where [:= :id id]})
+  (db/delete! ds {:tname :exercises
+                  :where [:= :id id]})
+  (update/apply nil {:type :delete
+                     :payload update}))
+
 (defn -set-unit [ds {:keys [id unit-id] :as update}]
   (when-let [exercise (-lookup ds {:id id})]
     (db/update! ds {:tname :exercises

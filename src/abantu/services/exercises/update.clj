@@ -8,8 +8,10 @@
 (defmulti apply (fn [_ action] (:type action)))
 
 (defmethod apply :create [exercise {:keys [payload]}]
-  ;; keep :answers from the lookup — they carry db-assigned ids
   (merge exercise (dissoc payload :answers)))
+
+(defmethod apply :delete [_exercise {:keys [_payload]}]
+  nil)
 
 (defmethod apply :set-unit [exercise {:keys [payload]}]
   (assoc exercise :unit-id (:unit-id payload)))

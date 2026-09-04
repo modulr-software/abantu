@@ -6,6 +6,9 @@
 (defmethod apply :create [course {:keys [payload]}]
   (merge course payload))
 
+(defmethod apply :delete [_course {:keys [_payload]}]
+  nil)
+
 (defmethod apply :set-name [course {:keys [payload]}]
   (assoc course :name (:name payload)))
 

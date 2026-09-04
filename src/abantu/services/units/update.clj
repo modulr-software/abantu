@@ -6,7 +6,7 @@
 (defmethod apply :create [unit {:keys [payload]}]
   (merge unit payload))
 
-(defmethod apply :remove [unit {:keys [payload]}]
+(defmethod apply :delete [_unit {:keys [_payload]}]
   nil)
 
 (defmethod apply :set-name [unit {:keys [payload]}]

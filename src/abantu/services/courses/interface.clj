@@ -89,6 +89,8 @@
 (malt/defprotocol CourseMutation
   (create [input ?Create]
     (util/maybe ?Course))
+  (delete [input ?Lookup]
+    :nil)
   (set-name [input ?SetName]
     (util/maybe ?Course))
   (set-language [input ?SetLanguage]
@@ -110,6 +112,8 @@
    (malt/reify CourseMutation
      (create [_ input]
        (courses/-create ds input))
+     (delete [_ input]
+       (courses/-delete ds input))
      (set-name [_ input]
        (courses/-set-name ds input))
      (set-language [_ input]

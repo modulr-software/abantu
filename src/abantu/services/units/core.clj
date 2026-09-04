@@ -35,7 +35,16 @@
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 
-;; TODO: add remove impl here
+(defn -delete [ds {:keys [id] :as update}]
+  (let [exmut (exercise/use-mutation ds)
+        exercise-ids (->> (db/find ds {:tname :exercises
+                                       :where [:= :unit-id id]})
+                          (mapv :id))]
+    (run! #(exercise/delete exmut {:id %}) exercise-ids)
+    (db/delete! ds {:tname :practice-sessions
+                    :where [:= :unit-id id]})
+    (update/apply nil {:type :delete
+                       :payload update})))
 
 (defn -set-name [ds {:keys [id name] :as update}]
   (when-let [unit (-lookup ds {:id id})]

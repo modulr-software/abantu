@@ -191,4 +191,8 @@
   (sql/format practice-sessions)
   (sql/format exercises-completed)
   (sql/format comments)
+  (sql/format versions)
+  (sql/format course-changes)
+  (sql/format unit-changes)
+  (sql/format exercise-changes)
   ())

@@ -111,6 +111,8 @@
 (malt/defprotocol ExerciseMutation
   (create [input ?Create]
     (util/maybe ?Exercise))
+  (delete [input ?Lookup]
+    :nil)
   (set-unit [input ?SetUnit]
     (util/maybe ?Exercise))
   (set-instruction [input ?SetInstruction]
@@ -146,6 +148,8 @@
    (malt/reify ExerciseMutation
      (create [_ input]
        (exercises/-create ds input))
+     (delete [_ input]
+       (exercises/-delete ds input))
      (set-unit [_ input]
        (exercises/-set-unit ds input))
      (set-instruction [_ input]

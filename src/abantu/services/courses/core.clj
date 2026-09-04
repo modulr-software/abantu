@@ -56,6 +56,20 @@
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 
+(defn -delete [ds {:keys [id] :as update}]
+  (let [unmut (unit/use-mutation ds)
+        unit-ids (db/find ds {:tname :units
+                              :where [:= :course-id id]})]
+    (run! #(unit/delete unmut %) unit-ids)
+    (db/delete! ds {:tname :user-courses
+                    :where [:= :course-id id]})
+    (db/delete! ds {:tname :course-editors
+                    :where [:= :course-id id]})
+    (db/delete! ds {:tname :courses
+                    :where [:= :id id]})
+    (update/apply nil {:type :delete
+                       :payload update})))
+
 (defn -set-name [ds {:keys [id name] :as update}]
   (when-let [course (-lookup ds {:id id})]
     (db/update! ds {:tname :courses
