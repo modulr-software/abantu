@@ -50,41 +50,47 @@
       :unit-changes
       :exercise-changes])
 
-    (run!
-     (hon/insert! ds-student {:tname :courses
-                              :data (mapv #(dissoc % :creator-id) courses)})
-     courses)
+    (when (seq courses)
+      (run!
+       (hon/insert! ds-student {:tname :courses
+                                :data (mapv #(dissoc % :creator-id) courses)})
+       courses))
 
-    (run!
-     (hon/insert! ds-student {:tname :units
-                              :data (mapv #(dissoc % :creator-id) units)})
-     units)
+    (when (seq units)
+      (run!
+       (hon/insert! ds-student {:tname :units
+                                :data (mapv #(dissoc % :creator-id) units)})
+       units))
 
-    (run!
-     (hon/insert! ds-student {:tname :exercises
-                              :data exercises})
+    (when (seq exercises)
+      (run!
+       (hon/insert! ds-student {:tname :exercises
+                                :data exercises})
+       exercises))
 
-     exercises)
+    (when (seq answers)
+      (run!
+       (hon/insert! ds-student {:tname :answers
+                                :data answers})
+       answers))
 
-    (run!
-     (hon/insert! ds-student {:tname :answers
-                              :data answers})
-     answers)
+    (when (seq practice-sessions)
+      (run!
+       (hon/insert! ds-student {:tname :practice-sessions
+                                :data practice-sessions})
+       practice-sessions))
 
-    (run!
-     (hon/insert! ds-student {:tname :practice-sessions
-                              :data practice-sessions})
-     practice-sessions)
+    (when (seq exercises-completed)
+      (run!
+       (hon/insert! ds-student {:tname :exercises-completed
+                                :data exercises-completed})
+       exercises-completed))
 
-    (run!
-     (hon/insert! ds-student {:tname :exercises-completed
-                              :data exercises-completed})
-     exercises-completed)
-
-    (run!
-     (hon/insert! ds-student {:tname :comments
-                              :data comments})
-     comments)))
+    (when (seq comments)
+      (run!
+       (hon/insert! ds-student {:tname :comments
+                                :data comments})
+       comments))))
 
 (defn run-down! [context]
   (let [ds-student (:ds-student context)]
@@ -96,7 +102,11 @@
       :answers
       :practice-sessions
       :exercises-completed
-      :comments])))
+      :comments
+      :versions
+      :course-changes
+      :unit-changes
+      :exercise-changes])))
 
 (comment
   ())
