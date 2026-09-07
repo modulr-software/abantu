@@ -40,7 +40,7 @@
                  (or (cske/transform-keys
                       csk/->snake_case_keyword where)
                      [])))
-            :ret ret))
+            :ret (or ret :*)))
 
 (defn find-one [ds opts]
   (->> {:ret :1}
@@ -59,7 +59,7 @@
               (-> (hsql/insert-into (csk/->snake_case_keyword tname))
                   (hsql/values vals)
                   (hsql/returning :*))
-              :ret ret)))
+              :ret (or ret :*))))
 
 (defn delete!
   "deletes a record or set of records that match a predicate where clause. the where
