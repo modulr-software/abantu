@@ -6,16 +6,19 @@
 (defn- attach-courses [ds {:keys [id] :as version}]
   (assoc version :course-changes (db/find ds {:tname :course-changes
                                               :where [:= :version-id id]
+                                              :order-by :id
                                               :ret :*})))
 
 (defn- attach-units [ds {:keys [id] :as version}]
   (assoc version :unit-changes (db/find ds {:tname :unit-changes
                                             :where [:= :version-id id]
+                                            :order-by :id
                                             :ret :*})))
 
 (defn- attach-exercises [ds {:keys [id] :as version}]
   (assoc version :exercise-changes (db/find ds {:tname :exercise-changes
                                                 :where [:= :version-id id]
+                                                :order-by :id
                                                 :ret :*})))
 
 (defn -lookup [ds {:keys [_id _timestamp with-changes?] :as opts}]
@@ -46,16 +49,19 @@
 (defn -exercises [ds {:keys [_version-id _timestamp] :as opts}]
   (db/find ds {:tname :exercise-changes
                :where (util/eq-clauses opts)
+               :order-by :id
                :ret :*}))
 
 (defn -units [ds {:keys [_version-id _timestamp] :as opts}]
   (db/find ds {:tname :unit-changes
                :where (util/eq-clauses opts)
+               :order-by :id
                :ret :*}))
 
 (defn -courses [ds {:keys [_version-id _timestamp] :as opts}]
   (db/find ds {:tname :course-changes
                :where (util/eq-clauses opts)
+               :order-by :id
                :ret :*}))
 
 (defn -add-version! [ds {:keys [label course-id] :as _payload}]

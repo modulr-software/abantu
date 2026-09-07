@@ -182,10 +182,9 @@
                            :label "review draft"})
 
   (add-course-update! vcm {:version-id 1
-                           :change-type "update"
+                           :change-type "set-name"
                            :update {:id 1
-                                    :name "afrikaans basics"
-                                    :description "updated description"}})
+                                    :name "afrikaans basics"}})
 
   (add-unit-update! vcm {:version-id 1
                          :change-type "create"
@@ -200,7 +199,7 @@
                                       :unit-id 1
                                       :course-id 1}})
 
-  (migrate-up! vcm {:course-id 1
-                    :version-id 1})
+  #_(migrate-up! vcm {:course-id 1
+                      :version-id 1})
 
   :end)
