@@ -1,7 +1,9 @@
 (ns abantu.services.changes.interface
-  (:require [abantu.util :as util]
+  (:require [abantu.services.changes.core :as changes]
+            [abantu.util :as util]
             [io.julienvincent.malt :as malt]
-            [malli.util :as mu]))
+            [malli.util :as mu]
+            [abantu.db.interface :as db]))
 
 (def ?CourseChange
   [:map
@@ -35,7 +37,7 @@
    [:id :int]
    [:timestamp :string]
    [:label {:optional true} (util/maybe :string)]
-   [:user-id :int]
+   [:applied :boolean]
    [:course-id :int]
    [:course-changes [:vector ?CourseChange]]
    [:unit-changes [:vector ?UnitChange]]
@@ -50,24 +52,31 @@
    (mu/merge [:map [:timestamp :string]] ?Opts)])
 
 (def ?Find
-  ?Lookup)
+  [:or
+   (mu/merge [:map [:course-id :int]] ?Opts)
+   (mu/merge [:map [:label :string]] ?Opts)])
+
+(def ?ChangeLookup
+  [:or
+   (mu/merge [:map [:version-id :int]] ?Opts)
+   (mu/merge [:map [:timestamp :string]] ?Opts)])
 
 (def ?AddVersion
-  (mu/select-keys ?Version [:label :user-id :course-id]))
+  (mu/select-keys ?Version [:label :course-id]))
 
 (def ?SetVersionLabel
   (mu/select-keys ?Version [:id :label]))
 
 (def ?AddCourseUpdate
-  (-> (mu/select-keys ?CourseChange [:version-id])
+  (-> (mu/select-keys ?CourseChange [:version-id :change-type])
       (mu/assoc :update [:map [:id :int]])))
 
 (def ?AddUnitUpdate
-  (-> (mu/select-keys ?UnitChange [:version-id])
+  (-> (mu/select-keys ?UnitChange [:version-id :change-type])
       (mu/assoc :update [:map [:id :int]])))
 
 (def ?AddExerciseUpdate
-  (-> (mu/select-keys ?ExerciseChange [:version-id])
+  (-> (mu/select-keys ?ExerciseChange [:version-id :change-type])
       (mu/assoc :update [:map [:id :int]])))
 
 (def ?MigrateUp
@@ -82,11 +91,11 @@
     [:vector ?Version])
   (all [input ?Opts]
     [:vector ?Version])
-  (exercises [input ?Lookup]
+  (exercises [input ?ChangeLookup]
     [:vector ?ExerciseChange])
-  (units [input ?Lookup]
+  (units [input ?ChangeLookup]
     [:vector ?UnitChange])
-  (courses [input ?Lookup]
+  (courses [input ?ChangeLookup]
     [:vector ?CourseChange]))
 
 (malt/defprotocol VersionControlMutation
@@ -103,6 +112,95 @@
   (migrate-up! [input ?MigrateUp]
     :nil))
 
-(defn use-query [])
+(defn use-query [ds]
+  (reify VersionControlQuery
+    (lookup [_ input]
+      (changes/-lookup ds input))
+    (find [_ input]
+      (changes/-find ds input))
+    (all [_ input]
+      (changes/-all ds input))
+    (exercises [_ input]
+      (changes/-exercises ds input))
+    (units [_ input]
+      (changes/-units ds input))
+    (courses [_ input]
+      (changes/-courses ds input))))
 
-(defn use-mutation [])
+(defn use-mutation [ds]
+  (reify VersionControlMutation
+    (add-version! [_ input]
+      (changes/-add-version! ds input))
+    (set-version-label! [_ input]
+      (changes/-set-version-label! ds input))
+    (add-course-update! [_ input]
+      (changes/-add-course-update! ds input))
+    (add-unit-update! [_ input]
+      (changes/-add-unit-update! ds input))
+    (add-exercise-update! [_ input]
+      (changes/-add-exercise-update! ds input))
+    (migrate-up! [_ input]
+      (changes/migrate-up! ds input))))
+
+(comment
+
+  (require '[abantu.db.util :as db.util])
+  (def ds (db.util/conn :student 1))
+
+  (def vcq (use-query ds))
+  (def vcm (use-mutation ds))
+
+  ;; queries
+
+  (lookup vcq {:id 1})
+  (lookup vcq {:id 1 :with-changes? true})
+  (lookup vcq {:timestamp "2025-01-01T00:00:00Z"
+               :with-changes? true})
+
+  (find vcq {:course-id 1})
+  (find vcq {:course-id 1 :with-changes? true})
+  (find vcq {:label "draft 1"
+             :with-changes? true})
+
+  (all vcq {:with-changes? false})
+  (all vcq {:with-changes? true})
+
+  (exercises vcq {:version-id 1})
+  (exercises vcq {:timestamp "2025-01-01T00:00:00Z"})
+  (units vcq {:version-id 1})
+  (units vcq {:timestamp "2025-01-01T00:00:00Z"})
+  (courses vcq {:version-id 1})
+  (courses vcq {:timestamp "2025-01-01T00:00:00Z"})
+
+  ;; mutations
+
+  (add-version! vcm {:label "draft 1"
+                     :course-id 1})
+  (add-version! vcm {:course-id 1})
+
+  (set-version-label! vcm {:id 1
+                           :label "review draft"})
+
+  (add-course-update! vcm {:version-id 1
+                           :change-type "update"
+                           :update {:id 1
+                                    :name "afrikaans basics"
+                                    :description "updated description"}})
+
+  (add-unit-update! vcm {:version-id 1
+                         :change-type "create"
+                         :update {:id 1
+                                  :course-id 1
+                                  :name "pronouns"
+                                  :type "lesson"}})
+
+  (add-exercise-update! vcm {:version-id 1
+                             :change-type "delete"
+                             :update {:id 1
+                                      :unit-id 1
+                                      :course-id 1}})
+
+  (migrate-up! vcm {:course-id 1
+                    :version-id 1})
+
+  :end)

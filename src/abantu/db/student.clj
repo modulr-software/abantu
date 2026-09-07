@@ -134,7 +134,6 @@
    (tables/table-id)
    [:label :text]
    [:course-id :int :not nil]
-   [:version :int [:default 0]]
    [:applied :int [:default 0]]
    [:timestamp :text :not nil]))
 

@@ -8,6 +8,15 @@
   (:import (java.math BigInteger)
            (java.security MessageDigest)))
 
+(defn eq-clauses
+  "accepts a map of conditions and constructs a honey WHERE clause 
+  with all conditions joined with AND"
+  [conds]
+  (cond-> (map (fn [[k v]] [:= k v]) conds)
+    (> (count (vec conds)) 1) (conj :and)
+    true (vec)
+    (= (count (vec conds)) 1) (first)))
+
 (defn parse-bool-map-entry [keys [k v]]
   [k (if (contains? keys k) (> v 0) v)])
 
