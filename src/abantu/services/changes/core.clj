@@ -1,7 +1,8 @@
 (ns abantu.services.changes.core
   (:require [abantu.db.interface :as db]
             [abantu.util :as util]
-            [clojure.data.json :as json]))
+            [jsonista.core :as json]
+            [abantu.db.util :as db.util]))
 
 (defn- attach-courses [ds {:keys [id] :as version}]
   (assoc version :course-changes (db/find ds {:tname :course-changes
@@ -80,7 +81,7 @@
 (defn -add-course-update! [ds {:keys [version-id change-type update]}]
   (let [change-type (str change-type)
         id (:id update)
-        json (json/write-str (dissoc update :id))]
+        json (json/write-value-as-string (dissoc update :id))]
     (db/insert! ds {:tname :course-changes
                     :data {:course-id id
                            :change-type change-type
@@ -92,7 +93,7 @@
 (defn -add-unit-update! [ds {:keys [version-id change-type update]}]
   (let [change-type (str change-type)
         {:keys [id course-id]} update
-        json (json/write-str (dissoc update :id :course-id))]
+        json (json/write-value-as-string (dissoc update :id :course-id))]
     (db/insert! ds {:tname :unit-changes
                     :data {:unit-id id
                            :course-id course-id
@@ -105,7 +106,7 @@
 (defn -add-exercise-update! [ds {:keys [version-id change-type update]}]
   (let [change-type (str change-type)
         {:keys [id unit-id course-id]} update
-        json (json/write-str (dissoc update :id :course-id))]
+        json (json/write-value-as-string (dissoc update :id :course-id))]
     (db/insert! ds {:tname :exercise-changes
                     :data {:exercise-id id
                            :unit-id unit-id
@@ -116,4 +117,27 @@
                            :version-id version-id}
                     :ret :1})))
 
-(defn migrate-up! [ds {:keys [course-id version-id]}])
+(defn- prep-change [{:keys [change-type change-data] :as change}]
+  (merge change {:change-type (keyword change-type)
+                 :change-data (json/read-value change-data (json/object-mapper {:decode-key-fn true}))}))
+
+(defn migrate-up! [ds {:keys [id applied course-id] :as _version}]
+  (with-open [master-ds (db.util/conn)]
+    (let [{:keys [published-course-id]} (db/find-one ds {:tname :courses
+                                                         :where [:= :id course-id]})
+          course-changes (->> (-courses ds {:version-id id})
+                              (mapv prep-change))
+          unit-changes (->> (-units ds {:version-id id})
+                            (mapv prep-change))
+          exercise-changes (->> (-exercises ds {:version-id id})
+                                (mapv prep-change))]
+
+      (when (not applied)
+        #_(run! #(migrate-course-change! master-ds published-course-id %) course-changes)
+        #_(run! #(migrate-unit-change! master-ds published-course-id %) unit-changes)
+        #_(run! #(migrate-exercise-change! master-ds published-course-id %) exercise-changes)
+
+        (db/update! ds {:tname :versions
+                        :data {:applied 1}
+                        :where [:= :id id]})))))
+

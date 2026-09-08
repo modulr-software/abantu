@@ -80,9 +80,7 @@
       (mu/assoc :update [:map [:id :int]])))
 
 (def ?MigrateUp
-  [:map
-   [:course-id :int]
-   [:version-id :int]])
+  (mu/select-keys ?Version [:id :applied :course-id]))
 
 (malt/defprotocol VersionControlQuery
   (lookup [input ?Lookup]
