@@ -9,6 +9,7 @@
 (def ?Unit
   [:map
    [:id :int]
+   [:uuid (util/maybe :string)]
    [:course-id :int]
    [:name :string]
    [:description (util/maybe :string)]
@@ -18,38 +19,48 @@
    [:exercises [:vector exercises/?Exercise]]])
 
 (def ?Lookup
-  (mu/select-keys ?Unit [:id]))
+  [:or
+   [:map [:id :int]]
+   [:map [:uuid :string]]])
 
 (def ?Find
   [:map
    [:id {:optional true} :int]
+   [:uuid {:optional true} :string]
    [:course-id :int]])
 
 (def ?Create
   (-> (mu/dissoc ?Unit :id)
       (mu/dissoc :creator)
+      (mu/update-entry-properties :uuid assoc :optional true)
       (mu/update-entry-properties :description assoc :optional true)
       (mu/update-entry-properties :level assoc :optional true)
       (mu/update-entry-properties :position assoc :optional true)
       (mu/assoc :exercises [:vector (mu/dissoc exercises/?Create :unit-id)])))
 
 (def ?SetCourseId
-  (mu/select-keys ?Unit [:id :course-id]))
+  [:or (mu/select-keys ?Unit [:id :course-id])
+   (mu/select-keys ?Unit [:uuid :course-id])])
 
 (def ?SetName
-  (mu/select-keys ?Unit [:id :name]))
+  [:or (mu/select-keys ?Unit [:id :name])
+   (mu/select-keys ?Unit [:uuid :name])])
 
 (def ?SetDescription
-  (mu/select-keys ?Unit [:id :description]))
+  [:or (mu/select-keys ?Unit [:id :description])
+   (mu/select-keys ?Unit [:uuid :description])])
 
 (def ?SetLevel
-  (mu/select-keys ?Unit [:id :level]))
+  [:or (mu/select-keys ?Unit [:id :level])
+   (mu/select-keys ?Unit [:uuid :level])])
 
 (def ?SetType
-  (mu/select-keys ?Unit [:id :type]))
+  [:or (mu/select-keys ?Unit [:id :type])
+   (mu/select-keys ?Unit [:uuid :type])])
 
 (def ?SetPosition
-  (mu/select-keys ?Unit [:id :position]))
+  [:or (mu/select-keys ?Unit [:id :position])
+   (mu/select-keys ?Unit [:uuid :position])])
 
 (malt/defprotocol UnitQuery
   (lookup [input ?Lookup] ?Unit)
@@ -116,7 +127,7 @@
               :type "lesson"
               :exercises []})
 
-  (set-name um {:id 1
+  (set-name um {:uuid "4605dfb397381fbd"
                 :name "pronouns 3"})
   (set-description um {:id 1
                        :description "even more useful stuff"})

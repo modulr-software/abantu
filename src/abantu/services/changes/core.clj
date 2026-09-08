@@ -81,9 +81,11 @@
 (defn -add-course-update! [ds {:keys [version-id change-type update]}]
   (let [change-type (str change-type)
         id (:id update)
+        {:keys [uuid]} (db/find-one ds {:tname :courses
+                                        :where [:= :id id]})
         json (json/write-value-as-string (dissoc update :id))]
     (db/insert! ds {:tname :course-changes
-                    :data {:course-id id
+                    :data {:course-uuid uuid
                            :change-type change-type
                            :change-data json
                            :timestamp (util/get-utc-timestamp-string)
@@ -93,10 +95,14 @@
 (defn -add-unit-update! [ds {:keys [version-id change-type update]}]
   (let [change-type (str change-type)
         {:keys [id course-id]} update
+        {:keys [uuid]} (db/find-one ds {:tname :units
+                                        :where [:= :id id]})
+        course (db/find-one ds {:tname :courses
+                                :where [:= :id course-id]})
         json (json/write-value-as-string (dissoc update :id :course-id))]
     (db/insert! ds {:tname :unit-changes
-                    :data {:unit-id id
-                           :course-id course-id
+                    :data {:unit-uuid uuid
+                           :course-uuid (:uuid course)
                            :change-type change-type
                            :change-data json
                            :timestamp (util/get-utc-timestamp-string)
@@ -106,11 +112,17 @@
 (defn -add-exercise-update! [ds {:keys [version-id change-type update]}]
   (let [change-type (str change-type)
         {:keys [id unit-id course-id]} update
+        {:keys [uuid]} (db/find-one ds {:tname :exercises
+                                        :where [:= :id id]})
+        unit (db/find-one ds {:tname :units
+                              :where [:= :id unit-id]})
+        course (db/find-one ds {:tname :courses
+                                :where [:= :id course-id]})
         json (json/write-value-as-string (dissoc update :id :course-id))]
     (db/insert! ds {:tname :exercise-changes
-                    :data {:exercise-id id
-                           :unit-id unit-id
-                           :course-id course-id
+                    :data {:exercise-uuid uuid
+                           :unit-uuid (:uuid unit)
+                           :course-uuid (:uuid course)
                            :change-type change-type
                            :change-data json
                            :timestamp (util/get-utc-timestamp-string)

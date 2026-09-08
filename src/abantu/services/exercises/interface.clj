@@ -16,6 +16,7 @@
 (def ?Exercise
   [:map
    [:id :int]
+   [:uuid (util/maybe :string)]
    [:unit-id :int]
    [:course-id :int]
    [:level :int]
@@ -32,65 +33,92 @@
 (def ?Lookup
   [:or
    [:map [:id :int]]
-   [:map [:unit-id :int] [:course-id {:optional true} :int]]
-   [:map [:course-id :int]]])
+   [:map [:uuid :string]]])
 
 (def ?Find
-  ?Lookup)
+  [:or
+   [:map [:unit-id :int] [:course-id {:optional true} :int]]
+   [:map [:course-id :int]]])
 
 (def ?Create
   (-> (mu/dissoc ?Exercise :id)
       (mu/dissoc :comments)
+      (mu/update-entry-properties :uuid assoc :optional true)
       (mu/update-entry-properties :level assoc :optional true)
       (mu/update-entry-properties :options assoc :optional true)
       (mu/assoc :answers [:vector [:vector :string]])))
 
 (def ?SetUnit
-  (mu/select-keys ?Exercise [:id :unit-id]))
+  [:or
+   (mu/select-keys ?Exercise [:id :unit-id])
+   (mu/select-keys ?Exercise [:uuid :unit-id])])
 
 (def ?SetInstruction
-  (mu/select-keys ?Exercise [:id :instruction]))
+  [:or (mu/select-keys ?Exercise [:id :instruction])
+   (mu/select-keys ?Exercise [:uuid :instruction])])
 
 (def ?SetQuestionContent
-  (mu/select-keys ?Exercise [:id :question-content]))
+  [:or (mu/select-keys ?Exercise [:id :question-content])
+   (mu/select-keys ?Exercise [:uuid :question-content])])
 
 (def ?SetAnswerType
-  (mu/select-keys ?Exercise [:id :answer-type]))
+  [:or (mu/select-keys ?Exercise [:id :answer-type])
+   (mu/select-keys ?Exercise [:uuid :answer-type])])
 
 (def ?SetLevel
-  (mu/select-keys ?Exercise [:id :level]))
+  [:or (mu/select-keys ?Exercise [:id :level])
+   (mu/select-keys ?Exercise [:uuid :level])])
 
 (def ?SetCorrectMessage
-  (mu/select-keys ?Exercise [:id :correct-message]))
+  [:or (mu/select-keys ?Exercise [:id :correct-message])
+   (mu/select-keys ?Exercise [:uuid :correct-message])])
 
 (def ?SetIncorrectMessage
-  (mu/select-keys ?Exercise [:id :incorrect-message]))
+  [:or (mu/select-keys ?Exercise [:id :incorrect-message])
+   (mu/select-keys ?Exercise [:uuid :incorrect-message])])
 
 (def ?SetPosition
-  (mu/select-keys ?Exercise [:id :position]))
+  [:or (mu/select-keys ?Exercise [:id :position])
+   (mu/select-keys ?Exercise [:uuid :position])])
 
 (def ?SetOptions
-  (mu/select-keys ?Exercise [:id :options]))
+  [:or (mu/select-keys ?Exercise [:id :options])
+   (mu/select-keys ?Exercise [:uuid :options])])
 
 (def ?RemoveOption
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :option ?Option)))
+  [:or
+   (-> (mu/select-keys ?Exercise [:id])
+       (mu/assoc :option ?Option))
+   (-> (mu/select-keys ?Exercise [:uuid])
+       (mu/assoc :option ?Option))])
 
 (def ?AddOption
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :option ?Option)))
+  [:or
+   (-> (mu/select-keys ?Exercise [:id])
+       (mu/assoc :option ?Option))
+   (-> (mu/select-keys ?Exercise [:uuid])
+       (mu/assoc :option ?Option))])
 
 (def ?AddAnswer
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer [:vector :string])))
+  [:or
+   (-> (mu/select-keys ?Exercise [:id])
+       (mu/assoc :answer [:vector :string]))
+   (-> (mu/select-keys ?Exercise [:uuid])
+       (mu/assoc :answer [:vector :string]))])
 
 (def ?RemoveAnswer
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answer-id :int)))
+  [:or
+   (-> (mu/select-keys ?Exercise [:id])
+       (mu/assoc :answer-id :int))
+   (-> (mu/select-keys ?Exercise [:uuid])
+       (mu/assoc :answer-id :int))])
 
 (def ?SetAnswers
-  (-> (mu/select-keys ?Exercise [:id])
-      (mu/assoc :answers [:vector [:vector :string]])))
+  [:or
+   (-> (mu/select-keys ?Exercise [:id])
+       (mu/assoc :answers [:vector [:vector :string]]))
+   (-> (mu/select-keys ?Exercise [:uuid])
+       (mu/assoc :answers [:vector [:vector :string]]))])
 
 (malt/defprotocol ExerciseQuery
   (lookup [input ?Lookup] (util/maybe ?Exercise))
@@ -215,7 +243,7 @@
 
   (set-unit em {:id 1
                 :unit-id 2})
-  (set-instruction em {:id 1
+  (set-instruction em {:uuid "21ad6b8d8d460d88"
                        :instruction "Translate the following:"})
   (set-question-content em {:id 1
                             :question-content "Who are you?"})

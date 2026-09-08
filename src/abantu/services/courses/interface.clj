@@ -20,6 +20,7 @@
 (def ?Course
   [:map
    [:id :int]
+   [:uuid (util/maybe :string)]
    [:name :string]
    [:language :string]
    [:description (util/maybe :string)]
@@ -30,17 +31,21 @@
    [:units [:vector units/?Unit]]])
 
 (def ?Lookup
-  (mu/select-keys ?Course [:id]))
+  [:or
+   [:map [:id :int]]
+   [:map [:uuid :string]]])
 
 (def ?Find
   [:map
    [:id {:optional true} :int]
+   [:uuid {:optional true} :string]
    [:creator-id :int]])
 
 (def ?Create
   (-> (mu/dissoc ?Course :id)
       (mu/dissoc :creator)
       (mu/assoc :creator-id :int)
+      (mu/update-entry-properties :uuid assoc :optional true)
       (mu/update-entry-properties :description assoc :optional true)
       (mu/update-entry-properties :publishable assoc :optional true)
       (mu/update-entry-properties :visible assoc :optional true)
@@ -48,27 +53,32 @@
       (mu/assoc :units [:vector (mu/dissoc units/?Create :course-id)])))
 
 (def ?SetName
-  (mu/select-keys ?Course [:id :name]))
+  [:or (mu/select-keys ?Course [:id :name])
+   (mu/select-keys ?Course [:uuid :name])])
 
 (def ?SetLanguage
-  (mu/select-keys ?Course [:id :language]))
+  [:or (mu/select-keys ?Course [:id :language])
+   (mu/select-keys ?Course [:uuid :language])])
 
 (def ?SetDescription
-  (mu/select-keys ?Course [:id :description]))
+  [:or (mu/select-keys ?Course [:id :description])
+   (mu/select-keys ?Course [:uuid :description])])
 
 (def ?SetPublishable
-  (mu/select-keys ?Course [:id :publishable]))
+  [:or (mu/select-keys ?Course [:id :publishable])
+   (mu/select-keys ?Course [:uuid :publishable])])
 
 (def ?SetVisible
-  (mu/select-keys ?Course [:id :visible]))
+  [:or (mu/select-keys ?Course [:id :visible])
+   (mu/select-keys ?Course [:uuid :visible])])
 
 (def ?SetReviewPending
-  (mu/select-keys ?Course [:id :review-pending]))
+  [:or (mu/select-keys ?Course [:id :review-pending])
+   (mu/select-keys ?Course [:uuid :review-pending])])
 
 (def ?SetCreatorId
-  [:map
-   [:id :int]
-   [:creator-id :int]])
+  [:or (mu/select-keys ?Course [:id :creator-id])
+   (mu/select-keys ?Course [:uuid :creator-id])])
 
 (malt/defprotocol CourseQuery
   (lookup [input ?Lookup] ?Course)
@@ -139,7 +149,7 @@
               :creator-id 1
               :units []})
 
-  (set-name cm {:id 1
+  (set-name cm {:uuid "3c7dd8bf2833ed25"
                 :name "afrikaans course 2"})
   (set-language cm {:id 1
                     :language "english"})

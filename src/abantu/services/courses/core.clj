@@ -23,9 +23,10 @@
 (defn- process-bools [course]
   (util/parse-bool-keys course [:publishable :visible :review-pending]))
 
-(defn -lookup [ds {:keys [id]}]
+(defn -lookup [ds {:keys [id uuid]}]
   (->> (db/find ds (cond-> {:tname :courses
                             :ret :1}
+                     (some? uuid) (h/where [:= :uuid uuid])
                      (some? id) (h/where [:= :id id])))
        (process-bools)
        (attach-units ds)
@@ -38,9 +39,10 @@
                    (partial attach-units ds)
                    (partial attach-creator ds)))))
 
-(defn -find [ds {:keys [id creator-id]}]
+(defn -find [ds {:keys [id uuid creator-id]}]
   (->> (db/find ds (cond-> {:tname :courses
                             :ret :*}
+                     (some? uuid) (h/where [:= :uuid uuid])
                      (some? id) (h/where [:= :id id])
                      (some? creator-id) (h/where [:= :creator-id creator-id])))
        (mapv
@@ -48,16 +50,18 @@
               (partial attach-units ds)
               (partial attach-creator ds)))))
 
-(defn -create [ds {:keys [units] :as update}]
+(defn -create [ds {:keys [uuid units] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :courses
-                                     :values (dissoc update :units)
+                                     :values (-> (dissoc update :units)
+                                                 (assoc :uuid (or uuid (util/uuid))))
                                      :ret :1})]
     (run! #(unit/create (unit/use-mutation ds) %) units)
     (update/apply (-lookup ds {:id id}) {:type :create
                                          :payload update})))
 
-(defn -delete [ds {:keys [id] :as update}]
-  (let [unmut (unit/use-mutation ds)
+(defn -delete [ds {:keys [id uuid] :as update}]
+  (let [{:keys [id]} (-lookup ds {:id id :uuid uuid})
+        unmut (unit/use-mutation ds)
         unit-ids (db/find ds {:tname :units
                               :where [:= :course-id id]})]
     (run! #(unit/delete unmut %) unit-ids)
@@ -70,52 +74,59 @@
     (update/apply nil {:type :delete
                        :payload update})))
 
-(defn -set-name [ds {:keys [id name] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-name [ds {:keys [id uuid name] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:name name}})
+                    :values {:name name}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-name
                           :payload update})))
 
-(defn -set-language [ds {:keys [id language] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-language [ds {:keys [id uuid language] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:language language}})
+                    :values {:language language}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-language
                           :payload update})))
 
-(defn -set-description [ds {:keys [id description] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-description [ds {:keys [id uuid description] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:description description}})
+                    :values {:description description}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-description
                           :payload update})))
 
-(defn -set-publishable [ds {:keys [id publishable] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-publishable [ds {:keys [id uuid publishable] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:publishable publishable}})
+                    :values {:publishable publishable}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-publishable
                           :payload update})))
 
-(defn -set-visible [ds {:keys [id visible] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-visible [ds {:keys [id uuid visible] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:visible visible}})
+                    :values {:visible visible}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-visible
                           :payload update})))
 
-(defn -set-review-pending [ds {:keys [id review-pending] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-review-pending [ds {:keys [id uuid review-pending] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:review-pending review-pending}})
+                    :values {:review-pending review-pending}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-review-pending
                           :payload update})))
 
-(defn -set-creator-id [ds {:keys [id creator-id] :as update}]
-  (when-let [course (-lookup ds {:id id})]
+(defn -set-creator-id [ds {:keys [id uuid creator-id] :as update}]
+  (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
-                    :values {:creator-id creator-id}})
+                    :values {:creator-id creator-id}
+                    :where [:= :id (:id course)]})
     (update/apply course {:type :set-creator-id
                           :payload update})))
 

@@ -2,12 +2,11 @@
   (:require [abantu.services.changes.core :as changes]
             [abantu.util :as util]
             [io.julienvincent.malt :as malt]
-            [malli.util :as mu]
-            [abantu.db.interface :as db]))
+            [malli.util :as mu]))
 
 (def ?CourseChange
   [:map
-   [:course-id :int]
+   [:course-uuid :int]
    [:change-type :string]
    [:change-data :string]
    [:timestamp :string]
@@ -15,8 +14,8 @@
 
 (def ?UnitChange
   [:map
-   [:course-id :int]
-   [:unit-id :int]
+   [:course-uuid :int]
+   [:unit-uuid :int]
    [:change-type :string]
    [:change-data :string]
    [:timestamp :string]
@@ -24,9 +23,9 @@
 
 (def ?ExerciseChange
   [:map
-   [:exercise-id :int]
-   [:course-id :int]
-   [:unit-id :int]
+   [:exercise-uuid :int]
+   [:course-uuid :int]
+   [:unit-uuid :int]
    [:change-type :string]
    [:change-data :string]
    [:timestamp :string]

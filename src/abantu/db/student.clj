@@ -41,18 +41,19 @@
   (tables/create-table-sql
    :courses
    (tables/table-id)
+   [:uuid :text :not nil]
    [:name :text]
    [:language :text]
    [:description :text]
    [:publishable :int [:default 0]]
    [:visible :int [:default 0]]
-   [:review-pending :int [:default 0]]
-   [:published-course-id :int]))
+   [:review-pending :int [:default 0]]))
 
 (def units
   (tables/create-table-sql
    :units
    (tables/table-id)
+   [:uuid :text :not nil]
    [:name :text :not nil]
    [:description :text]
    [:level :int]
@@ -65,6 +66,7 @@
   (tables/create-table-sql
    :exercises
    (tables/table-id)
+   [:uuid :text :not nil]
    [:unit-id :integer :not nil]
    [:course-id :integer :not nil]
    [:instruction :text :not nil]
@@ -141,42 +143,42 @@
   (tables/create-table-sql
    :course-changes
    (tables/table-id)
-   [:course-id :int :not nil]
+   [:course-uuid :text :not nil]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
    [:version-id :int :not nil]
-   (tables/foreign-key :course-id :courses :id)
+   (tables/foreign-key :course-uuid :courses :uuid)
    (tables/foreign-key :version-id :versions :id)))
 
 (def unit-changes
   (tables/create-table-sql
    :unit-changes
    (tables/table-id)
-   [:course-id :int :not nil]
-   [:unit-id :int :not nil]
+   [:course-uuid :int :not nil]
+   [:unit-uuid :int :not nil]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
    [:version-id :int :not nil]
-   (tables/foreign-key :course-id :courses :id)
-   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :course-uuid :courses :uuid)
+   (tables/foreign-key :unit-uuid :units :uuid)
    (tables/foreign-key :version-id :versions :id)))
 
 (def exercise-changes
   (tables/create-table-sql
    :exercise-changes
    (tables/table-id)
-   [:exercise-id :int :not nil]
-   [:course-id :int :not nil]
-   [:unit-id :int :not nil]
+   [:exercise-uuid :int :not nil]
+   [:course-uuid :int :not nil]
+   [:unit-uuid :int :not nil]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
    [:version-id :int :not nil]
-   (tables/foreign-key :exercise-id :exercises :id)
-   (tables/foreign-key :course-id :courses :id)
-   (tables/foreign-key :unit-id :units :id)
+   (tables/foreign-key :exercise-uuid :exercises :uuid)
+   (tables/foreign-key :course-uuid :courses :uuid)
+   (tables/foreign-key :unit-uuid :units :uuid)
    (tables/foreign-key :version-id :versions :id)))
 
 (comment
