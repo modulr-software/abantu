@@ -119,16 +119,16 @@
 
 (comment
 
-  (def um (use-mutation))
+  (def um (use-mutation (db.util/conn :student 1)))
 
-  (create um {:name "pronouns 2"
+  (create um {:name "pronouns 1"
               :course-id 1
               :description "useful stuff"
               :type "lesson"
               :exercises []})
 
-  (set-name um {:uuid "4605dfb397381fbd"
-                :name "pronouns 3"})
+  (set-name um {:id 1
+                :name "pronouns 1"})
   (set-description um {:id 1
                        :description "even more useful stuff"})
   (set-level um {:id 1

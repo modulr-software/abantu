@@ -8,7 +8,7 @@
 (defmulti apply (fn [_ action] (:type action)))
 
 (defmethod apply :create [exercise {:keys [payload]}]
-  (merge exercise (dissoc payload :answers)))
+  (merge exercise payload))
 
 (defmethod apply :delete [_exercise {:keys [_payload]}]
   nil)

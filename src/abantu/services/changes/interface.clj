@@ -2,7 +2,8 @@
   (:require [abantu.services.changes.core :as changes]
             [abantu.util :as util]
             [io.julienvincent.malt :as malt]
-            [malli.util :as mu]))
+            [malli.util :as mu]
+            [abantu.db.interface :as db]))
 
 (def ?CourseChange
   [:map
@@ -68,15 +69,20 @@
 
 (def ?AddCourseUpdate
   (-> (mu/select-keys ?CourseChange [:version-id :change-type])
-      (mu/assoc :update [:map [:id :int]])))
+      (mu/assoc :update [:map [:uuid :int]])))
 
 (def ?AddUnitUpdate
   (-> (mu/select-keys ?UnitChange [:version-id :change-type])
-      (mu/assoc :update [:map [:id :int]])))
+      (mu/assoc :update [:map
+                         [:uuid :string]
+                         [:course-uuid :string]])))
 
 (def ?AddExerciseUpdate
   (-> (mu/select-keys ?ExerciseChange [:version-id :change-type])
-      (mu/assoc :update [:map [:id :int]])))
+      (mu/assoc :update [:map
+                         [:uuid :string]
+                         [:unit-uuid :string]
+                         [:course-uuid :string]])))
 
 (def ?MigrateUp
   (mu/select-keys ?Version [:id :applied :course-id]))
@@ -178,23 +184,57 @@
   (set-version-label! vcm {:id 1
                            :label "review draft"})
 
+  (add-course-update!
+   vcm
+   {:version-id 1
+    :change-type "create"
+    :update {:id 1
+             :uuid "5fe04376aa57d644"
+             :name "zulu basics"
+             :language "zulu"
+             :description "learn zulu"}})
+
   (add-course-update! vcm {:version-id 1
-                           :change-type "set-name"
+                           :change-type "create"
+                           :update {:id 2
+                                    :uuid "8632b03c31aebe91"
+                                    :name "afrikaans"
+                                    :language "afrikaans"
+                                    :description "learn afrikaans"
+                                    :units []}})
+
+  (add-course-update! vcm {:version-id 1
+                           :change-type "set-description"
                            :update {:id 1
-                                    :name "afrikaans basics"}})
+                                    :uuid "5fe04376aa57d644"
+                                    :description "don't zulu lolol"}})
 
   (add-unit-update! vcm {:version-id 1
                          :change-type "create"
                          :update {:id 1
+                                  :uuid "88bbb7209549523f"
                                   :course-id 1
-                                  :name "pronouns"
-                                  :type "lesson"}})
+                                  :course-uuid "5fe04376aa57d644"
+                                  :name "pronouns 1"
+                                  :description "useful stuff"
+                                  :type "lesson"
+                                  :exercises []}})
 
   (add-exercise-update! vcm {:version-id 1
-                             :change-type "delete"
+                             :change-type "create"
                              :update {:id 1
+                                      :uuid "529849abbecc2114"
                                       :unit-id 1
-                                      :course-id 1}})
+                                      :unit-uuid "88bbb7209549523f"
+                                      :course-id 1
+                                      :course-uuid "5fe04376aa57d644"
+                                      :instruction "translate the following"
+                                      :question-content "who are you"
+                                      :answer-type "bubbles"
+                                      :options ["wat" "wie" "hoe" "is" "jy"]
+                                      :correct-message "correct!"
+                                      :incorrect-message "o nei"
+                                      :answers [["wie" "is" "jy"]]}})
 
   #_(migrate-up! vcm {:course-id 1
                       :version-id 1})

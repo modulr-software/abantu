@@ -143,12 +143,12 @@
   (tables/create-table-sql
    :course-changes
    (tables/table-id)
-   [:course-uuid :text :not nil]
+   [:uuid :text]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
    [:version-id :int :not nil]
-   (tables/foreign-key :course-uuid :courses :uuid)
+   (tables/foreign-key :uuid :courses :uuid)
    (tables/foreign-key :version-id :versions :id)))
 
 (def unit-changes
@@ -156,27 +156,27 @@
    :unit-changes
    (tables/table-id)
    [:course-uuid :int :not nil]
-   [:unit-uuid :int :not nil]
+   [:uuid :int]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
    [:version-id :int :not nil]
    (tables/foreign-key :course-uuid :courses :uuid)
-   (tables/foreign-key :unit-uuid :units :uuid)
+   (tables/foreign-key :uuid :units :uuid)
    (tables/foreign-key :version-id :versions :id)))
 
 (def exercise-changes
   (tables/create-table-sql
    :exercise-changes
    (tables/table-id)
-   [:exercise-uuid :int :not nil]
+   [:uuid :int]
    [:course-uuid :int :not nil]
    [:unit-uuid :int :not nil]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
    [:version-id :int :not nil]
-   (tables/foreign-key :exercise-uuid :exercises :uuid)
+   (tables/foreign-key :uuid :exercises :uuid)
    (tables/foreign-key :course-uuid :courses :uuid)
    (tables/foreign-key :unit-uuid :units :uuid)
    (tables/foreign-key :version-id :versions :id)))

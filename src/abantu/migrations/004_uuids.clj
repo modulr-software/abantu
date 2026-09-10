@@ -22,13 +22,13 @@
   (let [ds-master (:db-master context)]
     (hon/execute!
      ds-master
-     (hsql/alter-table :courses (hsql/drop-column :if-exists :uuid))
+     (hsql/alter-table :courses (hsql/drop-column :uuid))
      {})
     (hon/execute!
      ds-master
-     (hsql/alter-table :units (hsql/drop-column :if-exists :uuid))
+     (hsql/alter-table :units (hsql/drop-column :uuid))
      {})
     (hon/execute!
      ds-master
-     (hsql/alter-table :exercises (hsql/drop-column :if-exists :uuid))
+     (hsql/alter-table :exercises (hsql/drop-column :uuid))
      {})))

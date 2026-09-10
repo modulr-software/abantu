@@ -39,12 +39,11 @@
   [:map
    [:id {:optional true} :int]
    [:uuid {:optional true} :string]
-   [:creator-id :int]])
+   [:creator-id {:optional true} :int]])
 
 (def ?Create
   (-> (mu/dissoc ?Course :id)
       (mu/dissoc :creator)
-      (mu/assoc :creator-id :int)
       (mu/update-entry-properties :uuid assoc :optional true)
       (mu/update-entry-properties :description assoc :optional true)
       (mu/update-entry-properties :publishable assoc :optional true)
@@ -141,16 +140,15 @@
 
 (comment
 
-  (def cm (use-mutation))
+  (def cm (use-mutation (db.util/conn :student 1)))
 
-  (create cm {:name "zulu basics"
-              :language "zulu"
-              :description "learn zulu"
-              :creator-id 1
+  (create cm {:name "afrikaans basics"
+              :language "afrikaans"
+              :description "learn afrikaans"
               :units []})
 
-  (set-name cm {:uuid "3c7dd8bf2833ed25"
-                :name "afrikaans course 2"})
+  (set-name cm {:id 1
+                :name "zulu basics"})
   (set-language cm {:id 1
                     :language "english"})
   (set-description cm {:id 1

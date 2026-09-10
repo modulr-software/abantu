@@ -8,10 +8,12 @@
 
 (def ?Option :string)
 (def ?Answer
-  [:map
-   [:id :int]
-   [:text [:vector :string]]
-   [:exercise-id :int]])
+  [:or
+   [:map
+    [:id :int]
+    [:text [:vector :string]]
+    [:exercise-id :int]]
+   [:vector :string]])
 
 (def ?Exercise
   [:map
@@ -229,7 +231,7 @@
     all'
     #_(all eq))
 
-  (def em (use-mutation))
+  (def em (use-mutation (db.util/conn :student 1)))
 
   (create em {:unit-id 1
               :course-id 1
