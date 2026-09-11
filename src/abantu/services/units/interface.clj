@@ -25,8 +25,6 @@
 
 (def ?Find
   [:map
-   [:id {:optional true} :int]
-   [:uuid {:optional true} :string]
    [:course-id :int]])
 
 (def ?Create

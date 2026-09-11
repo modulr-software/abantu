@@ -24,10 +24,9 @@
   (util/parse-bool-keys course [:publishable :visible :review-pending]))
 
 (defn -lookup [ds {:keys [id uuid]}]
-  (->> (db/find ds (cond-> {:tname :courses
-                            :ret :1}
-                     (some? uuid) (h/where [:= :uuid uuid])
-                     (some? id) (h/where [:= :id id])))
+  (->> (db/find-one ds (cond-> {:tname :courses}
+                         (some? uuid) (h/where [:= :uuid uuid])
+                         (some? id) (h/where [:= :id id])))
        (process-bools)
        (attach-units ds)
        (attach-creator ds)))

@@ -141,6 +141,9 @@
 (comment
 
   (def cm (use-mutation (db.util/conn :student 1)))
+  (def cq (use-query (db.util/conn :student 1)))
+
+  (lookup cq {:uuid "5fe04376aa57d644"})
 
   (create cm {:name "afrikaans basics"
               :language "afrikaans"

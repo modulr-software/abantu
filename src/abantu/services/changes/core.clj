@@ -1,32 +1,62 @@
 (ns abantu.services.changes.core
   (:require [abantu.db.interface :as db]
-            [abantu.services.courses.interface :as course]
-            [abantu.services.courses.update :as course-update]
-            [abantu.services.units.interface :as unit]
-            [abantu.services.units.update :as unit-update]
-            [abantu.services.exercises.interface :as exercise]
-            [abantu.services.exercises.update :as exercise-update]
             [abantu.util :as util]
             [jsonista.core :as json]
             [abantu.db.util :as db.util]))
 
-(defn- attach-courses [ds {:keys [id] :as version}]
-  (assoc version :course-changes (db/find ds {:tname :course-changes
-                                              :where [:= :version-id id]
-                                              :order-by :id
-                                              :ret :*})))
+(defn- parse-change [{:keys [change-type change-data] :as change}]
+  (merge change {:change-type (keyword change-type)
+                 :change-data (->> {:decode-key-fn true}
+                                   (json/object-mapper)
+                                   (json/read-value change-data))}))
 
-(defn- attach-units [ds {:keys [id] :as version}]
-  (assoc version :unit-changes (db/find ds {:tname :unit-changes
-                                            :where [:= :version-id id]
-                                            :order-by :id
-                                            :ret :*})))
+(defn- group-changes-by-uuid [changes]
+  (->> changes
+       (reduce (fn [acc {:keys [uuid]}]
+                 (assoc acc uuid (filterv #(= (:uuid %) uuid) changes))) {})
+       (mapv (fn [m] {:uuid (first m) :change (last m)}))))
 
-(defn- attach-exercises [ds {:keys [id] :as version}]
-  (assoc version :exercise-changes (db/find ds {:tname :exercise-changes
-                                                :where [:= :version-id id]
-                                                :order-by :id
-                                                :ret :*})))
+(defn -find-exercise-changes [ds {:keys [from to] :as _opts}]
+  (->> (db/find ds {:tname :exercise-changes
+                    :where (cond
+                             (and from to) [:between :timestamp from to]
+                             from [:>= :timestamp from]
+                             to [:<= :timestamp to])
+                    :order-by :id
+                    :ret :*})
+       (mapv parse-change)
+       (group-changes-by-uuid)))
+
+(defn -find-unit-changes [ds {:keys [from to] :as _opts}]
+  (->> (db/find ds {:tname :unit-changes
+                    :where (cond
+                             (and from to) [:between :timestamp from to]
+                             from [:>= :timestamp from]
+                             to [:<= :timestamp to])
+                    :order-by :id
+                    :ret :*})
+       (mapv parse-change)
+       (group-changes-by-uuid)))
+
+(defn -find-course-changes [ds {:keys [from to] :as _opts}]
+  (->> (db/find ds {:tname :course-changes
+                    :where (cond
+                             (and from to) [:between :timestamp from to]
+                             from [:>= :timestamp from]
+                             to [:<= :timestamp to])
+                    :order-by :id
+                    :ret :*})
+       (mapv parse-change)
+       (group-changes-by-uuid)))
+
+(defn- attach-courses [ds {:keys [timestamp] :as version}]
+  (assoc version :course-changes (-find-course-changes ds {:to timestamp})))
+
+(defn- attach-units [ds {:keys [timestamp] :as version}]
+  (assoc version :unit-changes (-find-unit-changes ds {:to timestamp})))
+
+(defn- attach-exercises [ds {:keys [timestamp] :as version}]
+  (assoc version :exercise-changes (-find-exercise-changes ds {:to timestamp})))
 
 (defn -lookup [ds {:keys [_id _timestamp with-changes?] :as opts}]
   (cond->> (-> (db/find-one ds {:tname :versions
@@ -52,36 +82,6 @@
     with-changes? (mapv (comp (partial attach-courses ds)
                               (partial attach-units ds)
                               (partial attach-exercises ds)))))
-
-(defn- parse-change [{:keys [change-type change-data] :as change}]
-  (merge change {:change-type (keyword change-type)
-                 :change-data (->> {:decode-key-fn true}
-                                   (json/object-mapper)
-                                   (json/read-value change-data))}))
-
-(defn- group-changes-by-uuid [changes]
-  (->> changes
-       (reduce (fn [acc {:keys [uuid]}]
-                 (assoc acc uuid (filterv #(= (:uuid %) uuid) changes))) {})
-       (map (fn [m] {:uuid (first m) :change (last m)}))))
-
-(defn -exercises [ds {:keys [_version-id _timestamp] :as opts}]
-  (db/find ds {:tname :exercise-changes
-               :where (util/eq-clauses opts)
-               :order-by :id
-               :ret :*}))
-
-(defn -units [ds {:keys [_version-id _timestamp] :as opts}]
-  (->> (db/find ds {:tname :unit-changes
-                    :where (util/eq-clauses opts)
-                    :order-by :id
-                    :ret :*})))
-
-(defn -courses [ds {:keys [_version-id _timestamp] :as opts}]
-  (db/find ds {:tname :course-changes
-               :where (util/eq-clauses opts)
-               :order-by :id
-               :ret :*}))
 
 (defn -add-version! [ds {:keys [label course-id] :as _payload}]
   (let [{:keys [id]} (db/insert! ds {:tname :versions
@@ -163,137 +163,18 @@
              (assoc (:change-data result) :units)
              (assoc result :change-data)))))
 
-(defn exercise-update [update {:keys [change-type change-data]}]
-  (-> update
-      (assoc :_op (cond
-                    (= change-type :create) :create
-                    (= change-type :delete) :delete
-                    (not (= (:_op update) :create)) :update
-                    :else (:_op update)))
-      (exercise-update/apply {:type change-type
-                              :payload change-data})))
-
-(defn unit-update [update {:keys [change-type change-data]}]
-  (-> update
-      (assoc :_op (cond
-                    (= change-type :create) :create
-                    (= change-type :delete) :delete
-                    (not (= (:_op update) :create)) :update
-                    :else (:_op update)))
-      (unit-update/apply {:type change-type
-                          :payload change-data})))
-
-(defn course-update [update {:keys [change-type change-data]}]
-  (-> update
-      (assoc :_op (cond
-                    (= change-type :create) :create
-                    (= change-type :delete) :delete
-                    (not (= (:_op update) :create)) :update
-                    :else (:_op update)))
-      (course-update/apply {:type change-type
-                            :payload change-data})))
-
-(defn apply-update
-  ([apply-fn changes] (apply-update apply-fn {} changes))
-  ([apply-fn update changes]
-   (let [change (first changes)
-         update (apply-fn update change)]
-     (if (seq (rest changes))
-       (apply-update apply-fn update (rest changes))
-       update))))
-
-(defn stack-changes [update-fn {:keys [uuid change]}]
-  (let [stacked (apply-update update-fn change)]
-    {:uuid uuid
-     :op (:_op stacked)
-     :change (dissoc stacked :_op)}))
-
-(defn apply-exercise-changes! [ds {:keys [uuid op change]}]
-  (let [em (exercise/use-mutation ds)
-        course (course/lookup (course/use-query ds) {:uuid (:course-uuid change)})
-        unit (unit/lookup (unit/use-query ds) {:uuid (:unit-uuid change)})
-        change (-> (assoc change :course-id (:id course) :unit-id (:id unit))
-                   (dissoc :course-uuid :unit-uuid))]
-    (cond
-      (= op :create)
-      (exercise/create em change)
-
-      (= op :update)
-      (do
-        (db/update! ds {:tname :exercises
-                        :data (dissoc change :answers :options)
-                        :where [:= :uuid uuid]})
-        (exercise/set-answers em {:uuid uuid
-                                  :answers (:answers change)})
-        (exercise/set-options em {:uuid uuid
-                                  :options (:options change)}))
-
-      (= op :delete)
-      (exercise/delete em {:uuid uuid}))))
-
-(defn apply-unit-changes! [ds {:keys [uuid op change]}]
-  (let [course (course/lookup (course/use-query ds) {:uuid (:course-uuid change)})
-        change (-> (assoc change :course-id (:id course))
-                   (dissoc :course-uuid))]
-    (cond
-      (= op :create)
-      (unit/create (unit/use-mutation ds) (assoc change :exercises []))
-
-      (= op :update)
-      (db/update! ds {:tname :units
-                      :data change
-                      :where [:= :uuid uuid]})
-
-      (= op :delete)
-      (unit/delete (unit/use-mutation ds) {:uuid uuid}))))
-
-(defn apply-course-changes! [ds {:keys [uuid op change]}]
-  (cond
-    (= op :create)
-    (course/create (course/use-mutation ds) (assoc change :units []))
-
-    (= op :update)
-    (db/update! ds {:tname :courses
-                    :data change
-                    :where [:= :uuid uuid]})
-
-    (= op :delete)
-    (course/delete (course/use-mutation ds) {:uuid uuid})))
-
-(defn migrate-up! [ds {:keys [id applied course-id] :as _version}])
-
 (comment
+  (def ds (db.util/conn :student 1))
+
   (db/find (db.util/conn) {:tname :courses})
   (db/find (db.util/conn) {:tname :units})
   (db/find (db.util/conn) {:tname :exercises})
   (db/find (db.util/conn) {:tname :answers})
 
-  (with-open [ds (db.util/conn :student 1)
-              master-ds (db.util/conn)]
-    (let [id 1
-          course-id 1
-          applied false
+  (with-open [master-ds (db.util/conn)]
+    (let [{:keys [timestamp]} (db/find-one ds {:tname :versions
+                                               :where [:= :id 1]})
+          course-changes (->> (-find-course-changes ds {:from timestamp}))]
+      course-changes))
 
-          course-changes (->> (-courses ds {:version-id id})
-                              (mapv parse-change)
-                              (group-changes-by-uuid)
-                              (mapv #(stack-changes course-update %)))
-          unit-changes (->> (-units ds {:version-id id})
-                            (mapv parse-change)
-                            (group-changes-by-uuid)
-                            (mapv #(stack-changes unit-update %)))
-          exercise-changes (->> (-exercises ds {:version-id id})
-                                (mapv parse-change)
-                                (group-changes-by-uuid)
-                                (mapv #(stack-changes exercise-update %)))]
-
-      (when (not applied)
-        (run! #(apply-course-changes! master-ds %) course-changes)
-        (run! #(apply-unit-changes! master-ds %) unit-changes)
-        (run! #(apply-exercise-changes! master-ds %) exercise-changes)
-
-        #_(apply-update (partial course-update! master-ds) course-changes)
-        #_(db/update! ds {:tname :versions
-                          :data {:applied 1}
-                          :where [:= :id id]}))))
   ())

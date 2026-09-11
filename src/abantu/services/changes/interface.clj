@@ -1,36 +1,42 @@
 (ns abantu.services.changes.interface
   (:require [abantu.services.changes.core :as changes]
+            [abantu.services.changes.migrate :as migrate]
             [abantu.util :as util]
             [io.julienvincent.malt :as malt]
-            [malli.util :as mu]
-            [abantu.db.interface :as db]))
+            [malli.util :as mu]))
 
 (def ?CourseChange
   [:map
-   [:course-uuid :int]
-   [:change-type :string]
-   [:change-data :string]
-   [:timestamp :string]
-   [:version-id :int]])
+   [:uuid :string]
+   [:change [:vector
+             [:map
+              [:uuid :int]
+              [:change-type :string]
+              [:change-data :any]
+              [:timestamp :string]]]]])
 
 (def ?UnitChange
   [:map
-   [:course-uuid :int]
-   [:unit-uuid :int]
-   [:change-type :string]
-   [:change-data :string]
-   [:timestamp :string]
-   [:version-id :int]])
+   [:uuid :string]
+   [:change [:vector
+             [:map
+              [:uuid :int]
+              [:course-uuid :int]
+              [:change-type :string]
+              [:change-data :any]
+              [:timestamp :string]]]]])
 
 (def ?ExerciseChange
   [:map
-   [:exercise-uuid :int]
-   [:course-uuid :int]
-   [:unit-uuid :int]
-   [:change-type :string]
-   [:change-data :string]
-   [:timestamp :string]
-   [:version-id :int]])
+   [:uuid :string]
+   [:change [:vector
+             [:map
+              [:uuid :int]
+              [:course-uuid :int]
+              [:unit-uuid :int]
+              [:change-type :string]
+              [:change-data :any]
+              [:timestamp :string]]]]])
 
 (def ?Version
   [:map
@@ -94,11 +100,11 @@
     [:vector ?Version])
   (all [input ?Opts]
     [:vector ?Version])
-  (exercises [input ?ChangeLookup]
+  (find-exercise-changes [input ?ChangeLookup]
     [:vector ?ExerciseChange])
-  (units [input ?ChangeLookup]
+  (find-unit-changes [input ?ChangeLookup]
     [:vector ?UnitChange])
-  (courses [input ?ChangeLookup]
+  (find-course-changes [input ?ChangeLookup]
     [:vector ?CourseChange]))
 
 (malt/defprotocol VersionControlMutation
@@ -123,12 +129,12 @@
       (changes/-find ds input))
     (all [_ input]
       (changes/-all ds input))
-    (exercises [_ input]
-      (changes/-exercises ds input))
-    (units [_ input]
-      (changes/-units ds input))
-    (courses [_ input]
-      (changes/-courses ds input))))
+    (find-exercise-changes [_ input]
+      (changes/-find-exercise-changes ds input))
+    (find-unit-changes [_ input]
+      (changes/-find-unit-changes ds input))
+    (find-course-changes [_ input]
+      (changes/-find-course-changes ds input))))
 
 (defn use-mutation [ds]
   (reify VersionControlMutation
@@ -143,7 +149,7 @@
     (add-exercise-update! [_ input]
       (changes/-add-exercise-update! ds input))
     (migrate-up! [_ input]
-      (changes/migrate-up! ds input))))
+      (migrate/migrate-up! ds input))))
 
 (comment
 
@@ -168,12 +174,12 @@
   (all vcq {:with-changes? false})
   (all vcq {:with-changes? true})
 
-  (exercises vcq {:version-id 1})
-  (exercises vcq {:timestamp "2025-01-01T00:00:00Z"})
-  (units vcq {:version-id 1})
-  (units vcq {:timestamp "2025-01-01T00:00:00Z"})
-  (courses vcq {:version-id 1})
-  (courses vcq {:timestamp "2025-01-01T00:00:00Z"})
+  (find-exercise-changes vcq {:version-id 1})
+  (find-exercise-changes vcq {:timestamp "2025-01-01T00:00:00Z"})
+  (find-unit-changes vcq {:version-id 1})
+  (find-unit-changes vcq {:timestamp "2025-01-01T00:00:00Z"})
+  (find-course-changes vcq {:version-id 1})
+  (find-course-changes vcq {:timestamp "2025-01-01T00:00:00Z"})
 
   ;; mutations
 
@@ -203,11 +209,11 @@
                                     :description "learn afrikaans"
                                     :units []}})
 
-  (add-course-update! vcm {:version-id 1
+  (add-course-update! vcm {:version-id 2
                            :change-type "set-description"
                            :update {:id 1
                                     :uuid "5fe04376aa57d644"
-                                    :description "don't zulu lolol"}})
+                                    :description "lets maybe use an actual description here"}})
 
   (add-unit-update! vcm {:version-id 1
                          :change-type "create"
@@ -219,6 +225,13 @@
                                   :description "useful stuff"
                                   :type "lesson"
                                   :exercises []}})
+
+  (add-unit-update! vcm {:version-id 2
+                         :change-type "set-description"
+                         :update {:id 1
+                                  :uuid "88bbb7209549523f"
+                                  :course-uuid "5fe04376aa57d644"
+                                  :description "unit about pronouns"}})
 
   (add-exercise-update! vcm {:version-id 1
                              :change-type "create"
@@ -235,6 +248,16 @@
                                       :correct-message "correct!"
                                       :incorrect-message "o nei"
                                       :answers [["wie" "is" "jy"]]}})
+
+  (add-exercise-update! vcm {:version-id 2
+                             :change-type "set-instruction"
+                             :update {:id 1
+                                      :uuid "529849abbecc2114"
+                                      :unit-id 1
+                                      :unit-uuid "88bbb7209549523f"
+                                      :course-id 1
+                                      :course-uuid "5fe04376aa57d644"
+                                      :instruction "Translate the following:"}})
 
   #_(migrate-up! vcm {:course-id 1
                       :version-id 1})
