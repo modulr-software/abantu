@@ -62,10 +62,16 @@
    (mu/merge [:map [:course-id :int]] ?Opts)
    (mu/merge [:map [:label :string]] ?Opts)])
 
+(def ?ChangeFind
+  [:map
+   [:from (util/maybe :string)]
+   [:to (util/maybe :string)]])
+
 (def ?ChangeLookup
-  [:or
-   (mu/merge [:map [:version-id :int]] ?Opts)
-   (mu/merge [:map [:timestamp :string]] ?Opts)])
+  [:map
+   [:uuid (util/maybe :string)]
+   [:change-type (util/maybe :string)]
+   [:timestamp (util/maybe :string)]])
 
 (def ?AddVersion
   (mu/select-keys ?Version [:label :course-id]))
@@ -100,11 +106,17 @@
     [:vector ?Version])
   (all [input ?Opts]
     [:vector ?Version])
-  (find-exercise-changes [input ?ChangeLookup]
+  (lookup-exercise-change [input ?ChangeLookup]
+    (util/maybe ?ExerciseChange))
+  (lookup-unit-change [input ?ChangeLookup]
+    (util/maybe ?UnitChange))
+  (lookup-course-change [input ?ChangeLookup]
+    (util/maybe ?CourseChange))
+  (find-exercise-changes [input ?ChangeFind]
     [:vector ?ExerciseChange])
-  (find-unit-changes [input ?ChangeLookup]
+  (find-unit-changes [input ?ChangeFind]
     [:vector ?UnitChange])
-  (find-course-changes [input ?ChangeLookup]
+  (find-course-changes [input ?ChangeFind]
     [:vector ?CourseChange]))
 
 (malt/defprotocol VersionControlMutation
@@ -129,6 +141,12 @@
       (changes/-find ds input))
     (all [_ input]
       (changes/-all ds input))
+    (lookup-exercise-change [_ input]
+      (changes/-lookup-exercise-change ds input))
+    (lookup-unit-change [_ input]
+      (changes/-lookup-unit-change ds input))
+    (lookup-course-change [_ input]
+      (changes/-lookup-course-change ds input))
     (find-exercise-changes [_ input]
       (changes/-find-exercise-changes ds input))
     (find-unit-changes [_ input]

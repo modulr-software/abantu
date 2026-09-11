@@ -110,11 +110,11 @@
 
 (defn migrate-up! [ds {:keys [id timestamp] :as _version}]
   (with-open [master-ds (db.util/conn)]
-    (let [course-changes (->> (core/-courses ds {:from timestamp})
+    (let [course-changes (->> (core/-find-course-changes ds {:from timestamp})
                               (mapv #(stack-changes course-update %)))
-          unit-changes (->> (core/-units ds {:from timestamp})
+          unit-changes (->> (core/-find-unit-changes ds {:from timestamp})
                             (mapv #(stack-changes unit-update %)))
-          exercise-changes (->> (core/-exercises ds {:from timestamp})
+          exercise-changes (->> (core/-find-exercise-changes ds {:from timestamp})
                                 (mapv #(stack-changes exercise-update %)))]
 
       (run! #(apply-course-changes! master-ds %) course-changes)

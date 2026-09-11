@@ -2,7 +2,8 @@
   (:require [abantu.db.interface :as db]
             [abantu.util :as util]
             [jsonista.core :as json]
-            [abantu.db.util :as db.util]))
+            [abantu.db.util :as db.util]
+            [honey.sql :as h]))
 
 (defn- parse-change [{:keys [change-type change-data] :as change}]
   (merge change {:change-type (keyword change-type)
@@ -48,6 +49,27 @@
                     :ret :*})
        (mapv parse-change)
        (group-changes-by-uuid)))
+
+(defn -lookup-exercise-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
+  (->> (db/find ds {:tname :exercise-changes
+                    :where (h/map= opts)
+                    :order-by :id
+                    :ret :*})
+       (parse-change)))
+
+(defn -lookup-unit-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
+  (->> (db/find ds {:tname :unit-changes
+                    :where (h/map= opts)
+                    :order-by :id
+                    :ret :*})
+       (parse-change)))
+
+(defn -lookup-course-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
+  (->> (db/find ds {:tname :course-changes
+                    :where (h/map= opts)
+                    :order-by :id
+                    :ret :*})
+       (parse-change)))
 
 (defn- attach-courses [ds {:keys [timestamp] :as version}]
   (assoc version :course-changes (-find-course-changes ds {:to timestamp})))
