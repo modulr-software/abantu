@@ -118,7 +118,7 @@
                   :data {:label label}
                   :where [:= :id id]}))
 
-(defn -add-exercise-update! [ds {:keys [version-id change-type update]}]
+(defn -add-exercise-update! [ds {:keys [change-type update]}]
   (let [change-type (str change-type)
         {:keys [uuid unit-uuid course-uuid]} update
         json (json/write-value-as-string (dissoc update :id :unit-id :course-id))]
@@ -128,62 +128,37 @@
                            :course-uuid course-uuid
                            :change-type change-type
                            :change-data json
-                           :timestamp (util/get-utc-timestamp-string)
-                           :version-id version-id}
+                           :timestamp (util/get-utc-timestamp-string)}
                     :ret :1})))
 
-(defn -add-unit-update! [ds {:keys [version-id change-type update]}]
+(defn -add-unit-update! [ds {:keys [change-type update]}]
   (let [change-type (str change-type)
         {:keys [uuid course-uuid]} update
         json (json/write-value-as-string (dissoc update :id :course-id :exercises))
-        exercises (:exercises update)
+        _exercises (:exercises update)
         result (db/insert! ds {:tname :unit-changes
                                :data {:uuid uuid
                                       :course-uuid course-uuid
                                       :change-type change-type
                                       :change-data json
-                                      :timestamp (util/get-utc-timestamp-string)
-                                      :version-id version-id}
+                                      :timestamp (util/get-utc-timestamp-string)}
                                :ret :1})]
-    result
-    #_(when (seq exercises)
-        (println
-         (->> exercises
-              (mapv (fn [exercise]
-                      {:version-id version-id
-                       :change-type change-type
-                       :update (assoc exercise :unit-uuid uuid :course-uuid course-uuid)}))))
-        (->> exercises
-             (mapv (fn [exercise]
-                     {:version-id version-id
-                      :change-type change-type
-                      :update (assoc exercise :unit-uuid uuid :course-uuid course-uuid)}))
-             (mapv #(-add-exercise-update! ds %))
-             (assoc (:change-data result) :exercises)
-             (assoc result :change-data)))))
+    ; TODO: call -add-exercise-update! to cascade exercise changes
+    result))
 
-(defn -add-course-update! [ds {:keys [version-id change-type update]}]
+(defn -add-course-update! [ds {:keys [change-type update]}]
   (let [change-type (str change-type)
         uuid (:uuid update)
         json (json/write-value-as-string (dissoc update :id :units))
-        units (:units update)
+        _units (:units update)
         result (db/insert! ds {:tname :course-changes
                                :data {:uuid uuid
                                       :change-type change-type
                                       :change-data json
-                                      :timestamp (util/get-utc-timestamp-string)
-                                      :version-id version-id}
+                                      :timestamp (util/get-utc-timestamp-string)}
                                :ret :1})]
-    result
-    #_(when (seq units)
-        (->> units
-             (mapv (fn [unit]
-                     {:version-id version-id
-                      :change-type change-type
-                      :update (assoc unit :course-uuid uuid)}))
-             (mapv #(-add-unit-update! ds %))
-             (assoc (:change-data result) :units)
-             (assoc result :change-data)))))
+    ; TODO: call -add-unit-update! to cascade unit changes
+    result))
 
 (comment
   (def ds (db.util/conn :student 1))

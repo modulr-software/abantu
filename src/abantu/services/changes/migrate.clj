@@ -9,6 +9,11 @@
             [abantu.db.interface :as db]
             [abantu.db.util :as db.util]))
 
+(defn separate-deletes [{:keys [uuid change]}]
+  {:uuid uuid
+   :change (filterv #(not (= (:change-type %) :delete)) change)
+   :delete (filterv #(= (:change-type %) :delete) change)})
+
 (defn exercise-update [update {:keys [change-type change-data]}]
   (-> update
       (assoc :_op (cond
@@ -118,8 +123,19 @@
                                 (mapv #(stack-changes exercise-update %)))]
 
       (run! #(apply-course-changes! master-ds %) course-changes)
+      (->> course-changes
+           (mapv #(assoc % :change (:delete %)))
+           (run! #(apply-course-changes! master-ds %)))
+
       (run! #(apply-unit-changes! master-ds %) unit-changes)
+      (->> unit-changes
+           (mapv #(assoc % :change (:delete %)))
+           (run! #(apply-unit-changes! master-ds %)))
+
       (run! #(apply-exercise-changes! master-ds %) exercise-changes)
+      (->> exercise-changes
+           (mapv #(assoc % :change (:delete %)))
+           (run! #(apply-exercise-changes! master-ds %)))
 
       (db/update! ds {:tname :versions
                       :data {:applied 1}
@@ -138,7 +154,7 @@
   (with-open [master-ds (db.util/conn)]
     (let [{:keys [timestamp]} (db/find-one ds {:tname :versions
                                                :where [:= :id 1]})
-          course-changes (->> (core/-courses ds {:from timestamp}))]
-      course-changes))
+          course-changes (->> (core/-find-course-changes ds {:from timestamp}))]
+      (mapv separate-deletes course-changes)))
 
   ())

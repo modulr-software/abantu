@@ -227,6 +227,10 @@
                                     :description "learn afrikaans"
                                     :units []}})
 
+  (add-course-update! vcm {:change-type "delete"
+                           :update {:id 2
+                                    :uuid "8632b03c31aebe91"}})
+
   (add-course-update! vcm {:version-id 2
                            :change-type "set-description"
                            :update {:id 1
