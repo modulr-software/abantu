@@ -93,9 +93,9 @@
     (db/delete! ds {:tname :comments
                     :where [:= :exercise-id id]})
     (db/delete! ds {:tname :answers
-                    :where [:= :id id]})
+                    :where [:= :exercise-id id]})
     (db/delete! ds {:tname :exercises-completed
-                    :where [:= :id id]})
+                    :where [:= :exercise-id id]})
     (db/delete! ds {:tname :exercises
                     :where [:= :id id]})
     (update/apply nil {:type :delete

@@ -50,7 +50,7 @@
   nil)
 
 (comment
-  (require '[source-be.db-test-utils :as db-test-utils]
+  (require '[abantu.db-test-utils :as db-test-utils]
            '[abantu.db.honey :as hon])
 
   (def master-ds (db-test-utils/create-test-db! 1))

@@ -123,19 +123,10 @@
                                 (mapv #(stack-changes exercise-update %)))]
 
       (run! #(apply-course-changes! master-ds %) course-changes)
-      (->> course-changes
-           (mapv #(assoc % :change (:delete %)))
-           (run! #(apply-course-changes! master-ds %)))
 
       (run! #(apply-unit-changes! master-ds %) unit-changes)
-      (->> unit-changes
-           (mapv #(assoc % :change (:delete %)))
-           (run! #(apply-unit-changes! master-ds %)))
 
       (run! #(apply-exercise-changes! master-ds %) exercise-changes)
-      (->> exercise-changes
-           (mapv #(assoc % :change (:delete %)))
-           (run! #(apply-exercise-changes! master-ds %)))
 
       (db/update! ds {:tname :versions
                       :data {:applied 1}
@@ -154,7 +145,8 @@
   (with-open [master-ds (db.util/conn)]
     (let [{:keys [timestamp]} (db/find-one ds {:tname :versions
                                                :where [:= :id 1]})
-          course-changes (->> (core/-find-course-changes ds {:from timestamp}))]
-      (mapv separate-deletes course-changes)))
+          course-changes (->> (core/-find-course-changes ds {:from timestamp})
+                              #_(mapv #(stack-changes course-update %)))]
+      course-changes))
 
   ())

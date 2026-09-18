@@ -6,7 +6,7 @@
             [abantu.db.honey :as hon]
             [clojure.java.io :as io]
             [abantu.config :as conf]
-            [abantu.services.changes.interface :as changes-intf]))
+            [abantu.services.changes.interface :as changes-intf-sut]))
 
 (defn tmp-dir []
   (let [f (java.io.File/createTempFile "abantu-test-" "")]
@@ -50,17 +50,17 @@
                                     :unit-changes :exercise-changes])
 
             ;; create version and changes
-            (let [vcm (changes-intf/use-mutation ds-student)
-                  version (changes-intf/add-version! vcm {:course-id 1})]
+            (let [vcm (changes-intf-sut/use-mutation ds-student)
+                  version (changes-intf-sut/add-version! vcm {:course-id 1})]
 
-              (changes-intf/add-course-update! vcm {:version-id (:id version)
+              (changes-intf-sut/add-course-update! vcm {:version-id (:id version)
                                                     :change-type "create"
                                                     :update {:uuid "test-course-uuid"
                                                              :name "Test Course"
                                                              :language "test"
                                                              :description "desc"}})
 
-              (changes-intf/add-unit-update! vcm {:version-id (:id version)
+              (changes-intf-sut/add-unit-update! vcm {:version-id (:id version)
                                                   :change-type "create"
                                                   :update {:uuid "test-unit-uuid"
                                                            :course-uuid "test-course-uuid"
@@ -69,7 +69,7 @@
                                                            :type "lesson"
                                                            :exercises []}})
 
-              (changes-intf/add-exercise-update! vcm {:version-id (:id version)
+              (changes-intf-sut/add-exercise-update! vcm {:version-id (:id version)
                                                       :change-type "create"
                                                       :update {:uuid "test-ex-uuid"
                                                                :unit-uuid "test-unit-uuid"
@@ -83,12 +83,12 @@
                                                                :answers [["wie"]]}})
 
               ;; debug + run migration
-              (let [vcq (changes-intf/use-query ds-student)
-                    course-changes (changes-intf/find-course-changes vcq {:version-id (:id version)})]
+              (let [vcq (changes-intf-sut/use-query ds-student)
+                    course-changes (changes-intf-sut/find-course-changes vcq {:version-id (:id version)})]
                 (prn "course-changes:" course-changes)
                 (t/is (seq course-changes))
 
-                (changes-intf/migrate-up! vcm {:id (:id version)
+                (changes-intf-sut/migrate-up! vcm {:id (:id version)
                                                :timestamp (:timestamp version)})
 
                 ;; verify master DB
@@ -113,4 +113,4 @@
       (cleanup-test-db! tmp 1))))
 
 (defn run-tests []
-  (t/run-tests 'source-be.changes-migrate-test))
+  (t/run-tests 'abantu.changes-migrate-test))
