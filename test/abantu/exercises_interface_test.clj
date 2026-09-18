@@ -56,6 +56,16 @@
     (mirror-create! input created)
     created))
 
+(defn set-and-mirror!
+  "Apply a set- mutation to sut-ds and mirror the same update into control-ds.
+  Returns the mutation's result."
+  [mut input control-values]
+  (let [updated (mut @em input)]
+    (hon/update! @control-ds {:tname :exercises
+                              :values control-values
+                              :where [:= :id (:id input)]})
+    updated))
+
 (defn assert-control-matches!
   "Assert the exercises and answers tables are identical between the two dbs."
   []
@@ -131,3 +141,94 @@
       (assert-control-matches!)
       (is (= #{(:id basic) (:id unit-two)}
              (set (map :id (exercises-intf-sut/all @eq))))))))
+
+(deftest set-instruction-test
+  (testing "set-instruction updates the instruction in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-instruction
+                                   {:id id :instruction "A new instruction"}
+                                   {:instruction "A new instruction"})]
+      (is (= "A new instruction" (:instruction updated)))
+      (assert-control-matches!))))
+
+(deftest set-unit-test
+  (testing "set-unit updates the unit-id in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-unit
+                                   {:id id :unit-id 2}
+                                   {:unit-id 2})]
+      (is (= 2 (:unit-id updated)))
+      (assert-control-matches!))))
+
+(deftest set-question-content-test
+  (testing "set-question-content updates the question-content in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-question-content
+                                   {:id id :question-content "Who is this?"}
+                                   {:question-content "Who is this?"})]
+      (is (= "Who is this?" (:question-content updated)))
+      (assert-control-matches!))))
+
+(deftest set-answer-type-test
+  (testing "set-answer-type updates the answer-type in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-answer-type
+                                   {:id id :answer-type "freetext"}
+                                   {:answer-type "freetext"})]
+      (is (= "freetext" (:answer-type updated)))
+      (assert-control-matches!))))
+
+(deftest set-level-test
+  (testing "set-level updates the level in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-level
+                                   {:id id :level 2}
+                                   {:level 2})]
+      (is (= 2 (:level updated)))
+      (assert-control-matches!))))
+
+(deftest set-correct-message-test
+  (testing "set-correct-message updates the correct-message in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-correct-message
+                                   {:id id :correct-message "well done"}
+                                   {:correct-message "well done"})]
+      (is (= "well done" (:correct-message updated)))
+      (assert-control-matches!))))
+
+(deftest set-incorrect-message-test
+  (testing "set-incorrect-message updates the incorrect-message in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-incorrect-message
+                                   {:id id :incorrect-message "try again"}
+                                   {:incorrect-message "try again"})]
+      (is (= "try again" (:incorrect-message updated)))
+      (assert-control-matches!))))
+
+(deftest set-position-test
+  (testing "set-position updates the position in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          updated (set-and-mirror! exercises-intf-sut/set-position
+                                   {:id id :position 2}
+                                   {:position 2})]
+      (is (= 2 (:position updated)))
+      (assert-control-matches!))))
+
+(deftest set-options-test
+  (testing "set-options updates the options in the db"
+    (let [created (seed-exercise! (exercises-data :bubbles-basic))
+          id (:id created)
+          options ["ek" "sy"]
+          updated (set-and-mirror! exercises-intf-sut/set-options
+                                   {:id id :options options}
+                                   {:options (str/join ";;" options)})]
+      (is (= options (:options updated)))
+      (assert-control-matches!))))
