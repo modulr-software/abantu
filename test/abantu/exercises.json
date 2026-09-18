@@ -1,0 +1,35 @@
+{
+  "bubbles-basic": {
+    "unit-id": 1,
+    "course-id": 1,
+    "instruction": "Translate the following",
+    "question-content": "Who are you?",
+    "answer-type": "bubbles",
+    "options": ["wat", "wie", "hoe"],
+    "correct-message": "correct!",
+    "incorrect-message": "o nei",
+    "answers": [["wie", "is"]]
+  },
+  "bubbles-multi": {
+    "unit-id": 1,
+    "course-id": 1,
+    "instruction": "Translate the following",
+    "question-content": "Who is this?",
+    "answer-type": "bubbles",
+    "options": ["hy", "sy", "is"],
+    "correct-message": "correct!",
+    "incorrect-message": "o nei",
+    "answers": [["hy", "is"], ["sy", "is"]]
+  },
+  "bubbles-unit-two": {
+    "unit-id": 2,
+    "course-id": 1,
+    "instruction": "Translate the following",
+    "question-content": "Who is that?",
+    "answer-type": "bubbles",
+    "options": ["is", "jy", "daardie"],
+    "correct-message": "correct!",
+    "incorrect-message": "o nei",
+    "answers": [["is", "jy"]]
+  }
+}
