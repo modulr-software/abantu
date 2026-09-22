@@ -1,0 +1,15 @@
+{
+  "seed": [],
+  "input": {
+    "unit-id": 1,
+    "course-id": 1,
+    "question-content": "Who are you?",
+    "answer-type": "bubbles",
+    "answers": [
+      [
+        "wie",
+        "is"
+      ]
+    ]
+  }
+}

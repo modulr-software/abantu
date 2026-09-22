@@ -1,0 +1,31 @@
+{
+  "seed": [
+    {
+      "uuid": "test-unit-uuid",
+      "course-id": 1,
+      "name": "Unit One",
+      "type": "lesson",
+      "exercises": [
+        {
+          "uuid": "test-ex-uuid",
+          "course-id": 1,
+          "instruction": "i",
+          "question-content": "q",
+          "answer-type": "bubbles",
+          "options": [
+            "a",
+            "b"
+          ],
+          "answers": [
+            [
+              "a"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "input": {
+    "id": 1
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "seed": [
+    {
+      "course": {
+        "id": 1,
+        "uuid": "course-uuid",
+        "name": "Course One",
+        "language": "english",
+        "description": "A course",
+        "publishable": 0,
+        "visible": 0,
+        "review-pending": 0
+      }
+    }
+  ],
+  "input": {
+    "id": 1,
+    "language": "afrikaans"
+  },
+  "output": {
+    "id": 1,
+    "uuid": "course-uuid",
+    "name": "Course One",
+    "language": "afrikaans",
+    "description": "A course",
+    "publishable": false,
+    "visible": false,
+    "review-pending": false,
+    "creator": null,
+    "units": []
+  }
+}

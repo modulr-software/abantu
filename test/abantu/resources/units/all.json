@@ -1,0 +1,55 @@
+{
+  "seed": [
+    {
+      "unit": {
+        "id": 1,
+        "uuid": "test-unit-uuid",
+        "course-id": 1,
+        "name": "Unit One",
+        "description": "A unit",
+        "level": 1,
+        "type": "lesson",
+        "position": null
+      }
+    },
+    {
+      "unit": {
+        "id": 2,
+        "uuid": "test-unit-uuid-2",
+        "course-id": 1,
+        "name": "Unit Two",
+        "description": "Another unit",
+        "level": 2,
+        "type": "practice",
+        "position": null
+      }
+    }
+  ],
+  "query": {},
+  "output": [
+    {
+      "id": 1,
+      "uuid": "test-unit-uuid",
+      "course-id": 1,
+      "name": "Unit One",
+      "description": "A unit",
+      "level": 1,
+      "type": "lesson",
+      "position": null,
+      "creator-id": null,
+      "exercises": []
+    },
+    {
+      "id": 2,
+      "uuid": "test-unit-uuid-2",
+      "course-id": 1,
+      "name": "Unit Two",
+      "description": "Another unit",
+      "level": 2,
+      "type": "practice",
+      "position": null,
+      "creator-id": null,
+      "exercises": []
+    }
+  ]
+}

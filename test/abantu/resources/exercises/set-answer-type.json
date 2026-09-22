@@ -1,0 +1,58 @@
+{
+  "seed": [
+    {
+      "exercise": {
+        "id": 1,
+        "uuid": "test-exercise-uuid",
+        "unit-id": 1,
+        "course-id": 1,
+        "instruction": "Translate the following",
+        "question-content": "Who are you?",
+        "answer-type": "bubbles",
+        "options": "wat;;wie;;hoe",
+        "level": 1,
+        "correct-message": "correct!",
+        "incorrect-message": "o nei"
+      },
+      "answers": [
+        {
+          "exercise-id": 1,
+          "text": "wie;;is"
+        }
+      ]
+    }
+  ],
+  "input": {
+    "id": 1,
+    "answer-type": "freetext"
+  },
+  "output": {
+    "id": 1,
+    "uuid": "test-exercise-uuid",
+    "unit-id": 1,
+    "course-id": 1,
+    "level": 1,
+    "options": [
+      "wat",
+      "wie",
+      "hoe"
+    ],
+    "answer-type": "freetext",
+    "instruction": "Translate the following",
+    "question-content": "Who are you?",
+    "correct-message": "correct!",
+    "incorrect-message": "o nei",
+    "position": null,
+    "answers": [
+      {
+        "id": 1,
+        "exercise-id": 1,
+        "text": [
+          "wie",
+          "is"
+        ]
+      }
+    ],
+    "comments": []
+  }
+}

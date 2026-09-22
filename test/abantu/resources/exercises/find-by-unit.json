@@ -1,0 +1,80 @@
+{
+  "seed": [
+    {
+      "exercise": {
+        "id": 1,
+        "uuid": "test-exercise-uuid",
+        "unit-id": 1,
+        "course-id": 1,
+        "instruction": "Translate the following",
+        "question-content": "Who are you?",
+        "answer-type": "bubbles",
+        "options": "wat;;wie;;hoe",
+        "level": 1,
+        "correct-message": "correct!",
+        "incorrect-message": "o nei"
+      },
+      "answers": [
+        {
+          "exercise-id": 1,
+          "text": "wie;;is"
+        }
+      ]
+    },
+    {
+      "exercise": {
+        "id": 2,
+        "uuid": "test-exercise-uuid-2",
+        "unit-id": 2,
+        "course-id": 1,
+        "instruction": "Translate the following",
+        "question-content": "Who is that?",
+        "answer-type": "bubbles",
+        "options": "is;;jy;;daardie",
+        "level": 1,
+        "correct-message": "correct!",
+        "incorrect-message": "o nei"
+      },
+      "answers": [
+        {
+          "exercise-id": 2,
+          "text": "is;;jy"
+        }
+      ]
+    }
+  ],
+  "query": {
+    "unit-id": 2
+  },
+  "output": [
+    {
+      "id": 2,
+      "uuid": "test-exercise-uuid-2",
+      "unit-id": 2,
+      "course-id": 1,
+      "level": 1,
+      "options": [
+        "is",
+        "jy",
+        "daardie"
+      ],
+      "answer-type": "bubbles",
+      "instruction": "Translate the following",
+      "question-content": "Who is that?",
+      "correct-message": "correct!",
+      "incorrect-message": "o nei",
+      "position": null,
+      "answers": [
+        {
+          "id": 2,
+          "exercise-id": 2,
+          "text": [
+            "is",
+            "jy"
+          ]
+        }
+      ],
+      "comments": []
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "seed": [
+    {
+      "uuid": "course-uuid",
+      "name": "Course One",
+      "language": "english",
+      "units": [
+        {
+          "uuid": "unit-uuid",
+          "name": "Unit One",
+          "type": "lesson",
+          "exercises": [
+            {
+              "uuid": "ex-uuid",
+              "course-id": 1,
+              "instruction": "i",
+              "question-content": "q",
+              "answer-type": "bubbles",
+              "options": [
+                "a",
+                "b"
+              ],
+              "answers": [
+                [
+                  "a"
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "input": {
+    "id": 1
+  }
+}

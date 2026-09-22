@@ -1,0 +1,48 @@
+{
+  "input": {
+    "unit-id": 1,
+    "course-id": 1,
+    "uuid": "test-exercise-uuid",
+    "instruction": "Translate the following",
+    "question-content": "Who are you?",
+    "answer-type": "bubbles",
+    "options": [
+      "wat",
+      "wie",
+      "hoe"
+    ],
+    "correct-message": "correct!",
+    "incorrect-message": "o nei",
+    "answers": [
+      [
+        "wie",
+        "is"
+      ]
+    ]
+  },
+  "output": {
+    "id": 1,
+    "uuid": "test-exercise-uuid",
+    "unit-id": 1,
+    "course-id": 1,
+    "level": 1,
+    "options": [
+      "wat",
+      "wie",
+      "hoe"
+    ],
+    "answer-type": "bubbles",
+    "instruction": "Translate the following",
+    "question-content": "Who are you?",
+    "correct-message": "correct!",
+    "incorrect-message": "o nei",
+    "position": null,
+    "answers": [
+      [
+        "wie",
+        "is"
+      ]
+    ],
+    "comments": []
+  }
+}

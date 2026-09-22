@@ -1,0 +1,73 @@
+{
+  "seed": [
+    {
+      "user": {
+        "id": 3,
+        "email": "creator@example.com",
+        "firstname": "Pat",
+        "lastname": "Creator",
+        "email-verified": 1,
+        "archived": 0,
+        "approved": 1,
+        "user-type-id": 2
+      }
+    },
+    {
+      "course": {
+        "id": 1,
+        "uuid": "course-uuid",
+        "name": "Course One",
+        "language": "english",
+        "description": "A course",
+        "publishable": 0,
+        "visible": 0,
+        "review-pending": 0,
+        "creator-id": 3
+      }
+    },
+    {
+      "course": {
+        "id": 2,
+        "uuid": "course-uuid-2",
+        "name": "Course Two",
+        "language": "afrikaans",
+        "description": "Another course",
+        "publishable": 0,
+        "visible": 0,
+        "review-pending": 0,
+        "creator-id": 2
+      }
+    }
+  ],
+  "query": {
+    "creator-id": 3
+  },
+  "output": [
+    {
+      "id": 1,
+      "uuid": "course-uuid",
+      "name": "Course One",
+      "language": "english",
+      "description": "A course",
+      "publishable": false,
+      "visible": false,
+      "review-pending": false,
+      "creator": {
+        "id": 3,
+        "email": "creator@example.com",
+        "password": null,
+        "firstname": "Pat",
+        "lastname": "Creator",
+        "email-verified": true,
+        "archived": false,
+        "approved": true,
+        "mobile": null,
+        "email-hash": null,
+        "password-reset-hash": null,
+        "profile-image": null,
+        "role": "creator"
+      },
+      "units": []
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "seed": [
+    {
+      "unit": {
+        "id": 1,
+        "uuid": "test-unit-uuid",
+        "course-id": 1,
+        "name": "Unit One",
+        "description": "A unit",
+        "level": 1,
+        "type": "lesson",
+        "position": null
+      }
+    }
+  ],
+  "query": {
+    "uuid": "test-unit-uuid"
+  },
+  "output": {
+    "id": 1,
+    "uuid": "test-unit-uuid",
+    "course-id": 1,
+    "name": "Unit One",
+    "description": "A unit",
+    "level": 1,
+    "type": "lesson",
+    "position": null,
+    "creator-id": null,
+    "exercises": []
+  }
+}

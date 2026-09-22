@@ -1,0 +1,52 @@
+{
+  "seed": [
+    {
+      "exercise": {
+        "id": 1,
+        "uuid": "test-exercise-uuid",
+        "unit-id": 1,
+        "course-id": 1,
+        "instruction": "Translate the following",
+        "question-content": "Who are you?",
+        "answer-type": "bubbles",
+        "options": "wat;;wie;;hoe",
+        "level": 1,
+        "correct-message": "correct!",
+        "incorrect-message": "o nei"
+      },
+      "answers": [
+        {
+          "exercise-id": 1,
+          "text": "wie;;is"
+        }
+      ],
+      "comments": [
+        {
+          "exercise-id": 1,
+          "unit-id": 1,
+          "course-id": 1,
+          "text": "comment",
+          "user-id": 1,
+          "timestamp": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "exercises-completed": [
+        {
+          "user-id": 1,
+          "exercise-id": 1,
+          "unit-id": 1,
+          "timestamp": 123456
+        }
+      ]
+    }
+  ],
+  "input": {
+    "id": 1
+  },
+  "output": {
+    "exercises": [],
+    "answers": [],
+    "comments": [],
+    "exercises-completed": []
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "input": {
+    "uuid": "course-uuid",
+    "name": "Course One",
+    "language": "english",
+    "description": "A course",
+    "units": []
+  },
+  "output": {
+    "id": 1,
+    "uuid": "course-uuid",
+    "name": "Course One",
+    "language": "english",
+    "description": "A course",
+    "publishable": false,
+    "visible": false,
+    "review-pending": false,
+    "creator": null,
+    "units": []
+  }
+}

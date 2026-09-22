@@ -53,10 +53,11 @@
   (let [{:keys [id]} (db/insert! ds {:tname :courses
                                      :values (-> (dissoc update :units)
                                                  (assoc :uuid (or uuid (util/uuid))))
-                                     :ret :1})]
-    (run! #(unit/create (unit/use-mutation ds) %) units)
+                                     :ret :1})
+        units' (mapv #(assoc % :course-id id) units)]
+    (run! #(unit/create (unit/use-mutation ds) %) units')
     (update/apply (-lookup ds {:id id}) {:type :create
-                                         :payload update})))
+                                         :payload (dissoc update :units)})))
 
 (defn -delete [ds {:keys [id uuid] :as update}]
   (let [{:keys [id]} (-lookup ds {:id id :uuid uuid})

@@ -1,234 +1,208 @@
 (ns abantu.exercises-interface-test
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
-            [clojure.data.json :as json]
-            [clojure.string :as str]
-            [abantu.db-test-utils :as db-test-utils]
+            [jsonista.core :as json]
+            [abantu.test-util :as tu]
             [abantu.db.honey :as hon]
-            [abantu.services.exercises.interface :as exercises-intf-sut]))
+            [abantu.services.exercises.interface :as sut]))
 
-(def exercises-data
-  (-> (io/resource "abantu/exercises.json")
-      slurp
-      (json/read-str {:key-fn keyword})))
+(def with-test-db tu/with-test-db)
 
-(def control-ds (atom nil))
-(def sut-ds (atom nil))
-(def eq (atom nil))
-(def em (atom nil))
+(defn insert-exercise! [ds {:keys [exercise answers comments exercises-completed]}]
+  (hon/insert! ds {:tname :exercises
+                   :values exercise})
+  (when (seq answers)
+    (hon/insert! ds {:tname :answers
+                     :values answers}))
+  (when (seq comments)
+    (hon/insert! ds {:tname :comments
+                     :values comments}))
+  (when (seq exercises-completed)
+    (hon/insert! ds {:tname :exercises-completed
+                     :values exercises-completed})))
 
-(use-fixtures :each
-  (fn [f]
-    (reset! control-ds (db-test-utils/create-test-db! 1))
-    (reset! sut-ds (db-test-utils/create-test-db! 2))
-    (reset! eq (exercises-intf-sut/use-query @sut-ds))
-    (reset! em (exercises-intf-sut/use-mutation @sut-ds))
-    (try (f)
-         (finally
-           (db-test-utils/cleanup-test-db! 1)
-           (db-test-utils/cleanup-test-db! 2)))))
+(defn read-fixture [file]
+  (-> (io/resource (str "abantu/resources/exercises/" file))
+      (slurp)
+      (json/read-value json/keyword-keys-object-mapper)))
 
-(defn mirror-create!
-  "Insert into control-ds exactly the rows -create writes for `input`."
-  [input created]
-  (hon/insert! @control-ds
-               {:tname :exercises
-                :values {:uuid (:uuid created)
-                         :unit-id (:unit-id input)
-                         :course-id (:course-id input)
-                         :instruction (:instruction input)
-                         :question-content (:question-content input)
-                         :answer-type (:answer-type input)
-                         :options (str/join ";;" (:options input))
-                         :correct-message (:correct-message input)
-                         :incorrect-message (:incorrect-message input)}})
-  (when (seq (:answers input))
-    (hon/insert! @control-ds
-                 {:tname :answers
-                  :values (mapv #(assoc {:text (str/join ";;" %)}
-                                        :exercise-id (:id created))
-                                (:answers input))})))
+(deftest test-query
+  (testing "that querying one exercise that exists returns exercise with its metadata attached"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "lookup-by-id.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(defn seed-exercise!
-  "Create `input` via the interface in sut-ds and mirror its rows into control-ds."
-  [input]
-  (let [created (exercises-intf-sut/create @em input)]
-    (mirror-create! input created)
-    created))
+  (testing "that querying an exercise without answers returns an exercise with an empty answers vec"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "lookup-no-answers.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(defn set-and-mirror!
-  "Apply a set- mutation to sut-ds and mirror the same update into control-ds.
-  Returns the mutation's result."
-  [mut input control-values]
-  (let [updated (mut @em input)]
-    (hon/update! @control-ds {:tname :exercises
-                              :values control-values
-                              :where [:= :id (:id input)]})
-    updated))
+  (testing "that querying one exercise that doesn't exist returns nil"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "lookup-missing.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(defn assert-control-matches!
-  "Assert the exercises and answers tables are identical between the two dbs."
-  []
-  (is (= (hon/find @control-ds {:tname :exercises :ret :*})
-         (hon/find @sut-ds {:tname :exercises :ret :*})))
-  (is (= (hon/find @control-ds {:tname :answers :ret :*})
-         (hon/find @sut-ds {:tname :answers :ret :*}))))
+  (testing "that finding all exercises returns a vec of exercises with their metadata attached"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "all.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/all (sut/use-query ds))]
+            (is (= (:output data) actual)))))))
 
-(deftest create-test
-  (testing "manual control insert and interface create leave identical db contents"
-    (let [input (exercises-data :bubbles-basic)
-          _created (seed-exercise! input)]
-      (assert-control-matches!))))
+  (testing "that querying one exercise by its uuid returns exercise with its metadata attached"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "lookup-by-uuid.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(deftest delete-test
-  (testing "delete removes the exercise and all its dependent rows"
-    (let [input (exercises-data :bubbles-multi)
-          created (exercises-intf-sut/create @em input)
-          id (:id created)
-          _comment (hon/insert! @sut-ds {:tname :comments
-                                         :values {:exercise-id id
-                                                  :unit-id 1
-                                                  :course-id 1
-                                                  :text "comment"
-                                                  :user-id 1
-                                                  :timestamp "2026-01-01T00:00:00Z"}})
-          _completed (hon/insert! @sut-ds {:tname :exercises-completed
-                                           :values {:user-id 1
-                                                    :exercise-id id
-                                                    :unit-id 1
-                                                    :timestamp 123456}})
-          _deleted (exercises-intf-sut/delete @em {:id id})]
-      (is (empty? (hon/find @sut-ds {:tname :exercises
-                                     :where [:= :id id]
-                                     :ret :*})))
-      (is (empty? (hon/find @sut-ds {:tname :answers
-                                     :where [:= :exercise-id id]
-                                     :ret :*})))
-      (is (empty? (hon/find @sut-ds {:tname :comments
-                                     :where [:= :exercise-id id]
-                                     :ret :*})))
-      (is (empty? (hon/find @sut-ds {:tname :exercises-completed
-                                     :where [:= :exercise-id id]
-                                     :ret :*}))))))
+  (testing "that finding all exercises for a course returns a vec of exercises with their metadata attached"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "find-by-course.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/find (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(deftest lookup-test
-  (testing "lookup returns the seeded exercise by id and by uuid"
-    (let [input (exercises-data :bubbles-basic)
-          created (seed-exercise! input)
-          by-id (exercises-intf-sut/lookup @eq {:id (:id created)})
-          by-uuid (exercises-intf-sut/lookup @eq {:uuid (:uuid created)})]
-      (assert-control-matches!)
-      (is (= (:id created) (:id by-id)))
-      (is (= (:uuid created) (:uuid by-id)))
-      (is (= (:id created) (:id by-uuid)))
-      (is (= (:uuid created) (:uuid by-uuid))))))
+  (testing "that finding all exercises for a unit returns a vec of exercises with their metadata attached"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "find-by-unit.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/find (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(deftest find-test
-  (testing "find returns exercises by course and by unit"
-    (let [basic (seed-exercise! (exercises-data :bubbles-basic))
-          unit-two (seed-exercise! (exercises-data :bubbles-unit-two))]
-      (assert-control-matches!)
-      (is (= 2 (count (exercises-intf-sut/find @eq {:course-id 1}))))
-      (is (= #{(:id basic)}
-             (set (map :id (exercises-intf-sut/find @eq {:unit-id 1})))))
-      (is (= #{(:id unit-two)}
-             (set (map :id (exercises-intf-sut/find @eq {:unit-id 2}))))))))
+  (testing "that finding exercises for a unit and course returns the matching exercises with their metadata attached"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "find-by-unit-course.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/find (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual)))))))
 
-(deftest all-test
-  (testing "all returns every seeded exercise"
-    (let [basic (seed-exercise! (exercises-data :bubbles-basic))
-          unit-two (seed-exercise! (exercises-data :bubbles-unit-two))]
-      (assert-control-matches!)
-      (is (= #{(:id basic) (:id unit-two)}
-             (set (map :id (exercises-intf-sut/all @eq))))))))
+  (testing "that find with an id that doesn't exist returns an empty vec"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "find-missing.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/find (sut/use-query ds) (:query data))]
+            (is (= (:output data) actual))))))))
 
-(deftest set-instruction-test
-  (testing "set-instruction updates the instruction in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-instruction
-                                   {:id id :instruction "A new instruction"}
-                                   {:instruction "A new instruction"})]
-      (is (= "A new instruction" (:instruction updated)))
-      (assert-control-matches!))))
+(deftest test-mutation
+  (testing "that successfully creating an exercise returns the created exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "create-bubbles-basic.json")
+              actual (sut/create (sut/use-mutation ds) (:input data))]
+          (is (= (:output data) actual))))))
 
-(deftest set-unit-test
-  (testing "set-unit updates the unit-id in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-unit
-                                   {:id id :unit-id 2}
-                                   {:unit-id 2})]
-      (is (= 2 (:unit-id updated)))
-      (assert-control-matches!))))
+  (testing "that failing to create an exercise throws"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "create-invalid.json")]
+          (is (thrown? clojure.lang.ExceptionInfo
+                       (sut/create (sut/use-mutation ds) (:input data))))))))
 
-(deftest set-question-content-test
-  (testing "set-question-content updates the question-content in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-question-content
-                                   {:id id :question-content "Who is this?"}
-                                   {:question-content "Who is this?"})]
-      (is (= "Who is this?" (:question-content updated)))
-      (assert-control-matches!))))
+  (testing "that deleting an exercise removes it and its comment and answer records"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "delete-exercise.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (sut/delete (sut/use-mutation ds) (:input data))
+          (let [actual (into {} (map (fn [t] [t (hon/find ds {:tname t :ret :*})]))
+                             (keys (:output data)))]
+            (is (= (:output data) actual)))))))
 
-(deftest set-answer-type-test
-  (testing "set-answer-type updates the answer-type in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-answer-type
-                                   {:id id :answer-type "freetext"}
-                                   {:answer-type "freetext"})]
-      (is (= "freetext" (:answer-type updated)))
-      (assert-control-matches!))))
+  (testing "that setting the unit updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-unit.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-unit (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
 
-(deftest set-level-test
-  (testing "set-level updates the level in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-level
-                                   {:id id :level 2}
-                                   {:level 2})]
-      (is (= 2 (:level updated)))
-      (assert-control-matches!))))
+  (testing "that setting the instruction updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-instruction.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-instruction (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
 
-(deftest set-correct-message-test
-  (testing "set-correct-message updates the correct-message in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-correct-message
-                                   {:id id :correct-message "well done"}
-                                   {:correct-message "well done"})]
-      (is (= "well done" (:correct-message updated)))
-      (assert-control-matches!))))
+  (testing "that setting the question content updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-question-content.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-question-content (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
 
-(deftest set-incorrect-message-test
-  (testing "set-incorrect-message updates the incorrect-message in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-incorrect-message
-                                   {:id id :incorrect-message "try again"}
-                                   {:incorrect-message "try again"})]
-      (is (= "try again" (:incorrect-message updated)))
-      (assert-control-matches!))))
+  (testing "that setting the answer type updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-answer-type.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-answer-type (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
 
-(deftest set-position-test
-  (testing "set-position updates the position in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          updated (set-and-mirror! exercises-intf-sut/set-position
-                                   {:id id :position 2}
-                                   {:position 2})]
-      (is (= 2 (:position updated)))
-      (assert-control-matches!))))
+  (testing "that setting the level updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-level.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-level (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
 
-(deftest set-options-test
-  (testing "set-options updates the options in the db"
-    (let [created (seed-exercise! (exercises-data :bubbles-basic))
-          id (:id created)
-          options ["ek" "sy"]
-          updated (set-and-mirror! exercises-intf-sut/set-options
-                                   {:id id :options options}
-                                   {:options (str/join ";;" options)})]
-      (is (= options (:options updated)))
-      (assert-control-matches!))))
+  (testing "that setting the correct message updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-correct-message.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-correct-message (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
+
+  (testing "that setting the incorrect message updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-incorrect-message.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-incorrect-message (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
+
+  (testing "that setting the position updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-position.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-position (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
+
+  (testing "that setting the options updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-options.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-options (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual)))))))
+
+  (testing "that setting the answers updates the exercise"
+    (with-test-db
+      (fn [ds]
+        (let [data (read-fixture "set-answers.json")]
+          (run! (partial insert-exercise! ds) (:seed data))
+          (let [actual (sut/set-answers (sut/use-mutation ds) (:input data))]
+            (is (= (:output data) actual))))))))
+
+(defn run-tests []
+  (clojure.test/run-tests 'abantu.exercises-interface-test))

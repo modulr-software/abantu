@@ -37,7 +37,7 @@
         exercises' (mapv #(assoc % :unit-id id) exercises)]
     (run! #(exercise/create (exercise/use-mutation ds) %) exercises')
     (update/apply (-lookup ds {:id id}) {:type :create
-                                         :payload update})))
+                                         :payload (dissoc update :exercises)})))
 
 (defn -delete [ds {:keys [id uuid] :as update}]
   (let [{:keys [id]} (-lookup ds {:id id :uuid uuid})
@@ -48,6 +48,8 @@
     (run! #(exercise/delete exmut {:id %}) exercise-ids)
     (db/delete! ds {:tname :practice-sessions
                     :where [:= :unit-id id]})
+    (db/delete! ds {:tname :units
+                    :where [:= :id id]})
     (update/apply nil {:type :delete
                        :payload update})))
 

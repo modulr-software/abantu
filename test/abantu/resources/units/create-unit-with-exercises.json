@@ -1,0 +1,66 @@
+{
+  "input": {
+    "uuid": "test-unit-uuid",
+    "course-id": 1,
+    "name": "Unit One",
+    "type": "lesson",
+    "exercises": [
+      {
+        "uuid": "test-ex-uuid",
+        "course-id": 1,
+        "instruction": "i",
+        "question-content": "q",
+        "answer-type": "bubbles",
+        "options": [
+          "a",
+          "b"
+        ],
+        "answers": [
+          [
+            "a"
+          ]
+        ]
+      }
+    ]
+  },
+  "output": {
+    "id": 1,
+    "uuid": "test-unit-uuid",
+    "course-id": 1,
+    "name": "Unit One",
+    "description": null,
+    "level": null,
+    "type": "lesson",
+    "position": null,
+    "creator-id": null,
+    "exercises": [
+      {
+        "id": 1,
+        "uuid": "test-ex-uuid",
+        "unit-id": 1,
+        "course-id": 1,
+        "level": 1,
+        "options": [
+          "a",
+          "b"
+        ],
+        "answer-type": "bubbles",
+        "instruction": "i",
+        "question-content": "q",
+        "correct-message": null,
+        "incorrect-message": null,
+        "position": null,
+        "answers": [
+          {
+            "id": 1,
+            "exercise-id": 1,
+            "text": [
+              "a"
+            ]
+          }
+        ],
+        "comments": []
+      }
+    ]
+  }
+}
