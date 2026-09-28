@@ -2,7 +2,6 @@
   (:require [abantu.db.interface :as db]
             [abantu.util :as util]
             [jsonista.core :as json]
-            [abantu.db.util :as db.util]
             [honey.sql :as h]))
 
 (defn- parse-change [{:keys [change-type change-data] :as change}]
@@ -17,16 +16,17 @@
                  (assoc acc uuid (filterv #(= (:uuid %) uuid) changes))) {})
        (mapv (fn [m] {:uuid (first m) :change (last m)}))))
 
-(defn -find-exercise-changes [ds {:keys [from to] :as _opts}]
-  (->> (db/find ds {:tname :exercise-changes
-                    :where (cond
-                             (and from to) [:between :timestamp from to]
-                             from [:>= :timestamp from]
-                             to [:<= :timestamp to])
-                    :order-by :id
-                    :ret :*})
-       (mapv parse-change)
-       (group-changes-by-uuid)))
+(defn- parse-change [{:keys [change-type change-data] :as change}]
+  (merge change {:change-type (keyword change-type)
+                 :change-data (->> {:decode-key-fn true}
+                                   (json/object-mapper)
+                                   (json/read-value change-data))}))
+
+(defn- group-changes-by-uuid [changes]
+  (->> changes
+       (reduce (fn [acc {:keys [uuid]}]
+                 (assoc acc uuid (filterv #(= (:uuid %) uuid) changes))) {})
+       (mapv (fn [m] {:uuid (first m) :change (last m)}))))
 
 (defn -find-unit-changes [ds {:keys [from to] :as _opts}]
   (->> (db/find ds {:tname :unit-changes
@@ -50,14 +50,16 @@
        (mapv parse-change)
        (group-changes-by-uuid)))
 
-(defn -lookup-exercise-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
+(defn -find-exercise-changes [ds {:keys [from to] :as _opts}]
   (->> (db/find ds {:tname :exercise-changes
-                    :where (h/map= opts)
+                    :where (cond
+                             (and from to) [:between :timestamp from to]
+                             from [:>= :timestamp from]
+                             to [:<= :timestamp to])
                     :order-by :id
                     :ret :*})
        (mapv parse-change)
-       (group-changes-by-uuid)
-       first))
+       (group-changes-by-uuid)))
 
 (defn -lookup-unit-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
   (->> (db/find ds {:tname :unit-changes
@@ -76,54 +78,6 @@
        (mapv parse-change)
        (group-changes-by-uuid)
        first))
-
-(defn- attach-courses [ds {:keys [timestamp] :as version}]
-  (assoc version :course-changes (-find-course-changes ds {:to timestamp})))
-
-(defn- attach-units [ds {:keys [timestamp] :as version}]
-  (assoc version :unit-changes (-find-unit-changes ds {:to timestamp})))
-
-(defn- attach-exercises [ds {:keys [timestamp] :as version}]
-  (assoc version :exercise-changes (-find-exercise-changes ds {:to timestamp})))
-
-(defn -lookup [ds {:keys [_id _timestamp with-changes?] :as opts}]
-  (when-let [version (db/find-one ds {:tname :versions
-                                      :where (util/eq-clauses (dissoc opts :with-changes?))})]
-    (cond->> (util/parse-bool-keys version [:applied])
-      with-changes? (attach-courses ds)
-      with-changes? (attach-units ds)
-      with-changes? (attach-exercises ds))))
-
-(defn -find [ds {:keys [_course-id _label with-changes?] :as opts}]
-  (cond->> (db/find ds {:tname :versions
-                        :where (util/eq-clauses (dissoc opts :with-changes?))
-                        :ret :*})
-    true (mapv #(util/parse-bool-keys % [:applied]))
-    with-changes? (mapv (comp (partial attach-courses ds)
-                              (partial attach-units ds)
-                              (partial attach-exercises ds)))))
-
-(defn -all [ds {:keys [with-changes?] :as _opts}]
-  (cond->> (db/find ds {:tname :versions
-                        :ret :*})
-    true (mapv #(util/parse-bool-keys % [:applied]))
-    with-changes? (mapv (comp (partial attach-courses ds)
-                              (partial attach-units ds)
-                              (partial attach-exercises ds)))))
-
-(defn -add-version! [ds {:keys [label course-id] :as _payload}]
-  (let [{:keys [id]} (db/insert! ds {:tname :versions
-                                     :data {:label label
-                                            :course-id course-id
-                                            :timestamp (util/get-utc-timestamp-string)}
-                                     :ret :1})]
-    (-lookup ds {:id id})))
-
-(defn -set-version-label! [ds {:keys [id label with-changes?]}]
-  (db/update! ds {:tname :versions
-                  :data {:label label}
-                  :where [:= :id id]})
-  (-lookup ds {:id id :with-changes? with-changes?}))
 
 (defn -add-exercise-update! [ds {:keys [change-type update]}]
   (let [change-type (str change-type)
@@ -168,6 +122,7 @@
     result))
 
 (comment
+  (require '[abantu.db.util :as db.util])
   (def ds (db.util/conn :student 1))
 
   (db/find (db.util/conn) {:tname :courses})

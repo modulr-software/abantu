@@ -38,17 +38,6 @@
               [:change-data :any]
               [:timestamp :string]]]]])
 
-(def ?Version
-  [:map
-   [:id :int]
-   [:timestamp :string]
-   [:label {:optional true} (util/maybe :string)]
-   [:applied :boolean]
-   [:course-id :int]
-   [:course-changes [:vector ?CourseChange]]
-   [:unit-changes [:vector ?UnitChange]]
-   [:exercise-changes [:vector ?ExerciseChange]]])
-
 (def ?Opts
   [:map [:with-changes? :boolean]])
 
@@ -73,12 +62,6 @@
    [:change-type (util/maybe :string)]
    [:timestamp (util/maybe :string)]])
 
-(def ?AddVersion
-  (mu/select-keys ?Version [:label :course-id]))
-
-(def ?SetVersionLabel
-  (mu/merge (mu/select-keys ?Version [:id :label]) ?Opts))
-
 (def ?AddCourseUpdate
   (-> (mu/select-keys ?CourseChange [:change-type])
       (mu/assoc :update [:map [:uuid :string]])))
@@ -97,15 +80,12 @@
                          [:course-uuid :string]])))
 
 (def ?MigrateUp
-  (mu/select-keys ?Version [:id :applied :course-id]))
+  [:map
+   [:id :int]
+   [:course-id :int]
+   [:applied :boolean]])
 
-(malt/defprotocol VersionControlQuery
-  (lookup [input ?Lookup]
-    (util/maybe ?Version))
-  (find [input ?Find]
-    [:vector ?Version])
-  (all [input ?Opts]
-    [:vector ?Version])
+(malt/defprotocol ChangesQuery
   (lookup-exercise-change [input ?ChangeLookup]
     (util/maybe ?ExerciseChange))
   (lookup-unit-change [input ?ChangeLookup]
@@ -119,11 +99,7 @@
   (find-course-changes [input ?ChangeFind]
     [:vector ?CourseChange]))
 
-(malt/defprotocol VersionControlMutation
-  (add-version! [input ?AddVersion]
-    (util/maybe ?Version))
-  (set-version-label! [input ?SetVersionLabel]
-    (util/maybe ?Version))
+(malt/defprotocol ChangesMutation
   (add-course-update! [input ?AddCourseUpdate]
     (util/maybe ?CourseChange))
   (add-unit-update! [input ?AddUnitUpdate]
@@ -134,13 +110,7 @@
     :nil))
 
 (defn use-query [ds]
-  (reify VersionControlQuery
-    (lookup [_ input]
-      (changes/-lookup ds input))
-    (find [_ input]
-      (changes/-find ds input))
-    (all [_ input]
-      (changes/-all ds input))
+  (reify ChangesQuery
     (lookup-exercise-change [_ input]
       (changes/-lookup-exercise-change ds input))
     (lookup-unit-change [_ input]
@@ -155,11 +125,7 @@
       (changes/-find-course-changes ds input))))
 
 (defn use-mutation [ds]
-  (reify VersionControlMutation
-    (add-version! [_ input]
-      (changes/-add-version! ds input))
-    (set-version-label! [_ input]
-      (changes/-set-version-label! ds input))
+  (reify ChangesMutation
     (add-course-update! [_ input]
       (changes/-add-course-update! ds input))
     (add-unit-update! [_ input]
@@ -178,20 +144,6 @@
   (def vcm (use-mutation ds))
 
   ;; queries
-
-  (lookup vcq {:id 1})
-  (lookup vcq {:id 1 :with-changes? true})
-  (lookup vcq {:timestamp "2025-01-01T00:00:00Z"
-               :with-changes? true})
-
-  (find vcq {:course-id 1})
-  (find vcq {:course-id 1 :with-changes? true})
-  (find vcq {:label "draft 1"
-             :with-changes? true})
-
-  (all vcq {:with-changes? false})
-  (all vcq {:with-changes? true})
-
   (find-exercise-changes vcq {:from "2025-01-01T00:00:00Z"
                               :to "2025-01-31T00:00:00Z"})
   (find-unit-changes vcq {:from "2025-01-01T00:00:00Z"
@@ -200,17 +152,6 @@
                             :to "2025-01-31T00:00:00Z"})
 
   ;; mutations
-
-  (add-version! vcm {:label "draft 1"
-                     :course-id 1})
-  (add-version! vcm {:course-id 1})
-
-  (set-version-label! vcm {:id 1
-                           :label "review draft"})
-  (set-version-label! vcm {:id 1
-                           :label "review draft"
-                           :with-changes? true})
-
   (add-course-update!
    vcm
    {:change-type "create"
@@ -253,8 +194,8 @@
                                   :course-uuid "5fe04376aa57d644"
                                   :description "unit about pronouns"}})
 
-(add-exercise-update! vcm {:change-type "create"
-                            :update {:id 1
+  (add-exercise-update! vcm {:change-type "create"
+                             :update {:id 1
                                       :uuid "529849abbecc2114"
                                       :unit-id 1
                                       :unit-uuid "88bbb7209549523f"
@@ -268,7 +209,7 @@
                                       :incorrect-message "o nei"
                                       :answers [["wie" "is" "jy"]]}})
 
-(add-exercise-update! vcm {:change-type "set-instruction"
+  (add-exercise-update! vcm {:change-type "set-instruction"
                              :update {:id 1
                                       :uuid "529849abbecc2114"
                                       :unit-id 1
