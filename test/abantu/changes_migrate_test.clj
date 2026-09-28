@@ -1,116 +1,120 @@
 (ns abantu.changes-migrate-test
-  (:require [clojure.test :as t]
-            [abantu.db.util :as db.util]
-            [abantu.db.tables :as tables]
-            [abantu.db.student]
-            [abantu.db.honey :as hon]
+  (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
-            [abantu.config :as conf]
-            [abantu.services.changes.interface :as changes-intf-sut]))
+            [jsonista.core :as json]
+            [abantu.test-util :as tu]
+            [abantu.db.util :as db.util]
+            [abantu.db.honey :as hon]
+            [abantu.services.courses.interface :as course]
+            [abantu.services.changes.interface :as sut]))
 
-(defn tmp-dir []
-  (let [f (java.io.File/createTempFile "abantu-test-" "")]
-    (.delete f)
-    (.mkdir f)
-    (.getAbsolutePath f)))
+(defn with-test-dbs
+  "Runs (f master-ds student-ds) against fresh migrated test DBs (ids 1 and
+   2), routing the no-arg db.util/conn master connection to the test master
+   so migrate-up! writes there. Each no-arg call opens a fresh connection so
+   migrate-up!'s with-open cannot close master-ds."
+  [f]
+  (tu/with-test-student-db 1 2
+    (fn [student-ds]
+      (let [conn db.util/conn
+            master-ds (conn :test 1)]
+        (with-redefs [db.util/conn (fn
+                                     ([] (conn :test 1))
+                                     ([t & ids] (apply conn t ids)))]
+          (f master-ds student-ds))))))
 
-(defn cleanup-test-db!
-  "Remove test DB files for `test-id` and delete `tmp-dir` if present.
-  Safe to call from tests' finally blocks; errors are ignored."
-  [tmp-dir test-id]
-  (try (db.util/remove-db-files! :test test-id) (catch Throwable _))
-  (try (db.util/remove-db-files!) (catch Throwable _))
-  (try (when (and tmp-dir (.exists (io/file tmp-dir)))
-         (io/delete-file (io/file tmp-dir) true)) (catch Throwable _))
-  nil)
+(defn insert-seed! [ds {:keys [version course-change unit-change exercise-change]}]
+  (when version
+    (hon/insert! ds {:tname :versions
+                     :values version}))
+  (when course-change
+    (hon/insert! ds {:tname :course-changes
+                     :values course-change}))
+  (when unit-change
+    (hon/insert! ds {:tname :unit-changes
+                     :values unit-change}))
+  (when exercise-change
+    (hon/insert! ds {:tname :exercise-changes
+                     :values exercise-change})))
 
-(t/deftest migrate-setup-test
-  (t/testing "create test master + student DBs and add a version and updates"
-    (let [tmp (tmp-dir)
-          orig-read (var-get #'conf/read-value)]
-      (with-redefs [conf/read-value (fn [& ks]
-                                      (if (and (= (first ks) :database)
-                                               (= (second ks) :dir))
-                                        tmp
-                                        (apply orig-read ks)))]
+(defn read-fixture [file]
+  (-> (io/resource (str "abantu/resources/migrate/" file))
+      (slurp)
+      (json/read-value json/keyword-keys-object-mapper)))
 
-        ;; prepare master DB using student schema (contains uuid columns)
-        (let [master-ds (db.util/conn)]
-          (tables/create-tables! master-ds :abantu.db.student
-                                 [:courses :units :exercises :answers
-                                  :practice-sessions :exercises-completed :comments])
+(deftest test-migration
+  (testing "that migrating up on a new course that has not been published
+            yet successfully copies all course data to master"
+    (with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "migrate-new-course.json")]
+          (run! (partial insert-seed! student-ds) (:seed data))
+          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+            (sut/migrate-up! (sut/use-mutation student-ds) version)
+            (is (= (:output data)
+                   (course/all (course/use-query master-ds)))))))))
 
-          ;; create fresh test student DB by copying master schema
-          (db.util/create-test-db! 1)
+  (testing "that migrating up on a course that already exists with update
+            changes successfully applies updates to master"
+    (with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "migrate-update-course.json")]
+          (course/create (course/use-mutation master-ds) (:master data))
+          (run! (partial insert-seed! student-ds) (:seed data))
+          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+            (sut/migrate-up! (sut/use-mutation student-ds) version)
+            (is (= (:output data)
+                   (course/all (course/use-query master-ds)))))))))
 
-          (let [ds-student (db.util/conn :test 1)]
-            (tables/create-tables! ds-student :abantu.db.student
-                                   [:courses :units :exercises :answers :practice-sessions
-                                    :exercises-completed :comments :versions :course-changes
-                                    :unit-changes :exercise-changes])
+  (testing "that migrating up on an existing course with deletion updates
+            for units and exercises successfully deletes the specified units
+            and exercises"
+    (with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "migrate-delete-unit-exercise.json")]
+          (course/create (course/use-mutation master-ds) (:master data))
+          (run! (partial insert-seed! student-ds) (:seed data))
+          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+            (sut/migrate-up! (sut/use-mutation student-ds) version)
+            (is (= (:output data)
+                   (course/all (course/use-query master-ds)))))))))
 
-            ;; create version and changes
-            (let [vcm (changes-intf-sut/use-mutation ds-student)
-                  version (changes-intf-sut/add-version! vcm {:course-id 1})]
+  (testing "that migrating up on an existing course to and applying changes
+            to move an exercise to a different unit correctly sets the unit
+            id on master"
+    (with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "migrate-move-exercise.json")]
+          (course/create (course/use-mutation master-ds) (:master data))
+          (run! (partial insert-seed! student-ds) (:seed data))
+          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+            (sut/migrate-up! (sut/use-mutation student-ds) version)
+            (is (= (:output data)
+                   (course/all (course/use-query master-ds)))))))))
 
-              (changes-intf-sut/add-course-update! vcm {:version-id (:id version)
-                                                    :change-type "create"
-                                                    :update {:uuid "test-course-uuid"
-                                                             :name "Test Course"
-                                                             :language "test"
-                                                             :description "desc"}})
+  (testing "that migrating up on an existing course with changes that delete
+            the course and all its units and exercises then successfully
+            deletes all associated records on master"
+    (with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "migrate-delete-course.json")]
+          (course/create (course/use-mutation master-ds) (:master data))
+          (run! (partial insert-seed! student-ds) (:seed data))
+          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+            (sut/migrate-up! (sut/use-mutation student-ds) version)
+            (is (= (:output data)
+                   (course/all (course/use-query master-ds)))))))))
 
-              (changes-intf-sut/add-unit-update! vcm {:version-id (:id version)
-                                                  :change-type "create"
-                                                  :update {:uuid "test-unit-uuid"
-                                                           :course-uuid "test-course-uuid"
-                                                           :name "Test Unit"
-                                                           :description "unit desc"
-                                                           :type "lesson"
-                                                           :exercises []}})
-
-              (changes-intf-sut/add-exercise-update! vcm {:version-id (:id version)
-                                                      :change-type "create"
-                                                      :update {:uuid "test-ex-uuid"
-                                                               :unit-uuid "test-unit-uuid"
-                                                               :course-uuid "test-course-uuid"
-                                                               :instruction "Translate the following"
-                                                               :question-content "who are you"
-                                                               :answer-type "bubbles"
-                                                               :options ["wat" "wie"]
-                                                               :correct-message "correct!"
-                                                               :incorrect-message "nope"
-                                                               :answers [["wie"]]}})
-
-              ;; debug + run migration
-              (let [vcq (changes-intf-sut/use-query ds-student)
-                    course-changes (changes-intf-sut/find-course-changes vcq {:version-id (:id version)})]
-                (prn "course-changes:" course-changes)
-                (t/is (seq course-changes))
-
-                (changes-intf-sut/migrate-up! vcm {:id (:id version)
-                                               :timestamp (:timestamp version)})
-
-                ;; verify master DB
-                (let [master (db.util/conn)
-                      course (hon/find master {:tname :courses
-                                               :where [:= :uuid "test-course-uuid"]
-                                               :ret :1})
-                      unit (hon/find master {:tname :units
-                                             :where [:= :uuid "test-unit-uuid"]
-                                             :ret :1})
-                      exercise (hon/find master {:tname :exercises
-                                                 :where [:= :uuid "test-ex-uuid"]
-                                                 :ret :1})]
-                  (t/is (some? version))
-                  (t/is (some? course))
-                  (t/is (= (:name course) "Test Course"))
-                  (t/is (some? unit))
-                  (t/is (= (:name unit) "Test Unit"))
-                  (t/is (some? exercise))
-                  (t/is (= (:instruction exercise) "Translate the following"))))))))
-
-      (cleanup-test-db! tmp 1))))
+  (testing "that migrating up an existing course with 2 new units and 4 new exercises, moving 2 existing exercises to one of the new units, assigning the 4 new exercises to the 2 new units each, and then deleting one of the new units again afterwards - results in 1 new unit being in the database and the 2 existing exercises are moved successfully to that unit."
+    (with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "migrate-mixed-course-changes.json")]
+          (course/create (course/use-mutation master-ds) (:master data))
+          (run! (partial insert-seed! student-ds) (:seed data))
+          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+            (sut/migrate-up! (sut/use-mutation student-ds) version)
+            (is (= (:output data)
+                   (course/all (course/use-query master-ds))))))))))
 
 (defn run-tests []
-  (t/run-tests 'abantu.changes-migrate-test))
+  (clojure.test/run-tests 'abantu.changes-migrate-test))

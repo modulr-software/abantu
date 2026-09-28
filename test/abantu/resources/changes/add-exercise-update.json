@@ -1,0 +1,28 @@
+{
+  "input": {
+    "change-type": "create",
+    "update": {
+      "id": 1,
+      "uuid": "ex-uuid",
+      "unit-uuid": "unit-uuid",
+      "course-uuid": "course-uuid",
+      "instruction": "Translate",
+      "answers": []
+    }
+  },
+  "output": {
+    "id": 1,
+    "uuid": "ex-uuid",
+    "course-uuid": "course-uuid",
+    "unit-uuid": "unit-uuid",
+    "change-type": "create",
+    "change-data": {
+      "uuid": "ex-uuid",
+      "unit-uuid": "unit-uuid",
+      "course-uuid": "course-uuid",
+      "instruction": "Translate",
+      "answers": []
+    },
+    "timestamp": "2025-01-01T00:00:00Z"
+  }
+}

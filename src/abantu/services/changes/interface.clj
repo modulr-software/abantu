@@ -10,7 +10,7 @@
    [:uuid :string]
    [:change [:vector
              [:map
-              [:uuid :int]
+              [:uuid :string]
               [:change-type :string]
               [:change-data :any]
               [:timestamp :string]]]]])
@@ -20,8 +20,8 @@
    [:uuid :string]
    [:change [:vector
              [:map
-              [:uuid :int]
-              [:course-uuid :int]
+              [:uuid :string]
+              [:course-uuid :string]
               [:change-type :string]
               [:change-data :any]
               [:timestamp :string]]]]])
@@ -31,9 +31,9 @@
    [:uuid :string]
    [:change [:vector
              [:map
-              [:uuid :int]
-              [:course-uuid :int]
-              [:unit-uuid :int]
+              [:uuid :string]
+              [:course-uuid :string]
+              [:unit-uuid :string]
               [:change-type :string]
               [:change-data :any]
               [:timestamp :string]]]]])
@@ -77,20 +77,20 @@
   (mu/select-keys ?Version [:label :course-id]))
 
 (def ?SetVersionLabel
-  (mu/select-keys ?Version [:id :label]))
+  (mu/merge (mu/select-keys ?Version [:id :label]) ?Opts))
 
 (def ?AddCourseUpdate
-  (-> (mu/select-keys ?CourseChange [:version-id :change-type])
-      (mu/assoc :update [:map [:uuid :int]])))
+  (-> (mu/select-keys ?CourseChange [:change-type])
+      (mu/assoc :update [:map [:uuid :string]])))
 
 (def ?AddUnitUpdate
-  (-> (mu/select-keys ?UnitChange [:version-id :change-type])
+  (-> (mu/select-keys ?UnitChange [:change-type])
       (mu/assoc :update [:map
                          [:uuid :string]
                          [:course-uuid :string]])))
 
 (def ?AddExerciseUpdate
-  (-> (mu/select-keys ?ExerciseChange [:version-id :change-type])
+  (-> (mu/select-keys ?ExerciseChange [:change-type])
       (mu/assoc :update [:map
                          [:uuid :string]
                          [:unit-uuid :string]
@@ -192,12 +192,12 @@
   (all vcq {:with-changes? false})
   (all vcq {:with-changes? true})
 
-  (find-exercise-changes vcq {:version-id 1})
-  (find-exercise-changes vcq {:timestamp "2025-01-01T00:00:00Z"})
-  (find-unit-changes vcq {:version-id 1})
-  (find-unit-changes vcq {:timestamp "2025-01-01T00:00:00Z"})
-  (find-course-changes vcq {:version-id 1})
-  (find-course-changes vcq {:timestamp "2025-01-01T00:00:00Z"})
+  (find-exercise-changes vcq {:from "2025-01-01T00:00:00Z"
+                              :to "2025-01-31T00:00:00Z"})
+  (find-unit-changes vcq {:from "2025-01-01T00:00:00Z"
+                          :to "2025-01-31T00:00:00Z"})
+  (find-course-changes vcq {:from "2025-01-01T00:00:00Z"
+                            :to "2025-01-31T00:00:00Z"})
 
   ;; mutations
 
@@ -207,19 +207,20 @@
 
   (set-version-label! vcm {:id 1
                            :label "review draft"})
+  (set-version-label! vcm {:id 1
+                           :label "review draft"
+                           :with-changes? true})
 
   (add-course-update!
    vcm
-   {:version-id 1
-    :change-type "create"
+   {:change-type "create"
     :update {:id 1
              :uuid "5fe04376aa57d644"
              :name "zulu basics"
              :language "zulu"
              :description "learn zulu"}})
 
-  (add-course-update! vcm {:version-id 1
-                           :change-type "create"
+  (add-course-update! vcm {:change-type "create"
                            :update {:id 2
                                     :uuid "8632b03c31aebe91"
                                     :name "afrikaans"
@@ -231,14 +232,12 @@
                            :update {:id 2
                                     :uuid "8632b03c31aebe91"}})
 
-  (add-course-update! vcm {:version-id 2
-                           :change-type "set-description"
+  (add-course-update! vcm {:change-type "set-description"
                            :update {:id 1
                                     :uuid "5fe04376aa57d644"
                                     :description "lets maybe use an actual description here"}})
 
-  (add-unit-update! vcm {:version-id 1
-                         :change-type "create"
+  (add-unit-update! vcm {:change-type "create"
                          :update {:id 1
                                   :uuid "88bbb7209549523f"
                                   :course-id 1
@@ -248,16 +247,14 @@
                                   :type "lesson"
                                   :exercises []}})
 
-  (add-unit-update! vcm {:version-id 2
-                         :change-type "set-description"
+  (add-unit-update! vcm {:change-type "set-description"
                          :update {:id 1
                                   :uuid "88bbb7209549523f"
                                   :course-uuid "5fe04376aa57d644"
                                   :description "unit about pronouns"}})
 
-  (add-exercise-update! vcm {:version-id 1
-                             :change-type "create"
-                             :update {:id 1
+(add-exercise-update! vcm {:change-type "create"
+                            :update {:id 1
                                       :uuid "529849abbecc2114"
                                       :unit-id 1
                                       :unit-uuid "88bbb7209549523f"
@@ -271,8 +268,7 @@
                                       :incorrect-message "o nei"
                                       :answers [["wie" "is" "jy"]]}})
 
-  (add-exercise-update! vcm {:version-id 2
-                             :change-type "set-instruction"
+(add-exercise-update! vcm {:change-type "set-instruction"
                              :update {:id 1
                                       :uuid "529849abbecc2114"
                                       :unit-id 1
@@ -282,6 +278,6 @@
                                       :instruction "Translate the following:"}})
 
   #_(migrate-up! vcm {:course-id 1
-                      :version-id 1})
+                      :id 1})
 
   :end)

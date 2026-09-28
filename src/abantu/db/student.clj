@@ -153,8 +153,8 @@
   (tables/create-table-sql
    :unit-changes
    (tables/table-id)
-   [:course-uuid :int :not nil]
-   [:uuid :int]
+   [:course-uuid :text :not nil]
+   [:uuid :text]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]
@@ -165,9 +165,9 @@
   (tables/create-table-sql
    :exercise-changes
    (tables/table-id)
-   [:uuid :int]
-   [:course-uuid :int :not nil]
-   [:unit-uuid :int :not nil]
+   [:uuid :text]
+   [:course-uuid :text :not nil]
+   [:unit-uuid :text :not nil]
    [:change-type :text :not nil]
    [:change-data :text :not nil]
    [:timestamp :text :not nil]

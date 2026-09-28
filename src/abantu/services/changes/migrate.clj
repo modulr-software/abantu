@@ -55,11 +55,15 @@
        (apply-update apply-fn update (rest changes))
        update))))
 
-(defn stack-changes [update-fn {:keys [uuid change]}]
-  (let [stacked (apply-update update-fn change)]
-    {:uuid uuid
-     :op (:_op stacked)
-     :change (dissoc stacked :_op)}))
+(defn stack-changes [update-fn {:keys [uuid change delete]}]
+  (let [stack (fn [changes]
+                (when (seq changes)
+                  (let [stacked (apply-update update-fn changes)]
+                    {:uuid uuid
+                     :op (or (:_op stacked) (:change-type (last changes)))
+                     :change (dissoc stacked :_op)})))]
+    {:change (stack change)
+     :delete (stack delete)}))
 
 (defn apply-exercise-changes! [ds {:keys [uuid op change]}]
   (let [em (exercise/use-mutation ds)
@@ -76,10 +80,12 @@
         (db/update! ds {:tname :exercises
                         :data (dissoc change :answers :options)
                         :where [:= :uuid uuid]})
-        (exercise/set-answers em {:uuid uuid
-                                  :answers (:answers change)})
-        (exercise/set-options em {:uuid uuid
-                                  :options (:options change)}))
+        (when (contains? change :answers)
+          (exercise/set-answers em {:uuid uuid
+                                    :answers (:answers change)}))
+        (when (contains? change :options)
+          (exercise/set-options em {:uuid uuid
+                                    :options (:options change)})))
 
       (= op :delete)
       (exercise/delete em {:uuid uuid}))))
@@ -115,18 +121,21 @@
 
 (defn migrate-up! [ds {:keys [id timestamp] :as _version}]
   (with-open [master-ds (db.util/conn)]
-    (let [course-changes (->> (core/-find-course-changes ds {:from timestamp})
-                              (mapv #(stack-changes course-update %)))
-          unit-changes (->> (core/-find-unit-changes ds {:from timestamp})
-                            (mapv #(stack-changes unit-update %)))
-          exercise-changes (->> (core/-find-exercise-changes ds {:from timestamp})
-                                (mapv #(stack-changes exercise-update %)))]
+    (let [plan (fn [find update-fn]
+                 (->> (find ds {:from timestamp})
+                      (mapv separate-deletes)
+                      (mapv #(stack-changes update-fn %))))
+          courses     (plan core/-find-course-changes course-update)
+          units       (plan core/-find-unit-changes unit-update)
+          exercises   (plan core/-find-exercise-changes exercise-update)]
 
-      (run! #(apply-course-changes! master-ds %) course-changes)
+      (run! #(apply-course-changes!   master-ds %) (keep :change courses))
+      (run! #(apply-unit-changes!     master-ds %) (keep :change units))
+      (run! #(apply-exercise-changes! master-ds %) (keep :change exercises))
 
-      (run! #(apply-unit-changes! master-ds %) unit-changes)
-
-      (run! #(apply-exercise-changes! master-ds %) exercise-changes)
+      (run! #(apply-exercise-changes! master-ds %) (keep :delete exercises))
+      (run! #(apply-unit-changes!     master-ds %) (keep :delete units))
+      (run! #(apply-course-changes!   master-ds %) (keep :delete courses))
 
       (db/update! ds {:tname :versions
                       :data {:applied 1}
@@ -146,7 +155,8 @@
     (let [{:keys [timestamp]} (db/find-one ds {:tname :versions
                                                :where [:= :id 1]})
           course-changes (->> (core/-find-course-changes ds {:from timestamp})
-                              #_(mapv #(stack-changes course-update %)))]
+                              (mapv separate-deletes)
+                              (mapv #(stack-changes course-update %)))]
       course-changes))
 
   ())

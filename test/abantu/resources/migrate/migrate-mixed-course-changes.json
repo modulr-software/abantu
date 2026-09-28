@@ -1,0 +1,268 @@
+{
+  "master": {
+    "uuid": "course-uuid",
+    "name": "Course One",
+    "language": "english",
+    "description": "Learn English",
+    "units": [
+      {
+        "uuid": "existing-unit-uuid",
+        "name": "Existing Unit",
+        "description": "The original unit",
+        "type": "lesson",
+        "exercises": [
+          {
+            "uuid": "existing-ex-one-uuid",
+            "course-id": 1,
+            "instruction": "Existing exercise one",
+            "question-content": "First question",
+            "answer-type": "bubbles",
+            "options": ["one"],
+            "correct-message": "Correct",
+            "incorrect-message": "Incorrect",
+            "answers": [["one"]]
+          },
+          {
+            "uuid": "existing-ex-two-uuid",
+            "course-id": 1,
+            "instruction": "Existing exercise two",
+            "question-content": "Second question",
+            "answer-type": "bubbles",
+            "options": ["two"],
+            "correct-message": "Correct",
+            "incorrect-message": "Incorrect",
+            "answers": [["two"]]
+          }
+        ]
+      }
+    ]
+  },
+  "seed": [
+    {
+      "version": {
+        "label": "draft 6",
+        "course-id": 1,
+        "applied": 0,
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "unit-change": {
+        "course-uuid": "course-uuid",
+        "uuid": "new-unit-one-uuid",
+        "change-type": "create",
+        "change-data": "{\"uuid\":\"new-unit-one-uuid\",\"course-uuid\":\"course-uuid\",\"name\":\"New Unit One\",\"description\":\"The first new unit\",\"type\":\"lesson\",\"level\":1}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "unit-change": {
+        "course-uuid": "course-uuid",
+        "uuid": "new-unit-two-uuid",
+        "change-type": "create",
+        "change-data": "{\"uuid\":\"new-unit-two-uuid\",\"course-uuid\":\"course-uuid\",\"name\":\"New Unit Two\",\"description\":\"The second new unit\",\"type\":\"lesson\",\"level\":1}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "new-ex-one-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "new-unit-one-uuid",
+        "change-type": "create",
+        "change-data": "{\"uuid\":\"new-ex-one-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"new-unit-one-uuid\",\"level\":1,\"options\":[\"new one\"],\"answer-type\":\"bubbles\",\"instruction\":\"New exercise one\",\"question-content\":\"New question one\",\"correct-message\":\"Correct\",\"incorrect-message\":\"Incorrect\",\"answers\":[[\"new one\"]]}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "new-ex-two-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "new-unit-one-uuid",
+        "change-type": "create",
+        "change-data": "{\"uuid\":\"new-ex-two-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"new-unit-one-uuid\",\"level\":1,\"options\":[\"new two\"],\"answer-type\":\"bubbles\",\"instruction\":\"New exercise two\",\"question-content\":\"New question two\",\"correct-message\":\"Correct\",\"incorrect-message\":\"Incorrect\",\"answers\":[[\"new two\"]]}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "new-ex-three-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "new-unit-two-uuid",
+        "change-type": "create",
+        "change-data": "{\"uuid\":\"new-ex-three-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"new-unit-two-uuid\",\"level\":1,\"options\":[\"new three\"],\"answer-type\":\"bubbles\",\"instruction\":\"New exercise three\",\"question-content\":\"New question three\",\"correct-message\":\"Correct\",\"incorrect-message\":\"Incorrect\",\"answers\":[[\"new three\"]]}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "new-ex-four-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "new-unit-two-uuid",
+        "change-type": "create",
+        "change-data": "{\"uuid\":\"new-ex-four-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"new-unit-two-uuid\",\"level\":1,\"options\":[\"new four\"],\"answer-type\":\"bubbles\",\"instruction\":\"New exercise four\",\"question-content\":\"New question four\",\"correct-message\":\"Correct\",\"incorrect-message\":\"Incorrect\",\"answers\":[[\"new four\"]]}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "existing-ex-one-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "new-unit-one-uuid",
+        "change-type": "set-unit",
+        "change-data": "{\"uuid\":\"existing-ex-one-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"new-unit-one-uuid\"}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "existing-ex-two-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "new-unit-one-uuid",
+        "change-type": "set-unit",
+        "change-data": "{\"uuid\":\"existing-ex-two-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"new-unit-one-uuid\"}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    },
+    {
+      "unit-change": {
+        "course-uuid": "course-uuid",
+        "uuid": "new-unit-two-uuid",
+        "change-type": "delete",
+        "change-data": "{\"uuid\":\"new-unit-two-uuid\",\"course-uuid\":\"course-uuid\"}",
+        "timestamp": "2026-06-17T00:00:00Z"
+      }
+    }
+  ],
+  "query": {
+    "id": 1
+  },
+  "output": [
+    {
+      "id": 1,
+      "uuid": "course-uuid",
+      "name": "Course One",
+      "language": "english",
+      "description": "Learn English",
+      "publishable": false,
+      "visible": false,
+      "review-pending": false,
+      "creator": null,
+      "units": [
+        {
+          "id": 1,
+          "uuid": "existing-unit-uuid",
+          "course-id": 1,
+          "name": "Existing Unit",
+          "description": "The original unit",
+          "level": null,
+          "type": "lesson",
+          "position": null,
+          "creator-id": null,
+          "exercises": []
+        },
+        {
+          "id": 2,
+          "uuid": "new-unit-one-uuid",
+          "course-id": 1,
+          "name": "New Unit One",
+          "description": "The first new unit",
+          "level": 1,
+          "type": "lesson",
+          "position": null,
+          "creator-id": null,
+          "exercises": [
+            {
+              "id": 1,
+              "uuid": "existing-ex-one-uuid",
+              "unit-id": 2,
+              "course-id": 1,
+              "level": 1,
+              "options": ["one"],
+              "answer-type": "bubbles",
+              "instruction": "Existing exercise one",
+              "question-content": "First question",
+              "correct-message": "Correct",
+              "incorrect-message": "Incorrect",
+              "position": null,
+              "answers": [
+                {
+                  "id": 1,
+                  "exercise-id": 1,
+                  "text": ["one"]
+                }
+              ],
+              "comments": []
+            },
+            {
+              "id": 2,
+              "uuid": "existing-ex-two-uuid",
+              "unit-id": 2,
+              "course-id": 1,
+              "level": 1,
+              "options": ["two"],
+              "answer-type": "bubbles",
+              "instruction": "Existing exercise two",
+              "question-content": "Second question",
+              "correct-message": "Correct",
+              "incorrect-message": "Incorrect",
+              "position": null,
+              "answers": [
+                {
+                  "id": 2,
+                  "exercise-id": 2,
+                  "text": ["two"]
+                }
+              ],
+              "comments": []
+            },
+            {
+              "id": 3,
+              "uuid": "new-ex-one-uuid",
+              "unit-id": 2,
+              "course-id": 1,
+              "level": 1,
+              "options": ["new one"],
+              "answer-type": "bubbles",
+              "instruction": "New exercise one",
+              "question-content": "New question one",
+              "correct-message": "Correct",
+              "incorrect-message": "Incorrect",
+              "position": null,
+              "answers": [
+                {
+                  "id": 3,
+                  "exercise-id": 3,
+                  "text": ["new one"]
+                }
+              ],
+              "comments": []
+            },
+            {
+              "id": 4,
+              "uuid": "new-ex-two-uuid",
+              "unit-id": 2,
+              "course-id": 1,
+              "level": 1,
+              "options": ["new two"],
+              "answer-type": "bubbles",
+              "instruction": "New exercise two",
+              "question-content": "New question two",
+              "correct-message": "Correct",
+              "incorrect-message": "Incorrect",
+              "position": null,
+              "answers": [
+                {
+                  "id": 4,
+                  "exercise-id": 4,
+                  "text": ["new two"]
+                }
+              ],
+              "comments": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

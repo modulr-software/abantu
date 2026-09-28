@@ -1,0 +1,12 @@
+{
+  "input": {
+    "course-id": 1
+  },
+  "output": {
+    "id": 1,
+    "label": null,
+    "course-id": 1,
+    "applied": false,
+    "timestamp": "2025-01-01T00:00:00Z"
+  }
+}

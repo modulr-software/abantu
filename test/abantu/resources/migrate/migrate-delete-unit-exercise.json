@@ -1,0 +1,141 @@
+{
+  "master": {
+    "uuid": "course-uuid",
+    "name": "Course One",
+    "language": "english",
+    "description": "Learn English",
+    "units": [
+      {
+        "uuid": "unit-one-uuid",
+        "name": "Unit One",
+        "description": "First unit",
+        "type": "lesson",
+        "exercises": [
+          {
+            "uuid": "ex-one-uuid",
+            "course-id": 1,
+            "instruction": "Translate the following",
+            "question-content": "Who are you?",
+            "answer-type": "bubbles",
+            "options": ["wie", "is", "jy"],
+            "correct-message": "correct!",
+            "incorrect-message": "o nei",
+            "answers": [["wie", "is", "jy"]]
+          }
+        ]
+      },
+      {
+        "uuid": "unit-two-uuid",
+        "name": "Unit Two",
+        "description": "Second unit",
+        "type": "lesson",
+        "exercises": [
+          {
+            "uuid": "ex-two-uuid",
+            "course-id": 1,
+            "instruction": "Name yourself",
+            "question-content": "What is your name?",
+            "answer-type": "bubbles",
+            "options": ["one", "two"],
+            "correct-message": "correct!",
+            "incorrect-message": "try again",
+            "answers": [["one"]]
+          },
+          {
+            "uuid": "ex-three-uuid",
+            "course-id": 1,
+            "instruction": "Write your name",
+            "question-content": "Your name?",
+            "answer-type": "bubbles",
+            "options": ["one", "two"],
+            "correct-message": "correct!",
+            "incorrect-message": "try again",
+            "answers": [["one"]]
+          }
+        ]
+      }
+    ]
+  },
+  "seed": [
+    {
+      "version": {
+        "label": "draft 3",
+        "course-id": 1,
+        "applied": 0,
+        "timestamp": "2025-01-03T00:00:00Z"
+      }
+    },
+    {
+      "unit-change": {
+        "course-uuid": "course-uuid",
+        "uuid": "unit-one-uuid",
+        "change-type": "delete",
+        "change-data": "{\"uuid\":\"unit-one-uuid\",\"course-uuid\":\"course-uuid\"}",
+        "timestamp": "2025-01-03T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "ex-two-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "unit-two-uuid",
+        "change-type": "delete",
+        "change-data": "{\"uuid\":\"ex-two-uuid\",\"course-uuid\":\"course-uuid\",\"unit-uuid\":\"unit-two-uuid\"}",
+        "timestamp": "2025-01-03T00:00:00Z"
+      }
+    }
+  ],
+  "query": {
+    "id": 1
+  },
+  "output": [
+    {
+      "id": 1,
+      "uuid": "course-uuid",
+      "name": "Course One",
+      "language": "english",
+      "description": "Learn English",
+      "publishable": false,
+      "visible": false,
+      "review-pending": false,
+      "creator": null,
+      "units": [
+        {
+          "id": 2,
+          "uuid": "unit-two-uuid",
+          "course-id": 1,
+          "name": "Unit Two",
+          "description": "Second unit",
+          "level": null,
+          "type": "lesson",
+          "position": null,
+          "creator-id": null,
+          "exercises": [
+            {
+              "id": 3,
+              "uuid": "ex-three-uuid",
+              "unit-id": 2,
+              "course-id": 1,
+              "level": 1,
+              "options": ["one", "two"],
+              "answer-type": "bubbles",
+              "instruction": "Write your name",
+              "question-content": "Your name?",
+              "correct-message": "correct!",
+              "incorrect-message": "try again",
+              "position": null,
+              "answers": [
+                {
+                  "id": 3,
+                  "exercise-id": 3,
+                  "text": ["one"]
+                }
+              ],
+              "comments": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

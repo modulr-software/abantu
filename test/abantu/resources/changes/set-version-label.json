@@ -1,0 +1,23 @@
+{
+  "seed": [
+    {
+      "version": {
+        "label": "draft 1",
+        "course-id": 1,
+        "applied": 1,
+        "timestamp": "2025-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "input": {
+    "id": 1,
+    "label": "review draft"
+  },
+  "output": {
+    "id": 1,
+    "label": "review draft",
+    "course-id": 1,
+    "applied": true,
+    "timestamp": "2025-01-01T00:00:00Z"
+  }
+}

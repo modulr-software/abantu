@@ -1,0 +1,82 @@
+{
+  "seed": [
+    {
+      "version": {
+        "label": "draft 1",
+        "course-id": 1,
+        "applied": 1,
+        "timestamp": "2025-01-01T00:00:00Z"
+      }
+    },
+    {
+      "version": {
+        "label": "review draft",
+        "course-id": 1,
+        "applied": 0,
+        "timestamp": "2025-01-10T00:00:00Z"
+      }
+    },
+    {
+      "course-change": {
+        "uuid": "course-uuid",
+        "change-type": "create",
+        "change-data": "{\"name\":\"Course One\"}",
+        "timestamp": "2025-01-01T00:00:00Z"
+      }
+    },
+    {
+      "course-change": {
+        "uuid": "course-uuid",
+        "change-type": "set-name",
+        "change-data": "{\"name\":\"Course renamed\"}",
+        "timestamp": "2025-01-05T00:00:00Z"
+      }
+    },
+    {
+      "course-change": {
+        "uuid": "course-uuid-2",
+        "change-type": "create",
+        "change-data": "{\"name\":\"Course Two\"}",
+        "timestamp": "2025-01-02T00:00:00Z"
+      }
+    },
+    {
+      "unit-change": {
+        "course-uuid": "course-uuid",
+        "uuid": "unit-uuid",
+        "change-type": "create",
+        "change-data": "{\"name\":\"Unit One\"}",
+        "timestamp": "2025-01-01T00:00:00Z"
+      }
+    },
+    {
+      "exercise-change": {
+        "uuid": "ex-uuid",
+        "course-uuid": "course-uuid",
+        "unit-uuid": "unit-uuid",
+        "change-type": "create",
+        "change-data": "{\"instruction\":\"Translate\"}",
+        "timestamp": "2025-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "query": {
+    "with-changes?": false
+  },
+  "output": [
+    {
+      "id": 1,
+      "label": "draft 1",
+      "course-id": 1,
+      "applied": true,
+      "timestamp": "2025-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "label": "review draft",
+      "course-id": 1,
+      "applied": false,
+      "timestamp": "2025-01-10T00:00:00Z"
+    }
+  ]
+}

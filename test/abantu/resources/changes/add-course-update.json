@@ -1,0 +1,21 @@
+{
+  "input": {
+    "change-type": "create",
+    "update": {
+      "id": 1,
+      "uuid": "course-uuid",
+      "name": "Course One",
+      "units": []
+    }
+  },
+  "output": {
+    "id": 1,
+    "uuid": "course-uuid",
+    "change-type": "create",
+    "change-data": {
+      "uuid": "course-uuid",
+      "name": "Course One"
+    },
+    "timestamp": "2025-01-01T00:00:00Z"
+  }
+}

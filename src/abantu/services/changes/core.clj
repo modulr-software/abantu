@@ -55,21 +55,27 @@
                     :where (h/map= opts)
                     :order-by :id
                     :ret :*})
-       (parse-change)))
+       (mapv parse-change)
+       (group-changes-by-uuid)
+       first))
 
 (defn -lookup-unit-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
   (->> (db/find ds {:tname :unit-changes
                     :where (h/map= opts)
                     :order-by :id
                     :ret :*})
-       (parse-change)))
+       (mapv parse-change)
+       (group-changes-by-uuid)
+       first))
 
 (defn -lookup-course-change [ds {:keys [_uuid _change-type _timestamp] :as opts}]
   (->> (db/find ds {:tname :course-changes
                     :where (h/map= opts)
                     :order-by :id
                     :ret :*})
-       (parse-change)))
+       (mapv parse-change)
+       (group-changes-by-uuid)
+       first))
 
 (defn- attach-courses [ds {:keys [timestamp] :as version}]
   (assoc version :course-changes (-find-course-changes ds {:to timestamp})))
@@ -81,12 +87,12 @@
   (assoc version :exercise-changes (-find-exercise-changes ds {:to timestamp})))
 
 (defn -lookup [ds {:keys [_id _timestamp with-changes?] :as opts}]
-  (cond->> (-> (db/find-one ds {:tname :versions
-                                :where (util/eq-clauses (dissoc opts :with-changes?))})
-               (util/parse-bool-keys [:applied]))
-    with-changes? (attach-courses ds)
-    with-changes? (attach-units ds)
-    with-changes? (attach-exercises ds)))
+  (when-let [version (db/find-one ds {:tname :versions
+                                      :where (util/eq-clauses (dissoc opts :with-changes?))})]
+    (cond->> (util/parse-bool-keys version [:applied])
+      with-changes? (attach-courses ds)
+      with-changes? (attach-units ds)
+      with-changes? (attach-exercises ds))))
 
 (defn -find [ds {:keys [_course-id _label with-changes?] :as opts}]
   (cond->> (db/find ds {:tname :versions
@@ -113,10 +119,11 @@
                                      :ret :1})]
     (-lookup ds {:id id})))
 
-(defn -set-version-label! [ds {:keys [id label]}]
+(defn -set-version-label! [ds {:keys [id label with-changes?]}]
   (db/update! ds {:tname :versions
                   :data {:label label}
-                  :where [:= :id id]}))
+                  :where [:= :id id]})
+  (-lookup ds {:id id :with-changes? with-changes?}))
 
 (defn -add-exercise-update! [ds {:keys [change-type update]}]
   (let [change-type (str change-type)
