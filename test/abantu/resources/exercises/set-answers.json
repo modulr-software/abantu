@@ -49,14 +49,10 @@
     "incorrect-message": "o nei",
     "position": null,
     "answers": [
-      {
-        "id": 2,
-        "exercise-id": 1,
-        "text": [
-          "is",
-          "ek"
-        ]
-      }
+      [
+        "is",
+        "ek"
+      ]
     ],
     "comments": []
   }

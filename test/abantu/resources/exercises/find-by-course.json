@@ -65,14 +65,10 @@
       "incorrect-message": "o nei",
       "position": null,
       "answers": [
-        {
-          "id": 1,
-          "exercise-id": 1,
-          "text": [
-            "wie",
-            "is"
-          ]
-        }
+        [
+          "wie",
+          "is"
+        ]
       ],
       "comments": []
     }

@@ -53,62 +53,6 @@
   (read-json file))
 
 (deftest test-query
-  (testing "that looking up one version by its id returns the version"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "lookup-by-id.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
-  (testing "that looking up one version by its timestamp returns the version"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "lookup-by-timestamp.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
-  (testing "that looking up a version that doesn't exist returns nil"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "lookup-missing.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
-  (testing "that looking up one version by its id with :with-changes? returns the version with its changes attached"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "lookup-with-changes.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/lookup (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
-  (testing "that finding versions by course id returns the versions"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "find-by-course-id.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/find (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
-  (testing "that finding versions by label returns the matching versions"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "find-by-label.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/find (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
-  (testing "that finding all versions returns a vec of versions"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "all.json")]
-          (run! (partial insert-seed! ds) (:seed data))
-          (let [actual (sut/all (sut/use-query ds) (:query data))]
-            (is (= (:output data) actual)))))))
-
   (testing "that finding course changes within a timestamp range returns the grouped changes"
     (with-test-student-db
       (fn [ds]
@@ -158,40 +102,6 @@
             (is (= (:output data) actual))))))))
 
 (deftest test-mutation
-  (testing "that creating a version returns the created version"
-    (with-test-student-db
-      (fn [ds]
-        (with-frozen-time
-          (fn []
-            (let [data (read-fixture-raw "add-version.json")
-                  actual (sut/add-version! (sut/use-mutation ds) (:input data))]
-              (is (= (:output data) actual))))))))
-
-  (testing "that creating a version without a label returns the created version"
-    (with-test-student-db
-      (fn [ds]
-        (with-frozen-time
-          (fn []
-            (let [data (read-fixture-raw "add-version-no-label.json")
-                  actual (sut/add-version! (sut/use-mutation ds) (:input data))]
-              (is (= (:output data) actual))))))))
-
-  (testing "that setting the version label updates the version"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "set-version-label.json")
-              _ (run! (partial insert-seed! ds) (:seed data))
-              actual (sut/set-version-label! (sut/use-mutation ds) (:input data))]
-          (is (= (:output data) actual))))))
-
-  (testing "that setting the version label with :with-changes? returns the version with its changes attached"
-    (with-test-student-db
-      (fn [ds]
-        (let [data (read-fixture "set-version-label-with-changes.json")
-              _ (run! (partial insert-seed! ds) (:seed data))
-              actual (sut/set-version-label! (sut/use-mutation ds) (:input data))]
-          (is (= (:output data) actual))))))
-
   (testing "that adding a course update records a create change"
     (with-test-student-db
       (fn [ds]

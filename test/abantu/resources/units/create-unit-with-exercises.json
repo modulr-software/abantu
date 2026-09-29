@@ -51,13 +51,9 @@
         "incorrect-message": null,
         "position": null,
         "answers": [
-          {
-            "id": 1,
-            "exercise-id": 1,
-            "text": [
-              "a"
-            ]
-          }
+          [
+            "a"
+          ]
         ],
         "comments": []
       }

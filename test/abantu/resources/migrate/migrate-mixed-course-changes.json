@@ -17,10 +17,16 @@
             "instruction": "Existing exercise one",
             "question-content": "First question",
             "answer-type": "bubbles",
-            "options": ["one"],
+            "options": [
+              "one"
+            ],
             "correct-message": "Correct",
             "incorrect-message": "Incorrect",
-            "answers": [["one"]]
+            "answers": [
+              [
+                "one"
+              ]
+            ]
           },
           {
             "uuid": "existing-ex-two-uuid",
@@ -28,10 +34,16 @@
             "instruction": "Existing exercise two",
             "question-content": "Second question",
             "answer-type": "bubbles",
-            "options": ["two"],
+            "options": [
+              "two"
+            ],
             "correct-message": "Correct",
             "incorrect-message": "Incorrect",
-            "answers": [["two"]]
+            "answers": [
+              [
+                "two"
+              ]
+            ]
           }
         ]
       }
@@ -178,7 +190,9 @@
               "unit-id": 2,
               "course-id": 1,
               "level": 1,
-              "options": ["one"],
+              "options": [
+                "one"
+              ],
               "answer-type": "bubbles",
               "instruction": "Existing exercise one",
               "question-content": "First question",
@@ -186,11 +200,9 @@
               "incorrect-message": "Incorrect",
               "position": null,
               "answers": [
-                {
-                  "id": 1,
-                  "exercise-id": 1,
-                  "text": ["one"]
-                }
+                [
+                  "one"
+                ]
               ],
               "comments": []
             },
@@ -200,7 +212,9 @@
               "unit-id": 2,
               "course-id": 1,
               "level": 1,
-              "options": ["two"],
+              "options": [
+                "two"
+              ],
               "answer-type": "bubbles",
               "instruction": "Existing exercise two",
               "question-content": "Second question",
@@ -208,11 +222,9 @@
               "incorrect-message": "Incorrect",
               "position": null,
               "answers": [
-                {
-                  "id": 2,
-                  "exercise-id": 2,
-                  "text": ["two"]
-                }
+                [
+                  "two"
+                ]
               ],
               "comments": []
             },
@@ -222,7 +234,9 @@
               "unit-id": 2,
               "course-id": 1,
               "level": 1,
-              "options": ["new one"],
+              "options": [
+                "new one"
+              ],
               "answer-type": "bubbles",
               "instruction": "New exercise one",
               "question-content": "New question one",
@@ -230,11 +244,9 @@
               "incorrect-message": "Incorrect",
               "position": null,
               "answers": [
-                {
-                  "id": 3,
-                  "exercise-id": 3,
-                  "text": ["new one"]
-                }
+                [
+                  "new one"
+                ]
               ],
               "comments": []
             },
@@ -244,7 +256,9 @@
               "unit-id": 2,
               "course-id": 1,
               "level": 1,
-              "options": ["new two"],
+              "options": [
+                "new two"
+              ],
               "answer-type": "bubbles",
               "instruction": "New exercise two",
               "question-content": "New question two",
@@ -252,11 +266,9 @@
               "incorrect-message": "Incorrect",
               "position": null,
               "answers": [
-                {
-                  "id": 4,
-                  "exercise-id": 4,
-                  "text": ["new two"]
-                }
+                [
+                  "new two"
+                ]
               ],
               "comments": []
             }

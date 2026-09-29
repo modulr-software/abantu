@@ -17,10 +17,20 @@
             "instruction": "Translate the following",
             "question-content": "Who are you?",
             "answer-type": "bubbles",
-            "options": ["wie", "is", "jy"],
+            "options": [
+              "wie",
+              "is",
+              "jy"
+            ],
             "correct-message": "correct!",
             "incorrect-message": "o nei",
-            "answers": [["wie", "is", "jy"]]
+            "answers": [
+              [
+                "wie",
+                "is",
+                "jy"
+              ]
+            ]
           }
         ]
       },
@@ -36,10 +46,17 @@
             "instruction": "Name yourself",
             "question-content": "What is your name?",
             "answer-type": "bubbles",
-            "options": ["one", "two"],
+            "options": [
+              "one",
+              "two"
+            ],
             "correct-message": "correct!",
             "incorrect-message": "try again",
-            "answers": [["one"]]
+            "answers": [
+              [
+                "one"
+              ]
+            ]
           },
           {
             "uuid": "ex-three-uuid",
@@ -47,10 +64,17 @@
             "instruction": "Write your name",
             "question-content": "Your name?",
             "answer-type": "bubbles",
-            "options": ["one", "two"],
+            "options": [
+              "one",
+              "two"
+            ],
             "correct-message": "correct!",
             "incorrect-message": "try again",
-            "answers": [["one"]]
+            "answers": [
+              [
+                "one"
+              ]
+            ]
           }
         ]
       }
@@ -117,7 +141,10 @@
               "unit-id": 2,
               "course-id": 1,
               "level": 1,
-              "options": ["one", "two"],
+              "options": [
+                "one",
+                "two"
+              ],
               "answer-type": "bubbles",
               "instruction": "Write your name",
               "question-content": "Your name?",
@@ -125,11 +152,9 @@
               "incorrect-message": "try again",
               "position": null,
               "answers": [
-                {
-                  "id": 3,
-                  "exercise-id": 3,
-                  "text": ["one"]
-                }
+                [
+                  "one"
+                ]
               ],
               "comments": []
             }

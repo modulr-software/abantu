@@ -17,10 +17,20 @@
             "instruction": "Translate the following",
             "question-content": "Who are you?",
             "answer-type": "bubbles",
-            "options": ["wie", "is", "jy"],
+            "options": [
+              "wie",
+              "is",
+              "jy"
+            ],
             "correct-message": "correct!",
             "incorrect-message": "o nei",
-            "answers": [["wie", "is", "jy"]]
+            "answers": [
+              [
+                "wie",
+                "is",
+                "jy"
+              ]
+            ]
           }
         ]
       }
@@ -115,7 +125,10 @@
               "unit-id": 1,
               "course-id": 1,
               "level": 1,
-              "options": ["one", "two"],
+              "options": [
+                "one",
+                "two"
+              ],
               "answer-type": "bubbles",
               "instruction": "Updated instruction",
               "question-content": "Who are you?",
@@ -123,11 +136,9 @@
               "incorrect-message": "o nei",
               "position": null,
               "answers": [
-                {
-                  "id": 2,
-                  "exercise-id": 1,
-                  "text": ["two"]
-                }
+                [
+                  "two"
+                ]
               ],
               "comments": []
             }

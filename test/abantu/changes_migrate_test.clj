@@ -6,7 +6,8 @@
             [abantu.db.util :as db.util]
             [abantu.db.honey :as hon]
             [abantu.services.courses.interface :as course]
-            [abantu.services.changes.interface :as sut]))
+            [abantu.services.changes.interface :as sut]
+            [abantu.services.versions.interface :as version]))
 
 (defn with-test-dbs
   "Runs (f master-ds student-ds) against fresh migrated test DBs (ids 1 and
@@ -49,7 +50,7 @@
       (fn [master-ds student-ds]
         (let [data (read-fixture "migrate-new-course.json")]
           (run! (partial insert-seed! student-ds) (:seed data))
-          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+          (let [version (version/lookup (version/use-query student-ds) (:query data))]
             (sut/migrate-up! (sut/use-mutation student-ds) version)
             (is (= (:output data)
                    (course/all (course/use-query master-ds)))))))))
@@ -61,7 +62,7 @@
         (let [data (read-fixture "migrate-update-course.json")]
           (course/create (course/use-mutation master-ds) (:master data))
           (run! (partial insert-seed! student-ds) (:seed data))
-          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+          (let [version (version/lookup (version/use-query student-ds) (:query data))]
             (sut/migrate-up! (sut/use-mutation student-ds) version)
             (is (= (:output data)
                    (course/all (course/use-query master-ds)))))))))
@@ -74,7 +75,7 @@
         (let [data (read-fixture "migrate-delete-unit-exercise.json")]
           (course/create (course/use-mutation master-ds) (:master data))
           (run! (partial insert-seed! student-ds) (:seed data))
-          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+          (let [version (version/lookup (version/use-query student-ds) (:query data))]
             (sut/migrate-up! (sut/use-mutation student-ds) version)
             (is (= (:output data)
                    (course/all (course/use-query master-ds)))))))))
@@ -87,7 +88,7 @@
         (let [data (read-fixture "migrate-move-exercise.json")]
           (course/create (course/use-mutation master-ds) (:master data))
           (run! (partial insert-seed! student-ds) (:seed data))
-          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+          (let [version (version/lookup (version/use-query student-ds) (:query data))]
             (sut/migrate-up! (sut/use-mutation student-ds) version)
             (is (= (:output data)
                    (course/all (course/use-query master-ds)))))))))
@@ -100,7 +101,7 @@
         (let [data (read-fixture "migrate-delete-course.json")]
           (course/create (course/use-mutation master-ds) (:master data))
           (run! (partial insert-seed! student-ds) (:seed data))
-          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+          (let [version (version/lookup (version/use-query student-ds) (:query data))]
             (sut/migrate-up! (sut/use-mutation student-ds) version)
             (is (= (:output data)
                    (course/all (course/use-query master-ds)))))))))
@@ -111,7 +112,7 @@
         (let [data (read-fixture "migrate-mixed-course-changes.json")]
           (course/create (course/use-mutation master-ds) (:master data))
           (run! (partial insert-seed! student-ds) (:seed data))
-          (let [version (sut/lookup (sut/use-query student-ds) (:query data))]
+          (let [version (version/lookup (version/use-query student-ds) (:query data))]
             (sut/migrate-up! (sut/use-mutation student-ds) version)
             (is (= (:output data)
                    (course/all (course/use-query master-ds))))))))))
