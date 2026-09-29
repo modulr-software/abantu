@@ -23,6 +23,29 @@
 (defn- process-bools [course]
   (util/parse-bool-keys course [:publishable :visible :review-pending]))
 
+;; resolved lazily: changes/interface requires changes/migrate, which requires
+;; courses/interface -> courses/core
+(def ^:private add-course-update!
+  (delay (requiring-resolve 'abantu.services.changes.interface/add-course-update!)))
+
+;; a create cascade replays the whole tree, minus comments (never replayable)
+(defn- cascaded-unit [unit]
+  (assoc unit :exercises (mapv #(dissoc % :comments) (:exercises unit))))
+
+;; a delete cascade carries identity only
+(defn- deleted-unit [unit]
+  {:uuid (:uuid unit)
+   :exercises (mapv (fn [exercise] {:uuid (:uuid exercise)}) (:exercises unit))})
+
+(defn- add-change! [changes-api course change-type payload units]
+  (when changes-api
+    (@add-course-update!
+     changes-api
+     {:change-type change-type
+      :update (merge payload
+                     {:uuid (:uuid course)}
+                     (when (seq units) {:units units}))})))
+
 (defn -lookup [ds {:keys [id uuid]}]
   (->> (db/find-one ds (cond-> {:tname :courses}
                          (some? uuid) (h/where [:= :uuid uuid])
@@ -49,86 +72,109 @@
               (partial attach-units ds)
               (partial attach-creator ds)))))
 
-(defn -create [ds {:keys [uuid units] :as update}]
+(defn -create [changes-api ds {:keys [uuid units] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :courses
                                      :values (-> (dissoc update :units)
                                                  (assoc :uuid (or uuid (util/uuid))))
                                      :ret :1})
         units' (mapv #(assoc % :course-id id) units)]
     (run! #(unit/create (unit/use-mutation ds) %) units')
-    (update/apply (-lookup ds {:id id}) {:type :create
-                                         :payload (dissoc update :units)})))
+    (let [applied (update/apply (-lookup ds {:id id}) {:type :create
+                                                       :payload (dissoc update :units)})]
+      ;; cascade: one course change + one change per unit + one per exercise
+      (add-change! changes-api applied :create (dissoc update :units)
+                   (mapv cascaded-unit (:units applied)))
+      applied)))
 
-(defn -delete [ds {:keys [id uuid] :as update}]
-  (let [{:keys [id]} (-lookup ds {:id id :uuid uuid})
+(defn -delete [changes-api ds {:keys [id uuid] :as update}]
+  (let [{:keys [id] :as course} (-lookup ds {:id id :uuid uuid})
         unmut (unit/use-mutation ds)
         unit-ids (db/find ds {:tname :units
                               :where [:= :course-id id]})]
     (run! #(unit/delete unmut %) unit-ids)
-    (db/delete! ds {:tname :user-courses
-                    :where [:= :course-id id]})
-    (db/delete! ds {:tname :course-editors
-                    :where [:= :course-id id]})
+    (try
+      (db/delete! ds {:tname :user-courses
+                      :where [:= :course-id id]})
+      (db/delete! ds {:tname :course-editors
+                      :where [:= :course-id id]})
+      (catch Exception _))
     (db/delete! ds {:tname :courses
                     :where [:= :id id]})
+    ;; cascade: one course change + one change per unit + one per exercise
+    (add-change! changes-api course :delete nil
+                 (mapv deleted-unit (:units course)))
     (update/apply nil {:type :delete
                        :payload update})))
 
-(defn -set-name [ds {:keys [id uuid name] :as update}]
+(defn -set-name [changes-api ds {:keys [id uuid name] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:name name}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-name
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-name
+                                        :payload update})]
+      (add-change! changes-api applied :set-name update nil)
+      applied)))
 
-(defn -set-language [ds {:keys [id uuid language] :as update}]
+(defn -set-language [changes-api ds {:keys [id uuid language] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:language language}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-language
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-language
+                                        :payload update})]
+      (add-change! changes-api applied :set-language update nil)
+      applied)))
 
-(defn -set-description [ds {:keys [id uuid description] :as update}]
+(defn -set-description [changes-api ds {:keys [id uuid description] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:description description}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-description
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-description
+                                        :payload update})]
+      (add-change! changes-api applied :set-description update nil)
+      applied)))
 
-(defn -set-publishable [ds {:keys [id uuid publishable] :as update}]
+(defn -set-publishable [changes-api ds {:keys [id uuid publishable] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:publishable publishable}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-publishable
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-publishable
+                                        :payload update})]
+      (add-change! changes-api applied :set-publishable update nil)
+      applied)))
 
-(defn -set-visible [ds {:keys [id uuid visible] :as update}]
+(defn -set-visible [changes-api ds {:keys [id uuid visible] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:visible visible}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-visible
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-visible
+                                        :payload update})]
+      (add-change! changes-api applied :set-visible update nil)
+      applied)))
 
-(defn -set-review-pending [ds {:keys [id uuid review-pending] :as update}]
+(defn -set-review-pending [changes-api ds {:keys [id uuid review-pending] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:review-pending review-pending}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-review-pending
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-review-pending
+                                        :payload update})]
+      (add-change! changes-api applied :set-review-pending update nil)
+      applied)))
 
-(defn -set-creator-id [ds {:keys [id uuid creator-id] :as update}]
+(defn -set-creator-id [changes-api ds {:keys [id uuid creator-id] :as update}]
   (when-let [course (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :courses
                     :values {:creator-id creator-id}
                     :where [:= :id (:id course)]})
-    (update/apply course {:type :set-creator-id
-                          :payload update})))
+    (let [applied (update/apply course {:type :set-creator-id
+                                        :payload update})]
+      (add-change! changes-api applied :set-creator-id update nil)
+      applied)))
 
 (comment
   (def ds (db/ds :master))

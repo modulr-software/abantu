@@ -8,12 +8,7 @@
 
 (def ?Option :string)
 (def ?Answer
-  [:or
-   [:map
-    [:id :int]
-    [:text [:vector :string]]
-    [:exercise-id :int]]
-   [:vector :string]])
+  [:vector :string])
 
 (def ?Exercise
   [:map
@@ -173,41 +168,46 @@
     (util/maybe ?Exercise)))
 
 (defn use-mutation
+  "Pass an instance of the changes api to record an exercise change for every
+   mutation. Without one, mutations change the exercise but record nothing -
+   which is what a cascaded create wants, since the caller's single change
+   already covers the whole tree."
   ([] (use-mutation (db.util/conn)))
-  ([ds]
+  ([ds] (use-mutation ds nil))
+  ([ds changes-api]
    (malt/reify ExerciseMutation
      (create [_ input]
-       (exercises/-create ds input))
+       (exercises/-create changes-api ds input))
      (delete [_ input]
-       (exercises/-delete ds input))
+       (exercises/-delete changes-api ds input))
      (set-unit [_ input]
-       (exercises/-set-unit ds input))
+       (exercises/-set-unit changes-api ds input))
      (set-instruction [_ input]
-       (exercises/-set-instruction ds input))
+       (exercises/-set-instruction changes-api ds input))
      (set-question-content [_ input]
-       (exercises/-set-question-content ds input))
+       (exercises/-set-question-content changes-api ds input))
      (set-answer-type [_ input]
-       (exercises/-set-answer-type ds input))
+       (exercises/-set-answer-type changes-api ds input))
      (set-level [_ input]
-       (exercises/-set-level ds input))
+       (exercises/-set-level changes-api ds input))
      (set-correct-message [_ input]
-       (exercises/-set-correct-message ds input))
+       (exercises/-set-correct-message changes-api ds input))
      (set-incorrect-message [_ input]
-       (exercises/-set-incorrect-message ds input))
+       (exercises/-set-incorrect-message changes-api ds input))
      (set-position [_ input]
-       (exercises/-set-position ds input))
+       (exercises/-set-position changes-api ds input))
      (set-options [_ input]
-       (exercises/-set-options ds input))
+       (exercises/-set-options changes-api ds input))
      (add-option [_ input]
-       (exercises/-add-option ds input))
+       (exercises/-add-option changes-api ds input))
      (remove-option [_ input]
-       (exercises/-remove-option ds input))
+       (exercises/-remove-option changes-api ds input))
      (set-answers [_ input]
-       (exercises/-set-answers ds input))
+       (exercises/-set-answers changes-api ds input))
      (add-answer [_ input]
-       (exercises/-add-answer ds input))
+       (exercises/-add-answer changes-api ds input))
      (remove-answer [_ input]
-       (exercises/-remove-answer ds input)))))
+       (exercises/-remove-answer changes-api ds input)))))
 
 (comment
   (require '[abantu.db.interface :as db])

@@ -31,22 +31,33 @@
 
 (defn get-all
   ([ds] (get-all ds "all"))
-  ([ds type]
-   (let [where (resolved-where type)]
-     (->> (db/find ds (cond-> {:tname :comments :ret :*}
-                        where (assoc :where where)))
-          (mapv (partial append-users ds))))))
-
+  ([ds type] (get-all ds type nil))
+  ([ds type users-ds-fn]
+   (let [where (resolved-where type)
+         resolve-users (or users-ds-fn (constantly ds))
+         comments (db/find ds (cond-> {:tname :comments :ret :*}
+                                where (assoc :where where)))]
+     (if (seq comments)
+       (mapv (partial append-users (resolve-users)) comments)
+       []))))
 
 (defn get-for-exercise
-  ([ds exercise-id] (get-for-exercise ds exercise-id "all"))
-  ([ds exercise-id type]
-   (let [rwhere (resolved-where type)]
-     (->> (db/find ds (cond-> {:tname :comments
-                               :where [:= :exercise-id exercise-id]
-                               :ret :*}
-                        rwhere (assoc :where [:and [:= :exercise-id exercise-id] rwhere])))
-          (mapv (partial append-users ds))))))
+  "Comments live alongside the exercise, but their authors live in the master
+   db. Pass `users-ds-fn` (a 0-arity fn returning the ds to resolve authors
+   from) when that differs from `ds`; it is only called when the exercise
+   actually has comments."
+  ([ds exercise-id] (get-for-exercise ds exercise-id "all" nil))
+  ([ds exercise-id type] (get-for-exercise ds exercise-id type nil))
+  ([ds exercise-id type users-ds-fn]
+   (let [rwhere (resolved-where type)
+         resolve-users (or users-ds-fn (constantly ds))
+         comments (db/find ds (cond-> {:tname :comments
+                                       :where [:= :exercise-id exercise-id]
+                                       :ret :*}
+                                rwhere (assoc :where [:and [:= :exercise-id exercise-id] rwhere])))]
+     (if (seq comments)
+       (mapv (partial append-users (resolve-users)) comments)
+       []))))
 
 (defn save-comment! [ds {:keys [exercise-id unit-id course-id text user-id timestamp] :as comment}]
   (let [id (:id (db/insert! ds {:tname :comments

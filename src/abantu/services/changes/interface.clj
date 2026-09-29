@@ -159,7 +159,50 @@
              :uuid "5fe04376aa57d644"
              :name "zulu basics"
              :language "zulu"
-             :description "learn zulu"}})
+             :description "learn zulu"
+             :units [{:id 1
+                      :uuid "88bbb7209549523f"
+                      :course-id 1
+                      :course-uuid "5fe04376aa57d644"
+                      :name "pronouns 1"
+                      :description "useful stuff"
+                      :type "lesson"
+                      :exercises []}]}})
+
+  (add-course-update!
+   vcm
+   {:change-type "create"
+    :update {:uuid "bf02418ff6342d18",
+             :id 1,
+             :description "learn afrikaans",
+             :creator nil,
+             :name "afrikaans basics",
+             :language "afrikaans",
+             :publishable false,
+             :visible false,
+             :review-pending false
+             :units [{:uuid "472a75c9f292632f",
+                      :id 1,
+                      :description "intro to pronouns",
+                      :name "pronouns 1",
+                      :type "lesson",
+                      :level nil,
+                      :position nil,
+                      :course-id 1
+                      :exercises [{:uuid "f49160fb67a86f42",
+                                   :id 1,
+                                   :question-content "who are you",
+                                   :correct-message "correct!",
+                                   :comments [],
+                                   :unit-id 1,
+                                   :level 1,
+                                   :answers [["wie" "is" "jy"]],
+                                   :position nil,
+                                   :options ["wat" "wie" "hoe" "is" "jy"],
+                                   :course-id 1,
+                                   :answer-type "bubbles",
+                                   :instruction "translate the following",
+                                   :incorrect-message "o nei"}]}]}})
 
   (add-course-update! vcm {:change-type "create"
                            :update {:id 2

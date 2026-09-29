@@ -34,7 +34,8 @@
       (mu/update-entry-properties :description assoc :optional true)
       (mu/update-entry-properties :level assoc :optional true)
       (mu/update-entry-properties :position assoc :optional true)
-      (mu/assoc :exercises [:vector (mu/dissoc exercises/?Create :unit-id)])))
+      (mu/assoc :exercises [:vector (-> (mu/dissoc exercises/?Create :unit-id)
+                                        (mu/dissoc :course-id))])))
 
 (def ?SetCourseId
   [:or (mu/select-keys ?Unit [:id :course-id])
@@ -96,24 +97,25 @@
 
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))
-  ([ds]
+  ([ds] (use-mutation ds nil))
+  ([ds changes-api]
    (malt/reify UnitMutation
      (create [_ input]
-       (units/-create ds input))
+       (units/-create changes-api ds input))
      (delete [_ input]
-       (units/-delete ds input))
+       (units/-delete changes-api ds input))
      (set-name [_ input]
-       (units/-set-name ds input))
+       (units/-set-name changes-api ds input))
      (set-description [_ input]
-       (units/-set-description ds input))
+       (units/-set-description changes-api ds input))
      (set-level [_ input]
-       (units/-set-level ds input))
+       (units/-set-level changes-api ds input))
      (set-type [_ input]
-       (units/-set-type ds input))
+       (units/-set-type changes-api ds input))
      (set-course-id [_ input]
-       (units/-set-course-id ds input))
+       (units/-set-course-id changes-api ds input))
      (set-position [_ input]
-       (units/-set-position ds input)))))
+       (units/-set-position changes-api ds input)))))
 
 (comment
 

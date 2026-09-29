@@ -117,26 +117,27 @@
 
 (defn use-mutation
   ([] (use-mutation (db.util/conn)))
-  ([ds]
+  ([ds] (use-mutation ds nil))
+  ([ds changes-api]
    (malt/reify CourseMutation
      (create [_ input]
-       (courses/-create ds input))
+       (courses/-create changes-api ds input))
      (delete [_ input]
-       (courses/-delete ds input))
+       (courses/-delete changes-api ds input))
      (set-name [_ input]
-       (courses/-set-name ds input))
+       (courses/-set-name changes-api ds input))
      (set-language [_ input]
-       (courses/-set-language ds input))
+       (courses/-set-language changes-api ds input))
      (set-description [_ input]
-       (courses/-set-description ds input))
+       (courses/-set-description changes-api ds input))
      (set-publishable [_ input]
-       (courses/-set-publishable ds input))
+       (courses/-set-publishable changes-api ds input))
      (set-visible [_ input]
-       (courses/-set-visible ds input))
+       (courses/-set-visible changes-api ds input))
      (set-review-pending [_ input]
-       (courses/-set-review-pending ds input))
+       (courses/-set-review-pending changes-api ds input))
      (set-creator-id [_ input]
-       (courses/-set-creator-id ds input)))))
+       (courses/-set-creator-id changes-api ds input)))))
 
 (comment
 
@@ -148,7 +149,16 @@
   (create cm {:name "afrikaans basics"
               :language "afrikaans"
               :description "learn afrikaans"
-              :units []})
+              :units [{:name "pronouns 1"
+                       :description "intro to pronouns"
+                       :type "lesson"
+                       :exercises [{:instruction "translate the following"
+                                    :question-content "who are you"
+                                    :answer-type "bubbles"
+                                    :options ["wat" "wie" "hoe" "is" "jy"]
+                                    :correct-message "correct!"
+                                    :incorrect-message "o nei"
+                                    :answers [["wie" "is" "jy"]]}]}]})
 
   (set-name cm {:id 1
                 :name "zulu basics"})
