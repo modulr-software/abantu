@@ -1,6 +1,6 @@
 (ns abantu.services.exercises.core
   (:require [abantu.db.interface :as db]
-            [abantu.services.comments :as comments]
+            [abantu.services.changes.core :as changes]
             [abantu.services.exercises.update :as update]
             [honey.sql.helpers :as h]
             [clojure.string :as str]
@@ -38,10 +38,6 @@
                                              :ret :*})
                                 (mapv process-answer))))
 
-(defn- attach-comments [ds {:keys [id] :as exercise}]
-  (assoc exercise :comments
-         (comments/get-for-exercise ds id "all" #(db/ds :master))))
-
 (defn -lookup  [ds {:keys [id uuid unit-id course-id]}]
   (when-let [exercise (db/find ds (cond-> {:tname :exercises
                                            :ret :1}
@@ -50,15 +46,13 @@
                                     (some? unit-id) (h/where [:= :unit-id unit-id])
                                     (some? course-id) (h/where [:= :course-id course-id])))]
     (->> exercise
-         (attach-comments ds)
          (process-options)
          (attach-answers ds))))
 
 (defn -all [ds]
   (->> (db/find ds {:tname :exercises
                     :ret :*})
-       (mapv (comp (partial attach-comments ds)
-                   process-options
+       (mapv (comp process-options
                    (partial attach-answers ds)))))
 
 (defn -find [ds {:keys [id uuid unit-id course-id]}]
@@ -68,14 +62,8 @@
                      (some? id) (h/where [:= :id id])
                      (some? unit-id) (h/where [:= :unit-id unit-id])
                      (some? course-id) (h/where [:= :course-id course-id])))
-       (mapv (comp (partial attach-comments ds)
-                   process-options
+       (mapv (comp process-options
                    (partial attach-answers ds)))))
-
-;; resolved lazily: changes/interface requires changes/migrate, which requires
-;; exercises/interface, so a static require from here is a cyclic load dependency
-(def ^:private add-exercise-update!
-  (delay (requiring-resolve 'abantu.services.changes.interface/add-exercise-update!)))
 
 (defn- add-change!
   "records an exercise change through the changes api, when one was given. the
@@ -83,15 +71,15 @@
    that exercise-changes requires from them."
   [changes-api ds change-type {:keys [uuid unit-id course-id]} payload]
   (when changes-api
-    (@add-exercise-update!
-     changes-api
+    (changes/-add-exercise-update!
+     ds
      {:change-type change-type
       :update (merge payload
                      {:uuid uuid
                       :unit-uuid (:uuid (db/find-one ds {:tname :units
                                                          :where [:= :id unit-id]}))
                       :course-uuid (:uuid (db/find-one ds {:tname :courses
-                                                          :where [:= :id course-id]}))})})))
+                                                           :where [:= :id course-id]}))})})))
 
 (defn -create
   [changes-api ds {:keys [uuid options answers] :as update}]
@@ -107,8 +95,6 @@
         exercise (-lookup ds {:id id})
         applied (update/apply exercise {:type :create
                                         :payload update})]
-    ;; the change carries the input, not the looked-up record: comments are never
-    ;; replayable and must not reach the feed
     (add-change! changes-api ds "create" exercise update)
     applied))
 
@@ -282,42 +268,42 @@
                            :course-id 1}})
 
   (-create nil ds {:unit-id 1
-               :course-id 1
-               :instruction "translate the following"
-               :question-content "He is"
-               :answer-type "bubbles"
-               :options ["hy" "sy" "is"]
-               :correct-message "correct!"
-               :incorrect-message "o nei"
-               :answers [["hy" "is"]]})
+                   :course-id 1
+                   :instruction "translate the following"
+                   :question-content "He is"
+                   :answer-type "bubbles"
+                   :options ["hy" "sy" "is"]
+                   :correct-message "correct!"
+                   :incorrect-message "o nei"
+                   :answers [["hy" "is"]]})
 
   (-set-unit nil ds {:id 1
-                 :unit-id 2})
+                     :unit-id 2})
   (-set-instruction nil ds {:id 1
-                        :instruction "Translate the following:"})
+                            :instruction "Translate the following:"})
   (-set-question-content nil ds {:id 1
-                             :question-content "I am"})
+                                 :question-content "I am"})
   (-set-answer-type nil ds {:id 1
-                        :answer-type "bubbles"})
+                            :answer-type "bubbles"})
   (-set-level nil ds {:id 1
-                  :level 2})
+                      :level 2})
   (-set-correct-message nil ds {:id 1
-                            :correct-message "wow amazing!"})
+                                :correct-message "wow amazing!"})
   (-set-incorrect-message nil ds {:id 1
-                              :incorrect-message "bro that was so lame"})
+                                  :incorrect-message "bro that was so lame"})
   (-set-position nil ds {:id 1
-                     :position 1})
+                         :position 1})
   (-set-options nil ds {:id 1
-                    :options ["ek" "hy" "sy" "is"]})
+                        :options ["ek" "hy" "sy" "is"]})
   (-add-option nil ds {:id 1
-                   :option "weet"})
+                       :option "weet"})
   (-remove-option nil ds {:id 1
-                      :option "weet"})
+                          :option "weet"})
   (-set-answers nil ds {:id 1
-                    :answers [["is" "ek"]]})
+                        :answers [["is" "ek"]]})
   (-add-answer nil ds {:id 1
-                   :answer ["hy" "is"]})
+                       :answer ["hy" "is"]})
   (-remove-answer nil ds {:id 1
-                      :answer-id 11})
+                          :answer-id 11})
 
   :end)

@@ -1,5 +1,6 @@
 (ns abantu.services.courses.core
   (:require [abantu.db.interface :as db]
+            [abantu.services.changes.core :as changes]
             [abantu.services.units.interface :as unit]
             [abantu.services.courses.update :as update]
             [honey.sql.helpers :as h]
@@ -19,14 +20,8 @@
     (-> (assoc course :creator nil)
         (dissoc :creator-id))))
 
-;; TODO: move this to a shared file
 (defn- process-bools [course]
   (util/parse-bool-keys course [:publishable :visible :review-pending]))
-
-;; resolved lazily: changes/interface requires changes/migrate, which requires
-;; courses/interface -> courses/core
-(def ^:private add-course-update!
-  (delay (requiring-resolve 'abantu.services.changes.interface/add-course-update!)))
 
 ;; a create cascade replays the whole tree, minus comments (never replayable)
 (defn- cascaded-unit [unit]
@@ -37,10 +32,10 @@
   {:uuid (:uuid unit)
    :exercises (mapv (fn [exercise] {:uuid (:uuid exercise)}) (:exercises unit))})
 
-(defn- add-change! [changes-api course change-type payload units]
+(defn- add-change! [changes-api ds course change-type payload units]
   (when changes-api
-    (@add-course-update!
-     changes-api
+    (changes/-add-course-update!
+     ds
      {:change-type change-type
       :update (merge payload
                      {:uuid (:uuid course)}
@@ -82,7 +77,7 @@
     (let [applied (update/apply (-lookup ds {:id id}) {:type :create
                                                        :payload (dissoc update :units)})]
       ;; cascade: one course change + one change per unit + one per exercise
-      (add-change! changes-api applied :create (dissoc update :units)
+      (add-change! changes-api ds applied :create (dissoc update :units)
                    (mapv cascaded-unit (:units applied)))
       applied)))
 
@@ -101,7 +96,7 @@
     (db/delete! ds {:tname :courses
                     :where [:= :id id]})
     ;; cascade: one course change + one change per unit + one per exercise
-    (add-change! changes-api course :delete nil
+    (add-change! changes-api ds course :delete nil
                  (mapv deleted-unit (:units course)))
     (update/apply nil {:type :delete
                        :payload update})))
@@ -113,7 +108,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-name
                                         :payload update})]
-      (add-change! changes-api applied :set-name update nil)
+      (add-change! changes-api ds applied :set-name update nil)
       applied)))
 
 (defn -set-language [changes-api ds {:keys [id uuid language] :as update}]
@@ -123,7 +118,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-language
                                         :payload update})]
-      (add-change! changes-api applied :set-language update nil)
+      (add-change! changes-api ds applied :set-language update nil)
       applied)))
 
 (defn -set-description [changes-api ds {:keys [id uuid description] :as update}]
@@ -133,7 +128,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-description
                                         :payload update})]
-      (add-change! changes-api applied :set-description update nil)
+      (add-change! changes-api ds applied :set-description update nil)
       applied)))
 
 (defn -set-publishable [changes-api ds {:keys [id uuid publishable] :as update}]
@@ -143,7 +138,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-publishable
                                         :payload update})]
-      (add-change! changes-api applied :set-publishable update nil)
+      (add-change! changes-api ds applied :set-publishable update nil)
       applied)))
 
 (defn -set-visible [changes-api ds {:keys [id uuid visible] :as update}]
@@ -153,7 +148,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-visible
                                         :payload update})]
-      (add-change! changes-api applied :set-visible update nil)
+      (add-change! changes-api ds applied :set-visible update nil)
       applied)))
 
 (defn -set-review-pending [changes-api ds {:keys [id uuid review-pending] :as update}]
@@ -163,7 +158,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-review-pending
                                         :payload update})]
-      (add-change! changes-api applied :set-review-pending update nil)
+      (add-change! changes-api ds applied :set-review-pending update nil)
       applied)))
 
 (defn -set-creator-id [changes-api ds {:keys [id uuid creator-id] :as update}]
@@ -173,7 +168,7 @@
                     :where [:= :id (:id course)]})
     (let [applied (update/apply course {:type :set-creator-id
                                         :payload update})]
-      (add-change! changes-api applied :set-creator-id update nil)
+      (add-change! changes-api ds applied :set-creator-id update nil)
       applied)))
 
 (comment

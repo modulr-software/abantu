@@ -1,5 +1,6 @@
 (ns abantu.services.units.core
   (:require [abantu.db.interface :as db]
+            [abantu.services.changes.core :as changes]
             [abantu.services.exercises.interface :as exercise]
             [abantu.services.units.update :as update]
             [honey.sql.helpers :as h]
@@ -9,15 +10,10 @@
   (->> (exercise/find (exercise/use-query ds) {:unit-id (:id unit)})
        (assoc unit :exercises)))
 
-;; resolved lazily: changes/interface requires changes/migrate, which requires
-;; units/interface -> units/core
-(def ^:private add-unit-update!
-  (delay (requiring-resolve 'abantu.services.changes.interface/add-unit-update!)))
-
 (defn- add-change! [changes-api ds unit change-type payload exercises]
   (when changes-api
-    (@add-unit-update!
-     changes-api
+    (changes/-add-unit-update!
+     ds
      {:change-type change-type
       :update (merge payload
                      {:uuid (:uuid unit)
@@ -123,8 +119,6 @@
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-course-id
                                       :payload update})]
-      ;; :course-id is stripped from the change payload, so the change must be
-      ;; attributed to the course the unit is moving *to*
       (add-change! changes-api ds (assoc applied :course-id course-id)
                    :set-course-id update nil)
       applied)))

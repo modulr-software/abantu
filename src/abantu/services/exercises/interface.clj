@@ -3,7 +3,6 @@
             [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
-            [abantu.services.comments.interface :as comments]
             [abantu.services.exercises.core :as exercises]))
 
 (def ?Option :string)
@@ -24,8 +23,7 @@
    [:question-content :string]
    [:correct-message {:optional true} [:maybe :string]]
    [:incorrect-message {:optional true} [:maybe :string]]
-   [:answers [:vector ?Answer]]
-   [:comments (util/maybe [:vector comments/?Comment])]])
+   [:answers [:vector ?Answer]]])
 
 (def ?Lookup
   [:or
@@ -39,7 +37,6 @@
 
 (def ?Create
   (-> (mu/dissoc ?Exercise :id)
-      (mu/dissoc :comments)
       (mu/update-entry-properties :uuid assoc :optional true)
       (mu/update-entry-properties :level assoc :optional true)
       (mu/update-entry-properties :options assoc :optional true)
