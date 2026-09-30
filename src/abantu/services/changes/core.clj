@@ -16,34 +16,40 @@
                  (assoc acc uuid (filterv #(= (:uuid %) uuid) changes))) {})
        (mapv (fn [m] {:uuid (first m) :change (last m)}))))
 
-(defn -find-unit-changes [ds {:keys [from to] :as _opts}]
-  (->> (db/find ds {:tname :unit-changes
-                    :where (cond
-                             (and from to) [:between :timestamp from to]
-                             from [:>= :timestamp from]
-                             to [:<= :timestamp to])
-                    :order-by :id
-                    :ret :*})
-       (mapv parse-change)
-       (group-changes-by-uuid)))
-
-(defn -find-course-changes [ds {:keys [from to] :as _opts}]
-  (->> (db/find ds {:tname :course-changes
-                    :where (cond
-                             (and from to) [:between :timestamp from to]
-                             from [:>= :timestamp from]
-                             to [:<= :timestamp to])
-                    :order-by :id
-                    :ret :*})
-       (mapv parse-change)
-       (group-changes-by-uuid)))
-
-(defn -find-exercise-changes [ds {:keys [from to] :as _opts}]
+(defn -find-exercise-changes [ds {:keys [from to change-type change-data] :as _opts}]
   (->> (db/find ds {:tname :exercise-changes
                     :where (cond
                              (and from to) [:between :timestamp from to]
                              from [:>= :timestamp from]
-                             to [:<= :timestamp to])
+                             to [:<= :timestamp to]
+                             change-type [:= :change-type change-type]
+                             change-data [:like :change-data (str "%" change-data "%")])
+                    :order-by :id
+                    :ret :*})
+       (mapv parse-change)
+       (group-changes-by-uuid)))
+
+(defn -find-unit-changes [ds {:keys [from to change-type change-data] :as _opts}]
+  (->> (db/find ds {:tname :unit-changes
+                    :where (cond
+                             (and from to) [:between :timestamp from to]
+                             from [:>= :timestamp from]
+                             to [:<= :timestamp to]
+                             change-type [:= :change-type change-type]
+                             change-data [:like :change-data (str "%" change-data "%")])
+                    :order-by :id
+                    :ret :*})
+       (mapv parse-change)
+       (group-changes-by-uuid)))
+
+(defn -find-course-changes [ds {:keys [from to change-type change-data] :as _opts}]
+  (->> (db/find ds {:tname :course-changes
+                    :where (cond
+                             (and from to) [:between :timestamp from to]
+                             from [:>= :timestamp from]
+                             to [:<= :timestamp to]
+                             change-type [:= :change-type change-type]
+                             change-data [:like :change-data (str "%" change-data "%")])
                     :order-by :id
                     :ret :*})
        (mapv parse-change)

@@ -54,7 +54,9 @@
 (def ?ChangeFind
   [:map
    [:from (util/maybe :string)]
-   [:to (util/maybe :string)]])
+   [:to (util/maybe :string)]
+   [:change-type (util/maybe :string)]
+   [:change-data (util/maybe :string)]])
 
 (def ?ChangeLookup
   [:map
