@@ -3,12 +3,12 @@
             [clojure.java.io :as io]
             [jsonista.core :as json]
             [abantu.test-util :as tu]
+            [abantu.db.honey :as hon]
             [abantu.services.courses.interface :as course]
             [abantu.services.units.interface :as unit]
             [abantu.services.exercises.interface :as exercise]
             [abantu.services.changes.interface :as changes]
             [abantu.services.versions.interface :as version]))
-
 
 (defn read-fixture [file]
   (-> (io/resource (str "abantu/resources/round-trip/" file))
@@ -34,6 +34,13 @@
 
 (defn- course-tree [ds]
   (norm (course/all (course/use-query ds))))
+
+(defn- row-counts
+  "counts of [courses units exercises] - the course tree reaches units and
+   exercises through their parents, so these are what catch orphans the tree
+   would hide"
+  [ds]
+  (mapv #(count (hon/find ds {:tname % :ret :*})) [:courses :units :exercises]))
 
 (deftest test-round-trip
   (testing "that creating a course with units and exercises on the student db,
@@ -76,7 +83,51 @@
           (exercise/set-answers em {:uuid "e2" :answers [["x"] ["y"]]})
           (changes/migrate-up! (changes/use-mutation student-ds) v)
           (is (= (:expected data) (course-tree student-ds)))
-          (is (= (:expected data) (course-tree master-ds))))))))
+          (is (= (:expected data) (course-tree master-ds))))))
+
+    (testing "that deleting a unit on the student db, then migrating up, deletes
+            that unit and its exercises on master too"
+      (tu/with-test-dbs
+        (fn [master-ds student-ds]
+          (let [data (read-fixture "delete-unit.json")
+                v (version/create! (version/use-mutation student-ds)
+                                   {:label "draft 1" :course-id 1})
+                cm (changes/use-mutation student-ds)]
+
+            (course/create (course/use-mutation student-ds cm) (:input data))
+            (unit/delete (unit/use-mutation student-ds cm) {:uuid "u1"})
+            (changes/migrate-up! (changes/use-mutation student-ds) v)
+
+            (is (= (:expected data) (course-tree student-ds)))
+            (is (= (:expected data) (course-tree master-ds)))
+
+            (is (= (set (:expected-exercise-uuids data))
+                   (set (map :uuid (hon/find student-ds {:tname :exercises :ret :*})))))
+            (is (= (set (:expected-exercise-uuids data))
+                   (set (map :uuid (hon/find master-ds {:tname :exercises :ret :*}))))))))))
+
+  (testing "that deleting a course that is already on master, then migrating up,
+            deletes the course and its units and exercises on both dbs"
+    (tu/with-test-dbs
+      (fn [master-ds student-ds]
+        (let [data (read-fixture "delete-course.json")
+              vm (version/use-mutation student-ds)
+              cm (changes/use-mutation student-ds)
+              v1 (version/create! vm {:label "draft 1" :course-id 1})]
+
+          (course/create (course/use-mutation student-ds cm) (:input data))
+          (changes/migrate-up! cm v1)
+
+          (is (= (:pre-delete-counts data) (row-counts student-ds)))
+          (is (= (:pre-delete-counts data) (row-counts master-ds)))
+          ;; this is needed for the next update to be separated from the first
+          ;; as versions are differentiated by timestamp
+          (Thread/sleep 1100)
+          (let [v2 (version/create! vm {:label "draft 2" :course-id 1})]
+            (course/delete (course/use-mutation student-ds cm) {:uuid "c-uuid"})
+            (changes/migrate-up! cm v2)
+            (is (= (:expected-counts data) (row-counts student-ds)))
+            (is (= (:expected-counts data) (row-counts master-ds)))))))))
 
 (defn run-tests []
   (clojure.test/run-tests 'abantu.round-trip-test))

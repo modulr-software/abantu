@@ -1,0 +1,91 @@
+{
+  "input": {
+    "uuid": "c-uuid",
+    "name": "Course One",
+    "language": "english",
+    "description": "learn english",
+    "units": [
+      {
+        "uuid": "u1",
+        "name": "Unit One",
+        "type": "lesson",
+        "level": 1,
+        "exercises": [
+          {
+            "uuid": "e1",
+            "instruction": "translate",
+            "question-content": "who are you",
+            "answer-type": "bubbles",
+            "options": ["wat", "wie"],
+            "answers": [["wie", "is"]]
+          },
+          {
+            "uuid": "e2",
+            "instruction": "fill in",
+            "question-content": "i am",
+            "answer-type": "freetext",
+            "options": [],
+            "answers": [["ek"]]
+          }
+        ]
+      },
+      {
+        "uuid": "u2",
+        "name": "Unit Two",
+        "type": "practice",
+        "level": 2,
+        "exercises": [
+          {
+            "uuid": "e3",
+            "instruction": "choose",
+            "question-content": "wat?",
+            "answer-type": "bubbles",
+            "options": ["a", "b"],
+            "answers": [["a"]]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": [
+    {
+      "uuid": "c-uuid",
+      "name": "Course One",
+      "language": "english",
+      "description": "learn english",
+      "publishable": false,
+      "visible": false,
+      "review-pending": false,
+      "creator": null,
+      "units": [
+        {
+          "uuid": "u2",
+          "name": "Unit Two",
+          "type": "practice",
+          "level": 2,
+          "description": null,
+          "position": null,
+          "course-id": 1,
+          "exercises": [
+            {
+              "uuid": "e3",
+              "unit-id": 2,
+              "course-id": 1,
+              "instruction": "choose",
+              "question-content": "wat?",
+              "answer-type": "bubbles",
+              "options": ["a", "b"],
+              "level": 1,
+              "correct-message": null,
+              "incorrect-message": null,
+              "position": null,
+              "answers": [["a"]],
+              "comments": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "expected-exercise-uuids": ["e3"]
+}
