@@ -107,7 +107,9 @@
         exercise (-lookup ds {:id id})
         applied (update/apply exercise {:type :create
                                         :payload update})]
-    (add-change! changes-api ds "create" exercise applied)
+    ;; the change carries the input, not the looked-up record: comments are never
+    ;; replayable and must not reach the feed
+    (add-change! changes-api ds "create" exercise update)
     applied))
 
 (defn -delete

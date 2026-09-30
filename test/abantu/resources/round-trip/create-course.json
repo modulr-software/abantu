@@ -1,0 +1,139 @@
+{
+  "input": {
+    "uuid": "c-uuid",
+    "name": "Course One",
+    "language": "afrikaans",
+    "description": "learn afrikaans",
+    "units": [
+      {
+        "uuid": "u1",
+        "name": "Unit One",
+        "type": "lesson",
+        "level": 1,
+        "description": "first unit",
+        "exercises": [
+          {
+            "uuid": "e1",
+            "instruction": "translate",
+            "question-content": "who are you",
+            "answer-type": "bubbles",
+            "options": ["wat", "wie", "hoe"],
+            "correct-message": "correct!",
+            "incorrect-message": "o nei",
+            "level": 2,
+            "position": 1,
+            "answers": [["wie", "is"], ["jy", "is"]]
+          },
+          {
+            "uuid": "e2",
+            "instruction": "fill in",
+            "question-content": "i am",
+            "answer-type": "freetext",
+            "options": [],
+            "correct-message": "nice",
+            "incorrect-message": "nope",
+            "answers": [["ek"]]
+          }
+        ]
+      },
+      {
+        "uuid": "u2",
+        "name": "Unit Two",
+        "type": "practice",
+        "level": 2,
+        "position": 1,
+        "exercises": [
+          {
+            "uuid": "e3",
+            "instruction": "choose",
+            "question-content": "wat?",
+            "answer-type": "bubbles",
+            "options": ["a", "b", "c"],
+            "answers": [["a"]]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": [
+    {
+      "uuid": "c-uuid",
+      "name": "Course One",
+      "language": "afrikaans",
+      "description": "learn afrikaans",
+      "publishable": false,
+      "visible": false,
+      "review-pending": false,
+      "creator": null,
+      "units": [
+        {
+          "uuid": "u1",
+          "name": "Unit One",
+          "type": "lesson",
+          "level": 1,
+          "description": "first unit",
+          "position": null,
+          "course-id": 1,
+          "exercises": [
+            {
+              "uuid": "e1",
+              "unit-id": 1,
+              "course-id": 1,
+              "instruction": "translate",
+              "question-content": "who are you",
+              "answer-type": "bubbles",
+              "options": ["wat", "wie", "hoe"],
+              "level": 2,
+              "correct-message": "correct!",
+              "incorrect-message": "o nei",
+              "position": 1,
+              "answers": [["wie", "is"], ["jy", "is"]],
+              "comments": []
+            },
+            {
+              "uuid": "e2",
+              "unit-id": 1,
+              "course-id": 1,
+              "instruction": "fill in",
+              "question-content": "i am",
+              "answer-type": "freetext",
+              "options": [],
+              "level": 1,
+              "correct-message": "nice",
+              "incorrect-message": "nope",
+              "position": null,
+              "answers": [["ek"]],
+              "comments": []
+            }
+          ]
+        },
+        {
+          "uuid": "u2",
+          "name": "Unit Two",
+          "type": "practice",
+          "level": 2,
+          "description": null,
+          "position": 1,
+          "course-id": 1,
+          "exercises": [
+            {
+              "uuid": "e3",
+              "unit-id": 2,
+              "course-id": 1,
+              "instruction": "choose",
+              "question-content": "wat?",
+              "answer-type": "bubbles",
+              "options": ["a", "b", "c"],
+              "level": 1,
+              "correct-message": null,
+              "incorrect-message": null,
+              "position": null,
+              "answers": [["a"]],
+              "comments": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

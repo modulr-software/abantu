@@ -47,11 +47,9 @@
   (assoc exercise :options (remove-first (:options exercise) (:option payload))))
 
 (defmethod apply :set-answers [exercise {:keys [payload]}]
-  ;; payload :answers are already processed rows with ids (see -set-answers)
   (assoc exercise :answers (:answers payload)))
 
 (defmethod apply :add-answer [exercise {:keys [payload]}]
-  ;; payload :answer is already a processed row with id (see -add-answer)
   (assoc exercise :answers (conj (:answers exercise) (:answer payload))))
 
 (defmethod apply :remove-answer [{:keys [answers] :as exercise} {:keys [payload]}]

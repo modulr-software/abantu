@@ -3,26 +3,12 @@
             [clojure.java.io :as io]
             [jsonista.core :as json]
             [abantu.test-util :as tu]
-            [abantu.db.util :as db.util]
             [abantu.db.honey :as hon]
             [abantu.services.courses.interface :as course]
             [abantu.services.changes.interface :as sut]
             [abantu.services.versions.interface :as version]))
 
-(defn with-test-dbs
-  "Runs (f master-ds student-ds) against fresh migrated test DBs (ids 1 and
-   2), routing the no-arg db.util/conn master connection to the test master
-   so migrate-up! writes there. Each no-arg call opens a fresh connection so
-   migrate-up!'s with-open cannot close master-ds."
-  [f]
-  (tu/with-test-student-db 1 2
-    (fn [student-ds]
-      (let [conn db.util/conn
-            master-ds (conn :test 1)]
-        (with-redefs [db.util/conn (fn
-                                     ([] (conn :test 1))
-                                     ([t & ids] (apply conn t ids)))]
-          (f master-ds student-ds))))))
+(def with-test-dbs tu/with-test-dbs)
 
 (defn insert-seed! [ds {:keys [version course-change unit-change exercise-change]}]
   (when version

@@ -1,6 +1,7 @@
 (ns abantu.test-util
   (:require [clojure.java.io :as io]
             [abantu.config :as conf]
+            [abantu.db.util :as db.util]
             [abantu.db-test-utils :as db-test-utils]))
 
 (defn- tmp-dir []
@@ -46,3 +47,18 @@
          (finally
            (when (.exists (io/file tmp))
              (io/delete-file (io/file tmp) true))))))))
+
+(defn with-test-dbs
+  "Like with-test-student-db, but runs (f master-ds student-ds) with both
+   connections open, and routes db.util/conn's no-arg master connection to the
+   test master so migrate-up! writes there. Each no-arg call opens a fresh
+   connection so migrate-up!'s with-open cannot close master-ds."
+  [f]
+  (with-test-student-db 1 2
+    (fn [student-ds]
+      (let [conn db.util/conn
+            master-ds (conn :test 1)]
+        (with-redefs [db.util/conn (fn
+                                     ([] (conn :test 1))
+                                     ([t & ids] (apply conn t ids)))]
+          (f master-ds student-ds))))))
