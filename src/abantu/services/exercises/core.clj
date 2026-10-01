@@ -41,7 +41,8 @@
 
 (defn- attach-comments [comments-api {:keys [id] :as exercise}]
   (assoc exercise :comments (if comments-api
-                              (comments/find comments-api {:exercise-id id})
+                              (comments/find comments-api {:exercise-id id
+                                                           :resolved true})
                               [])))
 
 (defn -lookup [ds opts {:keys [id uuid unit-id course-id]}]

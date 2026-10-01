@@ -19,10 +19,12 @@
   [:map [:id :int]])
 
 (def ?Find
-  [:or
-   [:map [:course-id :int]]
-   [:map [:unit-id :int]]
-   [:map [:exercise-id :int]]])
+  [:map
+   [:id (util/maybe :int)]
+   [:course-id (util/maybe :int)]
+   [:unit-id (util/maybe :int)]
+   [:exercise-id (util/maybe :int)]
+   [:resolved (util/maybe :boolean)]])
 
 (malt/defprotocol CommentQuery
   (lookup [input ?Lookup] (util/maybe ?Comment))
