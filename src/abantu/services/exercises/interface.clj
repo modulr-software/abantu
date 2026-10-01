@@ -3,6 +3,7 @@
             [io.julienvincent.malt :as malt]
             [malli.util :as mu]
             [abantu.db.util :as db.util]
+            [abantu.services.comments.interface :as comments]
             [abantu.services.exercises.core :as exercises]))
 
 (def ?Option :string)
@@ -23,7 +24,8 @@
    [:question-content :string]
    [:correct-message {:optional true} [:maybe :string]]
    [:incorrect-message {:optional true} [:maybe :string]]
-   [:answers [:vector ?Answer]]])
+   [:answers [:vector ?Answer]]
+   [:comments [:vector comments/?Comment]]])
 
 (def ?Lookup
   [:or
@@ -37,6 +39,7 @@
 
 (def ?Create
   (-> (mu/dissoc ?Exercise :id)
+      (mu/dissoc :comments)
       (mu/update-entry-properties :uuid assoc :optional true)
       (mu/update-entry-properties :level assoc :optional true)
       (mu/update-entry-properties :options assoc :optional true)
@@ -121,14 +124,15 @@
 
 (defn use-query
   ([] (use-query (db.util/conn)))
-  ([ds]
+  ([ds] (use-query ds {}))
+  ([ds {:keys [_comments-api] :as opts}]
    (malt/reify ExerciseQuery
      (lookup [_ input]
-       (exercises/-lookup ds input))
+       (exercises/-lookup ds opts input))
      (find [_ input]
-       (exercises/-find ds input))
+       (exercises/-find ds opts input))
      (all [_]
-       (exercises/-all ds)))))
+       (exercises/-all ds opts)))))
 
 (malt/defprotocol ExerciseMutation
   (create [input ?Create]
@@ -170,63 +174,45 @@
    which is what a cascaded create wants, since the caller's single change
    already covers the whole tree."
   ([] (use-mutation (db.util/conn)))
-  ([ds] (use-mutation ds nil))
-  ([ds changes-api]
+  ([ds] (use-mutation ds {}))
+  ([ds {:keys [_changes-api _comments-api] :as opts}]
    (malt/reify ExerciseMutation
      (create [_ input]
-       (exercises/-create changes-api ds input))
+       (exercises/-create ds opts input))
      (delete [_ input]
-       (exercises/-delete changes-api ds input))
+       (exercises/-delete ds opts input))
      (set-unit [_ input]
-       (exercises/-set-unit changes-api ds input))
+       (exercises/-set-unit ds opts input))
      (set-instruction [_ input]
-       (exercises/-set-instruction changes-api ds input))
+       (exercises/-set-instruction ds opts input))
      (set-question-content [_ input]
-       (exercises/-set-question-content changes-api ds input))
+       (exercises/-set-question-content ds opts input))
      (set-answer-type [_ input]
-       (exercises/-set-answer-type changes-api ds input))
+       (exercises/-set-answer-type ds opts input))
      (set-level [_ input]
-       (exercises/-set-level changes-api ds input))
+       (exercises/-set-level ds opts input))
      (set-correct-message [_ input]
-       (exercises/-set-correct-message changes-api ds input))
+       (exercises/-set-correct-message ds opts input))
      (set-incorrect-message [_ input]
-       (exercises/-set-incorrect-message changes-api ds input))
+       (exercises/-set-incorrect-message ds opts input))
      (set-position [_ input]
-       (exercises/-set-position changes-api ds input))
+       (exercises/-set-position ds opts input))
      (set-options [_ input]
-       (exercises/-set-options changes-api ds input))
+       (exercises/-set-options ds opts input))
      (add-option [_ input]
-       (exercises/-add-option changes-api ds input))
+       (exercises/-add-option ds opts input))
      (remove-option [_ input]
-       (exercises/-remove-option changes-api ds input))
+       (exercises/-remove-option ds opts input))
      (set-answers [_ input]
-       (exercises/-set-answers changes-api ds input))
+       (exercises/-set-answers ds opts input))
      (add-answer [_ input]
-       (exercises/-add-answer changes-api ds input))
+       (exercises/-add-answer ds opts input))
      (remove-answer [_ input]
-       (exercises/-remove-answer changes-api ds input)))))
+       (exercises/-remove-answer ds opts input)))))
 
 (comment
   (require '[abantu.db.interface :as db])
   (def ds (db/ds :master))
-
-  (let [data (exercises/-all ds)]
-    (malli.error/humanize (malli.core/explain [:vector ?Exercise] data)))
-
-  (->>
-   (exercises/-all ds)
-   (mapcat #(if (seq (:comments %))
-              (:comments %)))
-   (filterv identity)
-   (filterv #(seq (:user %))))
-
-  (let [eq (use-query ds)
-        id 1091
-        lookup' (lookup eq {:id id})
-        find' (find eq {:id id})
-        all' (all eq)]
-    all'
-    #_(all eq))
 
   (def em (use-mutation (db.util/conn :student 1)))
 

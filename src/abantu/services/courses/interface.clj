@@ -116,28 +116,32 @@
     (util/maybe ?Course)))
 
 (defn use-mutation
+  "Pass {:changes-api an-api} to record a course change for every mutation.
+   Without one, mutations change the course but record nothing - which is what a
+   cascaded create wants, since the caller's single change already covers the
+   whole tree."
   ([] (use-mutation (db.util/conn)))
-  ([ds] (use-mutation ds nil))
-  ([ds changes-api]
+  ([ds] (use-mutation ds {}))
+  ([ds opts]
    (malt/reify CourseMutation
      (create [_ input]
-       (courses/-create changes-api ds input))
+       (courses/-create ds opts input))
      (delete [_ input]
-       (courses/-delete changes-api ds input))
+       (courses/-delete ds opts input))
      (set-name [_ input]
-       (courses/-set-name changes-api ds input))
+       (courses/-set-name ds opts input))
      (set-language [_ input]
-       (courses/-set-language changes-api ds input))
+       (courses/-set-language ds opts input))
      (set-description [_ input]
-       (courses/-set-description changes-api ds input))
+       (courses/-set-description ds opts input))
      (set-publishable [_ input]
-       (courses/-set-publishable changes-api ds input))
+       (courses/-set-publishable ds opts input))
      (set-visible [_ input]
-       (courses/-set-visible changes-api ds input))
+       (courses/-set-visible ds opts input))
      (set-review-pending [_ input]
-       (courses/-set-review-pending changes-api ds input))
+       (courses/-set-review-pending ds opts input))
      (set-creator-id [_ input]
-       (courses/-set-creator-id changes-api ds input)))))
+       (courses/-set-creator-id ds opts input)))))
 
 (comment
 

@@ -95,7 +95,7 @@
       (fn [ds]
         (let [data (read-fixture "create-unit-with-exercises.json")
               {:keys [uuid exercises]} (:input data)]
-          (sut/create (sut/use-mutation ds (changes/use-mutation ds)) (:input data))
+          (sut/create (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))
           (let [units (changes ds :unit-changes)
                 exercises' (changes ds :exercise-changes)]
             (is (= 1 (count units)))
@@ -136,7 +136,7 @@
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "delete-unit.json")
-              mut (sut/use-mutation ds (changes/use-mutation ds))
+              mut (sut/use-mutation ds {:changes-api (changes/use-mutation ds)})
               seeded (mapv (fn [seed] (sut/create (sut/use-mutation ds) seed))
                            (:seed data))
               exercise-uuids (mapv (comp :uuid first :exercises) seeded)]
@@ -158,7 +158,7 @@
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "set-name.json")
-              mut (sut/use-mutation ds (changes/use-mutation ds))
+              mut (sut/use-mutation ds {:changes-api (changes/use-mutation ds)})
               seed (:unit (first (:seed data)))]
           (run! (partial insert-unit! ds) (:seed data))
           (sut/set-name mut {:id (:id seed) :name "renamed"})
@@ -174,7 +174,7 @@
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "set-name.json")
-              mut (sut/use-mutation ds (changes/use-mutation ds))
+              mut (sut/use-mutation ds {:changes-api (changes/use-mutation ds)})
               seed (:unit (first (:seed data)))]
           (run! (partial insert-unit! ds) (:seed data))
           (sut/set-course-id mut {:id (:id seed) :course-id 2})

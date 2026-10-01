@@ -96,26 +96,30 @@
     (util/maybe ?Unit)))
 
 (defn use-mutation
+  "Pass {:changes-api an-api} to record a unit change for every mutation.
+   Without one, mutations change the unit but record nothing - which is what a
+   cascaded create wants, since the caller's single change already covers the
+   whole tree."
   ([] (use-mutation (db.util/conn)))
-  ([ds] (use-mutation ds nil))
-  ([ds changes-api]
+  ([ds] (use-mutation ds {}))
+  ([ds opts]
    (malt/reify UnitMutation
      (create [_ input]
-       (units/-create changes-api ds input))
+       (units/-create ds opts input))
      (delete [_ input]
-       (units/-delete changes-api ds input))
+       (units/-delete ds opts input))
      (set-name [_ input]
-       (units/-set-name changes-api ds input))
+       (units/-set-name ds opts input))
      (set-description [_ input]
-       (units/-set-description changes-api ds input))
+       (units/-set-description ds opts input))
      (set-level [_ input]
-       (units/-set-level changes-api ds input))
+       (units/-set-level ds opts input))
      (set-type [_ input]
-       (units/-set-type changes-api ds input))
+       (units/-set-type ds opts input))
      (set-course-id [_ input]
-       (units/-set-course-id changes-api ds input))
+       (units/-set-course-id ds opts input))
      (set-position [_ input]
-       (units/-set-position changes-api ds input)))))
+       (units/-set-position ds opts input)))))
 
 (comment
 

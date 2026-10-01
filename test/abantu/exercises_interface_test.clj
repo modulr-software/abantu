@@ -130,7 +130,7 @@
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "create-bubbles-basic.json")
-              actual (sut/create (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+              actual (sut/create (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
           (is (= (:output data) actual))))))
 
   (testing "that failing to create an exercise throws"
@@ -138,14 +138,14 @@
       (fn [ds]
         (let [data (read-fixture "create-invalid.json")]
           (is (thrown? clojure.lang.ExceptionInfo
-                       (sut/create (sut/use-mutation ds (changes/use-mutation ds)) (:input data))))))))
+                       (sut/create (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))))))))
 
   (testing "that deleting an exercise removes it and its comment and answer records"
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "delete-exercise.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (sut/delete (sut/use-mutation ds (changes/use-mutation ds)) (:input data))
+          (sut/delete (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))
           (let [actual (into {} (map (fn [t] [t (hon/find ds {:tname t :ret :*})]))
                              (keys (:output data)))]
             (is (= (:output data) actual)))))))
@@ -155,7 +155,7 @@
       (fn [ds]
         (let [data (read-fixture "set-unit.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-unit (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-unit (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the instruction updates the exercise"
@@ -163,7 +163,7 @@
       (fn [ds]
         (let [data (read-fixture "set-instruction.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-instruction (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-instruction (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the question content updates the exercise"
@@ -171,7 +171,7 @@
       (fn [ds]
         (let [data (read-fixture "set-question-content.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-question-content (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-question-content (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the answer type updates the exercise"
@@ -179,7 +179,7 @@
       (fn [ds]
         (let [data (read-fixture "set-answer-type.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-answer-type (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-answer-type (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the level updates the exercise"
@@ -187,7 +187,7 @@
       (fn [ds]
         (let [data (read-fixture "set-level.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-level (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-level (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the correct message updates the exercise"
@@ -195,7 +195,7 @@
       (fn [ds]
         (let [data (read-fixture "set-correct-message.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-correct-message (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-correct-message (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the incorrect message updates the exercise"
@@ -203,7 +203,7 @@
       (fn [ds]
         (let [data (read-fixture "set-incorrect-message.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-incorrect-message (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-incorrect-message (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the position updates the exercise"
@@ -211,7 +211,7 @@
       (fn [ds]
         (let [data (read-fixture "set-position.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-position (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-position (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the options updates the exercise"
@@ -219,7 +219,7 @@
       (fn [ds]
         (let [data (read-fixture "set-options.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-options (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-options (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual)))))))
 
   (testing "that setting the answers updates the exercise"
@@ -227,7 +227,7 @@
       (fn [ds]
         (let [data (read-fixture "set-answers.json")]
           (run! (partial insert-exercise! ds) (:seed data))
-          (let [actual (sut/set-answers (sut/use-mutation ds (changes/use-mutation ds)) (:input data))]
+          (let [actual (sut/set-answers (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) (:input data))]
             (is (= (:output data) actual))))))))
 
 (defn run-tests []

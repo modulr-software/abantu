@@ -4,7 +4,8 @@
             [abantu.services.exercises.update :as update]
             [honey.sql.helpers :as h]
             [clojure.string :as str]
-            [abantu.util :as util]))
+            [abantu.util :as util]
+            [abantu.services.comments.interface :as comments]))
 
 (defn- process-options [exercise]
   (-> exercise
@@ -38,7 +39,12 @@
                                              :ret :*})
                                 (mapv process-answer))))
 
-(defn -lookup  [ds {:keys [id uuid unit-id course-id]}]
+(defn- attach-comments [comments-api {:keys [id] :as exercise}]
+  (assoc exercise :comments (if comments-api
+                              (comments/find comments-api {:exercise-id id})
+                              [])))
+
+(defn -lookup [ds opts {:keys [id uuid unit-id course-id]}]
   (when-let [exercise (db/find ds (cond-> {:tname :exercises
                                            :ret :1}
                                     (some? uuid) (h/where [:= :uuid uuid])
@@ -47,15 +53,17 @@
                                     (some? course-id) (h/where [:= :course-id course-id])))]
     (->> exercise
          (process-options)
-         (attach-answers ds))))
+         (attach-answers ds)
+         (attach-comments (:comments-api opts)))))
 
-(defn -all [ds]
+(defn -all [ds opts]
   (->> (db/find ds {:tname :exercises
                     :ret :*})
        (mapv (comp process-options
+                   (partial attach-comments (:comments-api opts))
                    (partial attach-answers ds)))))
 
-(defn -find [ds {:keys [id uuid unit-id course-id]}]
+(defn -find [ds opts {:keys [id uuid unit-id course-id]}]
   (->> (db/find ds (cond-> {:tname :exercises
                             :ret :*}
                      (some? uuid) (h/where [:= :uuid uuid])
@@ -63,6 +71,7 @@
                      (some? unit-id) (h/where [:= :unit-id unit-id])
                      (some? course-id) (h/where [:= :course-id course-id])))
        (mapv (comp process-options
+                   (partial attach-comments (:comments-api opts))
                    (partial attach-answers ds)))))
 
 (defn- add-change!
@@ -82,7 +91,7 @@
                                                            :where [:= :id course-id]}))})})))
 
 (defn -create
-  [changes-api ds {:keys [uuid options answers] :as update}]
+  [ds opts {:keys [uuid options answers] :as update}]
   (let [update' (assoc update :options (str/join ";;" options))
         {:keys [id]} (db/insert! ds {:tname :exercises
                                      :values (-> (dissoc update' :answers)
@@ -92,15 +101,15 @@
                       (mapv #(assoc {} :exercise-id id :text %)))
         _ (db/insert! ds {:tname :answers
                           :values answers'})
-        exercise (-lookup ds {:id id})
+        exercise (-lookup ds opts {:id id})
         applied (update/apply exercise {:type :create
                                         :payload update})]
-    (add-change! changes-api ds "create" exercise update)
+    (add-change! (:changes-api opts) ds "create" exercise update)
     applied))
 
 (defn -delete
-  [changes-api ds {:keys [id uuid] :as update}]
-  (let [exercise (-lookup ds {:id id :uuid uuid})
+  [ds opts {:keys [id uuid] :as update}]
+  (let [exercise (-lookup ds opts {:id id :uuid uuid})
         {:keys [id]} exercise
         _ (db/delete! ds {:tname :comments
                           :where [:= :exercise-id id]})
@@ -110,119 +119,119 @@
                           :where [:= :exercise-id id]})
         _ (db/delete! ds {:tname :exercises
                           :where [:= :id id]})]
-    (add-change! changes-api ds "delete" exercise update)
+    (add-change! (:changes-api opts) ds "delete" exercise update)
     (update/apply nil {:type :delete
                        :payload update})))
 
-(defn -set-unit [changes-api ds {:keys [id uuid unit-id] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-unit [ds opts {:keys [id uuid unit-id] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:unit-id unit-id}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-unit" (assoc exercise :unit-id unit-id) update)
+    (add-change! (:changes-api opts) ds "set-unit" (assoc exercise :unit-id unit-id) update)
     (update/apply exercise {:type :set-unit
                             :payload update})))
 
-(defn -set-instruction [changes-api ds {:keys [id uuid instruction] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-instruction [ds opts {:keys [id uuid instruction] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:instruction instruction}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-instruction" exercise update)
+    (add-change! (:changes-api opts) ds "set-instruction" exercise update)
     (update/apply exercise {:type :set-instruction
                             :payload update})))
 
-(defn -set-question-content [changes-api ds {:keys [id uuid question-content] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-question-content [ds opts {:keys [id uuid question-content] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:question-content question-content}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-question-content" exercise update)
+    (add-change! (:changes-api opts) ds "set-question-content" exercise update)
     (update/apply exercise {:type :set-question-content
                             :payload update})))
 
-(defn -set-answer-type [changes-api ds {:keys [id uuid answer-type] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-answer-type [ds opts {:keys [id uuid answer-type] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:answer-type answer-type}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-answer-type" exercise update)
+    (add-change! (:changes-api opts) ds "set-answer-type" exercise update)
     (update/apply exercise {:type :set-answer-type
                             :payload update})))
 
-(defn -set-level [changes-api ds {:keys [id uuid level] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-level [ds opts {:keys [id uuid level] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:level level}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-level" exercise update)
+    (add-change! (:changes-api opts) ds "set-level" exercise update)
     (update/apply exercise {:type :set-level
                             :payload update})))
 
-(defn -set-correct-message [changes-api ds {:keys [id uuid correct-message] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-correct-message [ds opts {:keys [id uuid correct-message] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:correct-message correct-message}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-correct-message" exercise update)
+    (add-change! (:changes-api opts) ds "set-correct-message" exercise update)
     (update/apply exercise {:type :set-correct-message
                             :payload update})))
 
-(defn -set-incorrect-message [changes-api ds {:keys [id uuid incorrect-message] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-incorrect-message [ds opts {:keys [id uuid incorrect-message] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:incorrect-message incorrect-message}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-incorrect-message" exercise update)
+    (add-change! (:changes-api opts) ds "set-incorrect-message" exercise update)
     (update/apply exercise {:type :set-incorrect-message
                             :payload update})))
 
-(defn -set-position [changes-api ds {:keys [id uuid position] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-position [ds opts {:keys [id uuid position] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:position position}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-position" exercise update)
+    (add-change! (:changes-api opts) ds "set-position" exercise update)
     (update/apply exercise {:type :set-position
                             :payload update})))
 
-(defn -set-options [changes-api ds {:keys [id uuid options] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-options [ds opts {:keys [id uuid options] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" options)}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "set-options" exercise update)
+    (add-change! (:changes-api opts) ds "set-options" exercise update)
     (update/apply exercise {:type :set-options
                             :payload update})))
 
-(defn -add-option [changes-api ds {:keys [id uuid option] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -add-option [ds opts {:keys [id uuid option] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" (conj (:options exercise) option))}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "add-option" exercise update)
+    (add-change! (:changes-api opts) ds "add-option" exercise update)
     (update/apply exercise {:type :add-option
                             :payload update})))
 
-(defn -remove-option [changes-api ds {:keys [id uuid option] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -remove-option [ds opts {:keys [id uuid option] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (db/update! ds {:tname :exercises
                     :values {:options (str/join ";;" (update/remove-first (:options exercise) option))}
                     :where [:= :id (:id exercise)]})
-    (add-change! changes-api ds "remove-option" exercise update)
+    (add-change! (:changes-api opts) ds "remove-option" exercise update)
     (update/apply exercise {:type :remove-option
                             :payload update})))
 
-(defn -set-answers [changes-api ds {:keys [id uuid answers] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -set-answers [ds opts {:keys [id uuid answers] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (let [applied (update/apply exercise {:type :set-answers
                                           :payload (assoc update
                                                           :answers (save-answers-for-exercise! ds (:id exercise) answers))})]
-      (add-change! changes-api ds "set-answers" exercise update)
+      (add-change! (:changes-api opts) ds "set-answers" exercise update)
       applied)))
 
-(defn -add-answer [changes-api ds {:keys [id uuid answer] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -add-answer [ds opts {:keys [id uuid answer] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (let [inserted (db/insert! ds {:tname :answers
                                    :values {:text       (str/join ";;" answer)
                                             :exercise-id (:id exercise)}
@@ -230,24 +239,24 @@
           applied (update/apply exercise {:type :add-answer
                                           :payload (assoc update
                                                           :answer (process-answer inserted))})]
-      (add-change! changes-api ds "add-answer" exercise update)
+      (add-change! (:changes-api opts) ds "add-answer" exercise update)
       applied)))
 
-(defn -remove-answer [changes-api ds {:keys [id uuid answer-id] :as update}]
-  (when-let [exercise (-lookup ds {:id id :uuid uuid})]
+(defn -remove-answer [ds opts {:keys [id uuid answer-id] :as update}]
+  (when-let [exercise (-lookup ds opts {:id id :uuid uuid})]
     (let [_ (db/delete! ds {:tname :answers
                             :where [:= :id answer-id]})
           applied (update/apply exercise {:type :remove-answer
                                           :payload update})]
-      (add-change! changes-api ds "remove-answer" exercise update)
+      (add-change! (:changes-api opts) ds "remove-answer" exercise update)
       applied)))
 
 (comment
   (def ds (db/ds :master))
 
-  (-lookup ds {:id 1091})
-  (-find ds {:id 1})
-  (-all ds)
+  (-lookup {} ds {:id 1091})
+  (-find {} ds {:id 1})
+  (-all {} ds)
 
   (db/insert! ds {:tname :courses
                   :values {:name "afrikaans course"

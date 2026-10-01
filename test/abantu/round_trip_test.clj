@@ -1,5 +1,5 @@
 (ns abantu.round-trip-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [clojure.java.io :as io]
             [jsonista.core :as json]
             [abantu.test-util :as tu]
@@ -15,11 +15,12 @@
       (slurp)
       (json/read-value json/keyword-keys-object-mapper)))
 
-(defn- norm
+(defn- sanitize
   "Ids are per-db sequences, so they can never be expected to match across the
    two databases - identity is carried by uuid. The student units table has no
    creator-id column, while master's does, so that key is absent on one side 
-   and nil on the other."
+   and nil on the other. This gets rid of those fields such that courses can be 
+   effectively compared"
   [courses]
   (mapv (fn [course']
           (-> course'
@@ -33,7 +34,7 @@
         courses))
 
 (defn- course-tree [ds]
-  (norm (course/all (course/use-query ds))))
+  (sanitize (course/all (course/use-query ds))))
 
 (defn- row-counts
   "counts of [courses units exercises] - the course tree reaches units and
@@ -43,7 +44,7 @@
   (mapv #(count (hon/find ds {:tname % :ret :*})) [:courses :units :exercises]))
 
 (deftest test-round-trip
-  (testing "that creating a course with units and exercises on the student db,
+  (testing "that creating a new course with units and exercises on the student db,
             then migrating up, reconstructs the same tree on master"
     (tu/with-test-dbs
       (fn [master-ds student-ds]
@@ -52,7 +53,7 @@
               v (version/create! (version/use-mutation student-ds)
                                  {:label "draft 1" :course-id 1})
               changes-mut (changes/use-mutation student-ds)
-              courses-mut (course/use-mutation student-ds changes-mut)]
+              courses-mut (course/use-mutation student-ds {:changes-api changes-mut})]
           ;; one call: the course -> unit -> exercise cascades run without a
           ;; changes api, and the single course change carries the whole tree
           (course/create courses-mut (:input data))
@@ -70,11 +71,11 @@
               v (version/create! (version/use-mutation student-ds)
                                  {:label "draft 1" :course-id 1})
               cm (changes/use-mutation student-ds)
-              um (unit/use-mutation student-ds cm)
-              em (exercise/use-mutation student-ds cm)]
+              um (unit/use-mutation student-ds {:changes-api cm})
+              em (exercise/use-mutation student-ds {:changes-api cm})]
 
           ; preload test course data to be updated
-          (course/create (course/use-mutation student-ds cm) (:input data))
+          (course/create (course/use-mutation student-ds {:changes-api cm}) (:input data))
 
           (unit/set-description um {:uuid "u1" :description "UPDATED desc"})
           (unit/set-level um {:uuid "u1" :level 3})
@@ -94,8 +95,8 @@
                                    {:label "draft 1" :course-id 1})
                 cm (changes/use-mutation student-ds)]
 
-            (course/create (course/use-mutation student-ds cm) (:input data))
-            (unit/delete (unit/use-mutation student-ds cm) {:uuid "u1"})
+            (course/create (course/use-mutation student-ds {:changes-api cm}) (:input data))
+            (unit/delete (unit/use-mutation student-ds {:changes-api cm}) {:uuid "u1"})
             (changes/migrate-up! (changes/use-mutation student-ds) v)
 
             (is (= (:expected data) (course-tree student-ds)))
@@ -115,7 +116,7 @@
               cm (changes/use-mutation student-ds)
               v1 (version/create! vm {:label "draft 1" :course-id 1})]
 
-          (course/create (course/use-mutation student-ds cm) (:input data))
+          (course/create (course/use-mutation student-ds {:changes-api cm}) (:input data))
           (changes/migrate-up! cm v1)
 
           (is (= (:pre-delete-counts data) (row-counts student-ds)))
@@ -124,7 +125,7 @@
           ;; as versions are differentiated by timestamp
           (Thread/sleep 1100)
           (let [v2 (version/create! vm {:label "draft 2" :course-id 1})]
-            (course/delete (course/use-mutation student-ds cm) {:uuid "c-uuid"})
+            (course/delete (course/use-mutation student-ds {:changes-api cm}) {:uuid "c-uuid"})
             (changes/migrate-up! cm v2)
             (is (= (:expected-counts data) (row-counts student-ds)))
             (is (= (:expected-counts data) (row-counts master-ds)))))))))

@@ -107,7 +107,7 @@
         (let [input (first (:seed (read-fixture "delete-course.json")))
               {:keys [uuid units]} input
               expected-exercises (mapcat :exercises units)]
-          (sut/create (sut/use-mutation ds (changes/use-mutation ds)) input)
+          (sut/create (sut/use-mutation ds {:changes-api (changes/use-mutation ds)}) input)
           (let [courses (changes ds :course-changes)
                 units' (changes ds :unit-changes)
                 exercises' (changes ds :exercise-changes)]
@@ -157,7 +157,7 @@
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "delete-course.json")
-              mut (sut/use-mutation ds (changes/use-mutation ds))
+              mut (sut/use-mutation ds {:changes-api (changes/use-mutation ds)})
               seed (first (:seed data))
               expected-exercises (mapcat :exercises (:units seed))]
           ;; seed without a changes api so only the delete lands in the feed
@@ -184,7 +184,7 @@
     (with-test-student-db
       (fn [ds]
         (let [data (read-fixture "set-name.json")
-              mut (sut/use-mutation ds (changes/use-mutation ds))
+              mut (sut/use-mutation ds {:changes-api (changes/use-mutation ds)})
               course (:course (first (:seed data)))]
           (run! (partial insert-course! ds) (:seed data))
           (sut/set-name mut {:id (:id course) :name "renamed"})

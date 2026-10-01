@@ -1,15 +1,48 @@
-(ns abantu.services.comments.interface)
-
-;; TODO: replace this private override with a proper map
-(def ^:private ?User [:map [:id :int]])
+(ns abantu.services.comments.interface
+  (:require [io.julienvincent.malt :as malt]
+            [malli.util :as mu]
+            [abantu.services.comments.core :as comments]
+            [abantu.util :as util]
+            [abantu.db.util :as db.util]))
 
 (def ?Comment [:map
                [:exercise-id :int]
                [:unit-id :int]
                [:course-id :int]
                [:text :string]
-               [:user ?User]
                [:timestamp :string]
                [:resolved :int]
-               [:resolved-by [:or :int :nil]]
-               [:resolved-at [:or :string :nil]]])
+               [:resolved-by (util/maybe :int)]
+               [:resolved-at (util/maybe :string)]])
+
+(def ?Lookup
+  [:map [:id :int]])
+
+(def ?Find
+  [:or
+   [:map [:course-id :int]]
+   [:map [:unit-id :int]]
+   [:map [:exercise-id :int]]])
+
+(malt/defprotocol CommentQuery
+  (lookup [input ?Lookup] (util/maybe ?Comment))
+  (find [input ?Find] [:vector ?Comment])
+  (all [] [:vector ?Comment]))
+
+(defn use-query
+  ([] (use-query (db.util/conn)))
+  ([ds]
+   (malt/reify CommentQuery
+     (lookup [_ input]
+       (comments/-lookup ds input))
+     (find [_ input]
+       (comments/-find ds input))
+     (all [_]
+       (comments/-all ds)))))
+
+(comment
+
+  (def cq (use-query (db.util/conn)))
+  (all cq)
+
+  :end)

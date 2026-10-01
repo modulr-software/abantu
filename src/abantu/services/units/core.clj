@@ -41,7 +41,7 @@
                      (some? course-id) (h/where [:= :course-id course-id])))
        (mapv #(attach-exercises ds %))))
 
-(defn -create [changes-api ds {:keys [uuid course-id exercises] :as update}]
+(defn -create [ds opts {:keys [uuid course-id exercises] :as update}]
   (let [{:keys [id]} (db/insert! ds {:tname :units
                                      :values (-> (dissoc update :exercises)
                                                  (assoc :uuid (or uuid (util/uuid))))
@@ -51,11 +51,11 @@
     (let [applied (update/apply (-lookup ds {:id id}) {:type :create
                                                       :payload (dissoc update :exercises)})]
       ;; cascade: one unit change + one change per created exercise
-      (add-change! changes-api ds applied :create (dissoc update :exercises)
+      (add-change! (:changes-api opts) ds applied :create (dissoc update :exercises)
                    (mapv #(dissoc % :comments) (:exercises applied)))
       applied)))
 
-(defn -delete [changes-api ds {:keys [id uuid] :as update}]
+(defn -delete [ds opts {:keys [id uuid] :as update}]
   (let [{:keys [id] :as unit} (-lookup ds {:id id :uuid uuid})
         exmut (exercise/use-mutation ds)
         exercise-ids (->> (db/find ds {:tname :exercises
@@ -67,70 +67,70 @@
     (db/delete! ds {:tname :units
                     :where [:= :id id]})
     ;; cascade: one unit change + one change per deleted exercise
-    (add-change! changes-api ds unit :delete nil
+    (add-change! (:changes-api opts) ds unit :delete nil
                  (mapv (fn [exercise] {:uuid (:uuid exercise)}) (:exercises unit)))
     (update/apply nil {:type :delete
                        :payload update})))
 
-(defn -set-name [changes-api ds {:keys [id uuid name] :as update}]
+(defn -set-name [ds opts {:keys [id uuid name] :as update}]
   (when-let [unit (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :units
                     :values {:name name}
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-name
                                       :payload update})]
-      (add-change! changes-api ds applied :set-name update nil)
+      (add-change! (:changes-api opts) ds applied :set-name update nil)
       applied)))
 
-(defn -set-description [changes-api ds {:keys [id uuid description] :as update}]
+(defn -set-description [ds opts {:keys [id uuid description] :as update}]
   (when-let [unit (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :units
                     :values {:description description}
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-description
                                       :payload update})]
-      (add-change! changes-api ds applied :set-description update nil)
+      (add-change! (:changes-api opts) ds applied :set-description update nil)
       applied)))
 
-(defn -set-level [changes-api ds {:keys [id uuid level] :as update}]
+(defn -set-level [ds opts {:keys [id uuid level] :as update}]
   (when-let [unit (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :units
                     :values {:level level}
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-level
                                       :payload update})]
-      (add-change! changes-api ds applied :set-level update nil)
+      (add-change! (:changes-api opts) ds applied :set-level update nil)
       applied)))
 
-(defn -set-type [changes-api ds {:keys [id uuid type] :as update}]
+(defn -set-type [ds opts {:keys [id uuid type] :as update}]
   (when-let [unit (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :units
                     :values {:type type}
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-type
                                       :payload update})]
-      (add-change! changes-api ds applied :set-type update nil)
+      (add-change! (:changes-api opts) ds applied :set-type update nil)
       applied)))
 
-(defn -set-course-id [changes-api ds {:keys [id uuid course-id] :as update}]
+(defn -set-course-id [ds opts {:keys [id uuid course-id] :as update}]
   (when-let [unit (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :units
                     :values {:course-id course-id}
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-course-id
                                       :payload update})]
-      (add-change! changes-api ds (assoc applied :course-id course-id)
+      (add-change! (:changes-api opts) ds (assoc applied :course-id course-id)
                    :set-course-id update nil)
       applied)))
 
-(defn -set-position [changes-api ds {:keys [id uuid position] :as update}]
+(defn -set-position [ds opts {:keys [id uuid position] :as update}]
   (when-let [unit (-lookup ds {:id id :uuid uuid})]
     (db/update! ds {:tname :units
                     :values {:position position}
                     :where [:= :id (:id unit)]})
     (let [applied (update/apply unit {:type :set-position
                                       :payload update})]
-      (add-change! changes-api ds applied :set-position update nil)
+      (add-change! (:changes-api opts) ds applied :set-position update nil)
       applied)))
 
 (comment
